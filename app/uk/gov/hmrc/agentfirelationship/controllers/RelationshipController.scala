@@ -33,14 +33,14 @@ class RelationshipController @Inject()(mongoService: RelationshipMongoService) e
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(Relationship(Arn(arn), service, clientId)) map { result =>
-      if (result.nonEmpty) Ok(toJson(result)) else NotFound
+      if (result.nonEmpty) Ok(toJson(result)) else {
+        Logger.info("Unable to find a relationship")
+        NotFound
+      }
     }
   }
 
   def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    Logger.info("I am arn who has been hit \n\n " + arn)
-    Logger.info("I am clientId who has been hit \n\n " + clientId)
-    Logger.info("I am service who has been hit \n\n " + service)
     mongoService.createRelationship(Relationship(Arn(arn), service, clientId)).map(_ => Created)
   }
 
@@ -49,8 +49,6 @@ class RelationshipController @Inject()(mongoService: RelationshipMongoService) e
   }
 
   def payeCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    Logger.info("I am endpoint who has been hit \n\n " + arn)
-    Logger.info("I am clientId who has been hit \n\n " + clientId)
     mongoService.findRelationships(Relationship(Arn(arn), "PAYE", clientId)) map { result =>
       if (result.nonEmpty) Ok else NotFound
     }

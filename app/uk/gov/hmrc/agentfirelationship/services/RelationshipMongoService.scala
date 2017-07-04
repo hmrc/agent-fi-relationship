@@ -32,21 +32,17 @@ import scala.concurrent.Future
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
 
-  def findRelationships(relationship: Relationship): Future[List[Relationship]] = {
+  def findRelationships(relationship: Relationship): Future[List[Relationship]] =
     find(Seq(
       "arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
       "clientId" -> Some(relationship.clientId))
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get)): _*)
-  }
 
-  def createRelationship(relationship: Relationship): Future[Unit] = {
-    insert(relationship).map(_ => ())
-  }
+  def createRelationship(relationship: Relationship): Future[Unit] = insert(relationship).map(_ => ())
 
-  def deleteRelationship(relationship: Relationship): Future[Boolean] = {
+  def deleteRelationship(relationship: Relationship): Future[Boolean] =
     remove("arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
       "clientId" -> Some(relationship.clientId)).map(_.ok)
-  }
 }
