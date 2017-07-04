@@ -11,7 +11,7 @@ sbt run
 
 ## Run the application via Service Manager
 
-```sm --start AGENTS_MTDFI_ALL```
+```sm --start AGENT_FI_ALL```
 
 
 ## Endpoints <a name="endpoints"></a>

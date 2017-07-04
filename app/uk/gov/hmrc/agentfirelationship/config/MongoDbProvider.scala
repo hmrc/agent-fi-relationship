@@ -19,7 +19,8 @@ package uk.gov.hmrc.agentfirelationship.config
 import javax.inject._
 
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.DefaultDB
 
 class MongoDbProvider @Inject()(reactiveMongoComponent: ReactiveMongoComponent) extends Provider[reactivemongo.api.DB] {
-  def get = reactiveMongoComponent.mongoConnector.db()
+  def get: DefaultDB = reactiveMongoComponent.mongoConnector.db()
 }

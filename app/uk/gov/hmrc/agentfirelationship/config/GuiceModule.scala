@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule
 import uk.gov.hmrc.play.config._
 
 class GuiceModule extends AbstractModule with ServicesConfig {
-  override def configure: Unit = {
+  override def configure(): Unit = {
     bind(classOf[reactivemongo.api.DB]).toProvider(classOf[MongoDbProvider])
     ()
   }
