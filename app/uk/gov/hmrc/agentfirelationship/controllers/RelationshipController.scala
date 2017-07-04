@@ -41,16 +41,21 @@ class RelationshipController @Inject()(mongoService: RelationshipMongoService) e
   }
 
   def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    Logger.info("Creating a relationship")
     mongoService.createRelationship(Relationship(Arn(arn), service, clientId)).map(_ => Created)
   }
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    Logger.info("Deleting a relationship")
     mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId)).map(_ => Ok)
   }
 
   def payeCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(Relationship(Arn(arn), "PAYE", clientId)) map { result =>
-      if (result.nonEmpty) Ok else NotFound
+      if (result.nonEmpty) Ok else {
+        Logger.info("No PAYE Relationship found")
+        NotFound
+      }
     }
   }
 }
