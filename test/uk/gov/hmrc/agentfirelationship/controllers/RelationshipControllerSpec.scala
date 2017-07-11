@@ -24,16 +24,21 @@ import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.agentfirelationship.audit.AuditService
+import uk.gov.hmrc.agentfirelationship.connectors.GovernmentGatewayProxyConnector
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
-  val mockRelationshipStoreController = new RelationshipController(mockMongoService)
-
+  val mockAuditService = mock[AuditService]
+  val mockGGProxy = mock[GovernmentGatewayProxyConnector]
+  val mockRelationshipStoreController = new RelationshipController(mockGGProxy,mockAuditService,mockMongoService)
+  implicit val hc = HeaderCarrier()
   override def beforeEach() {
     reset(mockMongoService)
   }
@@ -58,6 +63,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
     "return Status: Created for creating new record" in {
       when(mockMongoService.createRelationship(Relationship(Arn("AARN1234567"), "789", "456"))).thenReturn(Future successful (()))
+      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful ("q213"))
       val response = mockRelationshipStoreController.createRelationship("AARN1234567", "789", "456")(FakeRequest("POST", ""))
 
       status(response) mustBe CREATED
@@ -66,6 +72,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
     "return Status: Ok for deleting a record" in {
       when(mockMongoService.deleteRelationship(Relationship(Arn("AARN1234567"), "789", "456"))).thenReturn(Future successful true)
+      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful ("q213"))
       val response = mockRelationshipStoreController.deleteRelationship("AARN1234567", "789", "456")(FakeRequest("DELETE", ""))
 
       status(response) mustBe OK
