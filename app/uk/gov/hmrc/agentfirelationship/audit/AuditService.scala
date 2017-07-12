@@ -29,9 +29,9 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.collection.JavaConversions
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object AgentClientRelationshipEvent extends Enumeration {
   val CreateRelationship, EndRelationship = Value
@@ -46,10 +46,9 @@ class AuditData {
     details.put(key, value)
   }
 
-  def getDetails(): Map[String, Any] = {
+  def getDetails: Map[String, Any] = {
     JavaConversions.mapAsScalaMap(details).toMap
   }
-
 }
 
 @Singleton
@@ -73,17 +72,21 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     "nino"
   )
 
-  def sendCreateRelationshipAuditEvent(implicit hc: HeaderCarrier, request: Request[Any], auditData: AuditData): Unit = {
-    auditEvent(AgentClientRelationshipEvent.CreateRelationship, "create-fi-relationship",
-      collectDetails(auditData.getDetails(), createRelationshipDetailsFields))
-  }
-  def sendDeleteRelationshipAuditEvent(implicit hc: HeaderCarrier, request: Request[Any], auditData: AuditData): Unit = {
-    auditEvent(AgentClientRelationshipEvent.EndRelationship, "end-fi-relationship",
-      collectDetails(auditData.getDetails(), DeleteRelationshipFields))
+  def sendCreateRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
+    audit.map { auditData =>
+      auditEvent(AgentClientRelationshipEvent.CreateRelationship, "create-fi-relationship",
+        collectDetails(auditData.getDetails, createRelationshipDetailsFields))
+    }
   }
 
+  def sendDeleteRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
+    audit.map { auditData =>
+      auditEvent(AgentClientRelationshipEvent.EndRelationship, "end-fi-relationship",
+        collectDetails(auditData.getDetails, DeleteRelationshipFields))
+    }
+  }
 
-  private[audit] def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)
+  private def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)
                                (implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     send(createEvent(event, transactionName, details: _*))
   }
@@ -98,7 +101,7 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
 
     val detail = hc.toAuditDetails(details.map(pair => pair._1 -> toString(pair._2)): _*)
     val tags = hc.toAuditTags(transactionName, request.path)
-    DataEvent(auditSource = "agent-client-relationships",
+    DataEvent(auditSource = "agent-fi-relationship",
       auditType = event.toString,
       tags = tags,
       detail = detail
@@ -112,5 +115,4 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
       }
     }
   }
-
 }
