@@ -50,7 +50,7 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
     Logger.info("Creating a relationship")
     for {
       _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId))
-      _ <- auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
+      _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
     } yield Created
   }
 
@@ -58,7 +58,7 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
     Logger.info("Deleting a relationship")
     for {
       _ <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
-      _ <- auditService.sendDeleteRelationshipEvent(setAuditData(arn, service, clientId))
+      _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, service, clientId))
     } yield Ok
   }
 
