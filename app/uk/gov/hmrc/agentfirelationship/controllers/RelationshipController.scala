@@ -21,15 +21,21 @@ import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
+import uk.gov.hmrc.agentfirelationship.connectors.GovernmentGatewayProxyConnector
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @Singleton
-class RelationshipController @Inject()(mongoService: RelationshipMongoService) extends BaseController {
+class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
+                                       auditService: AuditService,
+                                       mongoService: RelationshipMongoService) extends BaseController {
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(Relationship(Arn(arn), service, clientId)) map { result =>
@@ -42,12 +48,18 @@ class RelationshipController @Inject()(mongoService: RelationshipMongoService) e
 
   def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     Logger.info("Creating a relationship")
-    mongoService.createRelationship(Relationship(Arn(arn), service, clientId)).map(_ => Created)
+    for {
+      _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId))
+      _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
+    } yield Created
   }
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     Logger.info("Deleting a relationship")
-    mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId)).map(_ => Ok)
+    for {
+      _ <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
+      _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, service, clientId))
+    } yield Ok
   }
 
   def payeCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
@@ -56,6 +68,17 @@ class RelationshipController @Inject()(mongoService: RelationshipMongoService) e
         Logger.info("No PAYE Relationship found")
         NotFound
       }
+    }
+  }
+
+  private def setAuditData(arn: String, service: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
+    gg.getCredIdFor(Arn(arn)).map { credentialIdentifier ⇒
+      val auditData = new AuditData()
+      auditData.set("nino", clientId)
+      auditData.set("regime", service)
+      auditData.set("arn", arn)
+      auditData.set("credId", credentialIdentifier)
+      auditData
     }
   }
 }
