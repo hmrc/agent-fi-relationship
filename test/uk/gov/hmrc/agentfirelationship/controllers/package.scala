@@ -16,8 +16,15 @@
 
 package uk.gov.hmrc.agentfirelationship
 
+import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 package object controllers {
   implicit val hc = new HeaderCarrier
+
+  val validTestARN: String = "AARN1234567"
+  val payeService: String = "PAYE"
+  val validTestNINO: String = "AE123456C"
+  val validTestRelationship: Relationship = Relationship(Arn(validTestARN), payeService, validTestNINO)
 }

@@ -48,60 +48,25 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
 
   def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     val maximumRelationshipCount = 2
+    val relationship: Relationship = Relationship(Arn(arn), service, clientId)
 
     (for {
       relationshipList <- mongoService.findAllRelationshipsForAgent(arn)
-      existingRelationship <- mongoService.findRelationships(Relationship(Arn(arn), service, clientId))
+      existingRelationship <- mongoService.findRelationships(relationship)
     } yield (relationshipList.length, existingRelationship.nonEmpty)) flatMap {
       case (size: Int, _) if size >= maximumRelationshipCount =>
         Logger.info("Maximum number of relationships reached")
         Future successful Forbidden
       case (_, true) =>
         Logger.info("Relationship already exists")
-        Future successful NoContent
+        Future successful Created
       case _ =>
         Logger.info("Creating a relationship")
         for {
-          _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId))
+          _ <- mongoService.createRelationship(relationship)
           _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
         } yield Created
     }
-
-//    queries match {
-//      case (size: Int, _) if size >= maximumRelationshipCount =>
-//        Logger.info("Maximum number of relationships reached")
-//        Future successful Forbidden
-//      case (_, true) =>
-//        Logger.info("Relationship already exists")
-//        Future successful NoContent
-//      case _ =>
-//        Logger.info("Creating a relationship")
-//        for {
-//          _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId))
-//          _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
-//        } yield Created
-//    }
-
-//    mongoService.findAllRelationshipsForAgent(arn) flatMap { agentRelationships =>
-//
-//      if(agentRelationships.size >= maximumRelationshipCount) {
-//        Logger.info("Maximum number of relationships reached")
-//        Future successful Forbidden
-//      }
-//      else {
-//        mongoService.findRelationships(Relationship(Arn(arn), service, clientId)) flatMap {
-//          case list if list.nonEmpty =>
-//            Logger.info("Relationship already exists")
-//            Future successful NoContent
-//          case _ =>
-//            Logger.info("Creating a relationship")
-//            for {
-//              _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId))
-//              _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
-//            } yield Created
-//        }
-//      }
-//    }
   }
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
