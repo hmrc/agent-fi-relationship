@@ -45,4 +45,11 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     remove("arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
       "clientId" -> Some(relationship.clientId)).map(_.ok)
+
+  def findAllRelationshipsForAgent(arn: String): Future[List[Relationship]] = {
+    val searchOptions = Seq("arn" -> Some(arn))
+      .filter(_._2.isDefined)
+      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get))
+    find(searchOptions: _*)
+  }
 }
