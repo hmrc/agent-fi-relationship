@@ -61,7 +61,7 @@ class AduitServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         verify(mockConnector).sendEvent(captor.capture())(any(), any())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
-        sentEvent.auditType shouldBe "CreateRelationship"
+        sentEvent.auditType shouldBe "AgentClientRelationshipCreated"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("credId") shouldBe "0000001234567890"
@@ -99,7 +99,7 @@ class AduitServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         verify(mockConnector).sendEvent(captor.capture())(any(), any())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
-        sentEvent.auditType shouldBe "EndRelationship"
+        sentEvent.auditType shouldBe "AgentClientRelationshipEnded"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("credId") shouldBe "0000001234567890"
