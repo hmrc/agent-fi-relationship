@@ -25,23 +25,22 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.mongo.ReactiveRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
 
-  def findRelationships(relationship: Relationship): Future[List[Relationship]] =
+  def findRelationships(relationship: Relationship)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find(Seq(
       "arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
       "clientId" -> Some(relationship.clientId))
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get)): _*)
 
-  def createRelationship(relationship: Relationship): Future[Unit] = insert(relationship).map(_ => ())
+  def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = insert(relationship).map(_ => ())
 
-  def deleteRelationship(relationship: Relationship): Future[Boolean] =
+  def deleteRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Boolean] =
     remove("arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
       "clientId" -> Some(relationship.clientId)).map(_.ok)
