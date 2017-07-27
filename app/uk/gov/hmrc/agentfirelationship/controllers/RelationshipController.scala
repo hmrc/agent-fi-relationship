@@ -56,10 +56,11 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     Logger.info("Deleting a relationship")
-    for {
-      _ <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
+    val relationshipDeleted: Future[Boolean] = for {
+      successOrFail <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
       _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, service, clientId))
-    } yield Ok
+    } yield successOrFail
+    relationshipDeleted.map( {if (_) Ok else NotFound})
   }
 
   def payeCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>

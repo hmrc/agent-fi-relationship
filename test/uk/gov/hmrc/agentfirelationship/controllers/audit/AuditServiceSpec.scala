@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.http.logging.{Authorization, RequestId, SessionId}
 import uk.gov.hmrc.play.test.UnitSpec
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.verify
-class AduitServiceSpec extends UnitSpec with MockitoSugar with Eventually {
+class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
   implicit val testConfig = PatienceConfig(
     timeout = scaled(Span(500, Millis)),
     interval = scaled(Span(200, Millis)))
