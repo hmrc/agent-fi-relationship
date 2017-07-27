@@ -32,7 +32,7 @@ import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.ContentTypes.XML
 import javax.xml.XMLConstants._
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.xml.Elem
 import scala.xml.XML.withSAXParser
 import org.apache.xerces.impl.Constants._
