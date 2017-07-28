@@ -29,7 +29,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 
 @Singleton
@@ -71,10 +71,11 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     Logger.info("Deleting a relationship")
-    for {
-      _ <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
+    val relationshipDeleted: Future[Boolean] = for {
+      successOrFail <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
       _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, service, clientId))
-    } yield Ok
+    } yield successOrFail
+    relationshipDeleted.map( {if (_) Ok else NotFound})
   }
 
   def payeCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>

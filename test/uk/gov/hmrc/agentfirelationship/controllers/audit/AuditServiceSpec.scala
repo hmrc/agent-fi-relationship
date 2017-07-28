@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.http.logging.{Authorization, RequestId, SessionId}
 import uk.gov.hmrc.play.test.UnitSpec
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.verify
-class AduitServiceSpec extends UnitSpec with MockitoSugar with Eventually {
+class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
   implicit val testConfig = PatienceConfig(
     timeout = scaled(Span(500, Millis)),
     interval = scaled(Span(200, Millis)))
@@ -61,7 +61,7 @@ class AduitServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         verify(mockConnector).sendEvent(captor.capture())(any(), any())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
-        sentEvent.auditType shouldBe "CreateRelationship"
+        sentEvent.auditType shouldBe "AgentClientRelationshipCreated"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("credId") shouldBe "0000001234567890"
@@ -99,7 +99,7 @@ class AduitServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         verify(mockConnector).sendEvent(captor.capture())(any(), any())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
-        sentEvent.auditType shouldBe "EndRelationship"
+        sentEvent.auditType shouldBe "AgentClientRelationshipEnded"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("credId") shouldBe "0000001234567890"

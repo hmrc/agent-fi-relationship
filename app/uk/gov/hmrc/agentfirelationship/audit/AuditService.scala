@@ -29,12 +29,12 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.collection.JavaConversions
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 import scala.util.Try
 
 object AgentClientRelationshipEvent extends Enumeration {
-  val CreateRelationship, EndRelationship = Value
+  val AgentClientRelationshipCreated, AgentClientRelationshipEnded = Value
   type AgentClientRelationshipEvent = Value
 }
 
@@ -74,14 +74,14 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
 
   def sendCreateRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
     audit.map { auditData =>
-      auditEvent(AgentClientRelationshipEvent.CreateRelationship, "create-fi-relationship",
+      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "create-fi-relationship",
         collectDetails(auditData.getDetails, createRelationshipDetailsFields))
     }
   }
 
   def sendDeleteRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
     audit.map { auditData =>
-      auditEvent(AgentClientRelationshipEvent.EndRelationship, "end-fi-relationship",
+      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipEnded, "end-fi-relationship",
         collectDetails(auditData.getDetails, DeleteRelationshipFields))
     }
   }
