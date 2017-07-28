@@ -26,7 +26,6 @@ import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
@@ -44,12 +43,10 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   def deleteRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Boolean] =
     remove("arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
-      "clientId" -> Some(relationship.clientId)).map(result => {
-      if (result.n == 0) false else result.ok
-    }
-    )
+      "clientId" -> Some(relationship.clientId))
+      .map(result => if (result.n == 0) false else result.ok)
 
-  def findAllRelationshipsForAgent(arn: String): Future[List[Relationship]] = {
+  def findAllRelationshipsForAgent(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     val searchOptions = Seq("arn" -> Some(arn))
       .filter(_._2.isDefined)
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get))

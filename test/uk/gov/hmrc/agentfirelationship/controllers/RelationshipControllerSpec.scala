@@ -30,7 +30,6 @@ import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
@@ -40,7 +39,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
   val mockRelationshipStoreController = new RelationshipController(mockGGProxy, mockAuditService, mockMongoService)
 
   def testGGProxy: OngoingStubbing[Future[String]] =
-    when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful "q213")
+    when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
 
   override def beforeEach() {
     reset(mockMongoService, mockAuditService)
@@ -58,10 +57,10 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: NOT_FOUND for not finding data" in {
-      when(mockMongoService.findRelationships(eqs(Relationship(Arn("ARN77777"), testService, validTestNINO)))(any()))
+      when(mockMongoService.findRelationships(eqs(Relationship(Arn(validTestArn), testService, validTestNINO)))(any()))
         .thenReturn(Future successful List())
 
-      val response = mockRelationshipStoreController.findRelationship("ARN77777", testService, validTestNINO)(fakeRequest)
+      val response = mockRelationshipStoreController.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any())(any())
@@ -70,7 +69,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "return Status: CREATED for creating new record" in {
       testGGProxy
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
-      when(mockMongoService.findAllRelationshipsForAgent(validTestArn))
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationship))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List())
@@ -79,14 +78,14 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
       status(response) mustBe CREATED
       verify(mockMongoService, times(1)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())
+      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())(any())
       verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
       testGGProxy
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
-      when(mockMongoService.findAllRelationshipsForAgent(validTestArn))
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationship))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List(validTestRelationship))
@@ -95,14 +94,14 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
       status(response) mustBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())
+      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())(any())
       verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
 
     "return Status: FORBIDDEN when 2 or more relationships already exists" in {
       testGGProxy
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
-      when(mockMongoService.findAllRelationshipsForAgent(validTestArn))
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationship, validTestRelationship))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List(validTestRelationship))
@@ -111,7 +110,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
       status(response) mustBe FORBIDDEN
       verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())
+      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())(any())
       verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
 

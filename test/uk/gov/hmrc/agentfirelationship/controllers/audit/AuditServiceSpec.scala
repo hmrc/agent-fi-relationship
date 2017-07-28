@@ -17,6 +17,8 @@
 package uk.gov.hmrc.agentfirelationship.controllers.audit
 
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.verify
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Span}
@@ -29,8 +31,7 @@ import uk.gov.hmrc.play.audit.model.{AuditEvent, DataEvent}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.{Authorization, RequestId, SessionId}
 import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.verify
+
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
   implicit val testConfig = PatienceConfig(
     timeout = scaled(Span(500, Millis)),
