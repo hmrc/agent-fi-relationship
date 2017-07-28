@@ -47,8 +47,8 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
   "RelationshipStoreController" should {
     "return Status: OK when successfully finding a relationship" in {
-      when(mockMongoService.findRelationships(eqs(Relationship(Arn(validTestArn), testService, validTestNINO)))(any()))
-        .thenReturn(Future successful List(Relationship(Arn(validTestArn), testService, validTestNINO)))
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
 
       val response = mockRelationshipStoreController.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
@@ -57,7 +57,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: NOT_FOUND for not finding data" in {
-      when(mockMongoService.findRelationships(eqs(Relationship(Arn(validTestArn), testService, validTestNINO)))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful List())
 
       val response = mockRelationshipStoreController.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
@@ -115,7 +115,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: OK for deleting a record" in {
-      when(mockMongoService.deleteRelationship(eqs(Relationship(Arn(validTestArn), testService, validTestNINO)))(any()))
+      when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful true)
       when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
 
@@ -137,8 +137,8 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: OK for finding data via access control endpoint" in {
-      when(mockMongoService.findRelationships(eqs(Relationship(Arn(validTestArn), testService, validTestNINO)))(any()))
-        .thenReturn(Future successful List(Relationship(Arn(validTestArn), testService, validTestNINO)))
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
 
       val response = mockRelationshipStoreController.payeCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
@@ -147,7 +147,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
-      when(mockMongoService.findRelationships(eqs(Relationship(Arn(validTestArn), testService, validTestNINO)))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful List())
 
       val response = mockRelationshipStoreController.payeCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
