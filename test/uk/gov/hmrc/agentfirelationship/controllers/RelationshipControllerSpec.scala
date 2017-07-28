@@ -78,6 +78,14 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       status(response) mustBe OK
       verify(mockMongoService, times(1)).deleteRelationship(any())(any())
     }
+    "return Status: NotFound for failing to delete a record" in {
+      when(mockMongoService.deleteRelationship(Relationship(Arn("AARN1234567"), "789", "456"))).thenReturn(Future successful false)
+      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful ("q213"))
+      val response = mockRelationshipStoreController.deleteRelationship("AARN1234567", "789", "456")(FakeRequest("DELETE", ""))
+
+      status(response) mustBe NOT_FOUND
+      verify(mockMongoService, times(1)).deleteRelationship(any())
+    }
 
     "return Status: OK for finding data via access control endpoint" in {
       when(mockMongoService.findRelationships(eqs(Relationship(Arn("AAABBB111222"), "PAYE", "123456")))(any()))
