@@ -19,7 +19,6 @@ package uk.gov.hmrc.agentfirelationship.services
 import javax.inject.Inject
 
 import com.google.inject.Singleton
-import play.api.Logger
 import play.api.libs.json.Format
 import play.api.libs.json.Json.{format, toJsFieldJsValueWrapper}
 import play.modules.reactivemongo.ReactiveMongoComponent
@@ -44,8 +43,13 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   def deleteRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Boolean] =
     remove("arn" -> Some(relationship.arn.value),
       "service" -> Some(relationship.service),
-      "clientId" -> Some(relationship.clientId)).map(result => {
-      if (result.n == 0) false else result.ok
-    }
-    )
+      "clientId" -> Some(relationship.clientId))
+      .map(result => if (result.n == 0) false else result.ok)
+
+  def findAllRelationshipsForAgent(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    val searchOptions = Seq("arn" -> Some(arn))
+      .filter(_._2.isDefined)
+      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get))
+    find(searchOptions: _*)
+  }
 }

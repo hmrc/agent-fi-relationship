@@ -17,6 +17,8 @@
 package uk.gov.hmrc.agentfirelationship
 
 import play.api.test.FakeRequest
+import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 package object controllers {
@@ -27,4 +29,5 @@ package object controllers {
   val testCredId = "q213"
   val testService = "PAYE"
   val validTestNINO = "AE123456C"
+  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO)
 }
