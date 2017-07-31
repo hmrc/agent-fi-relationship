@@ -84,7 +84,6 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
       testGGProxy
-      when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
       when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationship))
       when(mockMongoService.findRelationships(any())(any()))
@@ -100,7 +99,6 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
     "return Status: FORBIDDEN when 2 or more relationships already exists" in {
       testGGProxy
-      when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
       when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationship, validTestRelationship))
       when(mockMongoService.findRelationships(any())(any()))
