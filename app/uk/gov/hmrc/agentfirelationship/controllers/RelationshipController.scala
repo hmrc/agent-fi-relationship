@@ -64,7 +64,7 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
         Logger.info("Creating a relationship")
         for {
           _ <- mongoService.createRelationship(relationship)
-          _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, service, clientId))
+          _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, clientId))
         } yield Created
     }
   }
@@ -73,7 +73,7 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
     Logger.info("Deleting a relationship")
     val relationshipDeleted: Future[Boolean] = for {
       successOrFail <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
-      _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, service, clientId))
+      _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, clientId))
     } yield successOrFail
     relationshipDeleted.map(if (_) Ok else NotFound)
   }
@@ -87,13 +87,13 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
     }
   }
 
-  private def setAuditData(arn: String, service: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
+  private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
     gg.getCredIdFor(Arn(arn)).map { credentialIdentifier ⇒
       val auditData = new AuditData()
-      auditData.set("nino", clientId)
-      auditData.set("regime", service)
-      auditData.set("arn", arn)
       auditData.set("credId", credentialIdentifier)
+      auditData.set("arn", arn)
+      auditData.set("regime", "paye-poc")
+      auditData.set("regimeId", clientId)
       auditData
     }
   }
