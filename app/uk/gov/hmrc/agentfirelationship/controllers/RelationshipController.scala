@@ -90,7 +90,7 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
   private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
     gg.getCredIdFor(Arn(arn)).map { credentialIdentifier ⇒
       val auditData = new AuditData()
-      auditData.set("credId", credentialIdentifier)
+      auditData.set("authProviderId", credentialIdentifier)
       auditData.set("arn", arn)
       auditData.set("regime", "paye-poc")
       auditData.set("regimeId", clientId)

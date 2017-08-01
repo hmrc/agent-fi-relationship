@@ -59,14 +59,14 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
   }
 
   val createRelationshipDetailsFields = Seq(
-    "credId",
+    "authProviderId",
     "arn",
     "regime",
     "regimeId"
   )
 
   val DeleteRelationshipFields = Seq(
-    "credId",
+    "authProviderId",
     "arn",
     "regime",
     "regimeId"

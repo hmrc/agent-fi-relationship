@@ -49,7 +49,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
-      auditData.set("credId", "0000001234567890")
+      auditData.set("authProviderId", "0000001234567890")
       auditData.set("regime", "paye-poc")
       auditData.set("regimeId", Nino("KS969148D").value)
       await(service.sendCreateRelationshipEvent(auditData)(
@@ -65,7 +65,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditType shouldBe "AgentClientRelationshipCreated"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
-        sentEvent.detail("credId") shouldBe "0000001234567890"
+        sentEvent.detail("authProviderId") shouldBe "0000001234567890"
         sentEvent.detail("regime") shouldBe  "paye-poc"
         sentEvent.detail("regimeId") shouldBe "KS969148D"
         sentEvent.tags.contains("Authorization") shouldBe false
@@ -88,7 +88,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
-      auditData.set("credId", "0000001234567890")
+      auditData.set("authProviderId", "0000001234567890")
       auditData.set("regime", "paye-poc")
       auditData.set("regimeId", Nino("KS969148D").value)
       await(service.sendDeleteRelationshipEvent(auditData)(
@@ -104,7 +104,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditType shouldBe "AgentClientRelationshipEnded"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
-        sentEvent.detail("credId") shouldBe "0000001234567890"
+        sentEvent.detail("authProviderId") shouldBe "0000001234567890"
         sentEvent.detail("regime") shouldBe  "paye-poc"
         sentEvent.detail("regimeId") shouldBe "KS969148D"
         sentEvent.tags.contains("Authorization") shouldBe false
