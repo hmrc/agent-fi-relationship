@@ -49,9 +49,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
-      auditData.set("credId", "0000001234567890")
-      auditData.set("regime", "mtd-it")
-      auditData.set("nino", Nino("KS969148D").value)
+      auditData.set("authProviderId", "0000001234567890")
+      auditData.set("regime", "paye-poc")
+      auditData.set("regimeId", Nino("KS969148D").value)
       await(service.sendCreateRelationshipEvent(auditData)(
         hc,
         FakeRequest("GET", "/path"))
@@ -65,11 +65,12 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditType shouldBe "AgentClientRelationshipCreated"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
-        sentEvent.detail("credId") shouldBe "0000001234567890"
-        sentEvent.detail("nino") shouldBe "KS969148D"
+        sentEvent.detail("authProviderId") shouldBe "0000001234567890"
+        sentEvent.detail("regime") shouldBe  "paye-poc"
+        sentEvent.detail("regimeId") shouldBe "KS969148D"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
-        sentEvent.tags("transactionName") shouldBe "create-fi-relationship"
+        sentEvent.tags("transactionName") shouldBe "agent fi create relationship"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
         sentEvent.tags("X-Request-ID") shouldBe "dummy request id"
@@ -87,9 +88,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
-      auditData.set("credId", "0000001234567890")
-      auditData.set("regime", "mtd-it")
-      auditData.set("nino", Nino("KS969148D").value)
+      auditData.set("authProviderId", "0000001234567890")
+      auditData.set("regime", "paye-poc")
+      auditData.set("regimeId", Nino("KS969148D").value)
       await(service.sendDeleteRelationshipEvent(auditData)(
         hc,
         FakeRequest("GET", "/path"))
@@ -103,11 +104,12 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditType shouldBe "AgentClientRelationshipEnded"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
-        sentEvent.detail("credId") shouldBe "0000001234567890"
-        sentEvent.detail("nino") shouldBe "KS969148D"
+        sentEvent.detail("authProviderId") shouldBe "0000001234567890"
+        sentEvent.detail("regime") shouldBe  "paye-poc"
+        sentEvent.detail("regimeId") shouldBe "KS969148D"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
-        sentEvent.tags("transactionName") shouldBe "end-fi-relationship"
+        sentEvent.tags("transactionName") shouldBe "agent fi delete relationship"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
         sentEvent.tags("X-Request-ID") shouldBe "dummy request id"

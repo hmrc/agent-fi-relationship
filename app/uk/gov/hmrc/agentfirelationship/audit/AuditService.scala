@@ -59,29 +59,29 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
   }
 
   val createRelationshipDetailsFields = Seq(
-    "credId",
+    "authProviderId",
     "arn",
     "regime",
-    "nino"
+    "regimeId"
   )
 
   val DeleteRelationshipFields = Seq(
-    "credId",
+    "authProviderId",
     "arn",
     "regime",
-    "nino"
+    "regimeId"
   )
 
   def sendCreateRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
     audit.map { auditData =>
-      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "create-fi-relationship",
+      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "agent fi create relationship",
         collectDetails(auditData.getDetails, createRelationshipDetailsFields))
     }
   }
 
   def sendDeleteRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
     audit.map { auditData =>
-      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipEnded, "end-fi-relationship",
+      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipEnded, "agent fi delete relationship",
         collectDetails(auditData.getDetails, DeleteRelationshipFields))
     }
   }
