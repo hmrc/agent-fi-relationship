@@ -43,7 +43,7 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService
       val client1Id = "Client1"
       val client2Id = "Client2"
       val client3Id = "Client3"
-      val service = "PAYE"
+      val service = "afi"
       createRelationship(agentId, client1Id, service)
       createRelationship(agentId, client2Id, service)
 
@@ -67,7 +67,7 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService
       Given("agent has a relationship")
       val agentId = "Agent123"
       val client1Id = "Client1"
-      val service = "PAYE"
+      val service = "afi"
       createRelationship(agentId, client1Id, service)
 
       When("I call the create-relationship endpoint")
