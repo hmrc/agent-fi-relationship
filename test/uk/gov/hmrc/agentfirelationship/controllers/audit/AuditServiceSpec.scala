@@ -50,7 +50,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
       auditData.set("authProviderId", "0000001234567890")
-      auditData.set("regime", "paye-poc")
+      auditData.set("regime", "afi")
       auditData.set("regimeId", Nino("KS969148D").value)
       await(service.sendCreateRelationshipEvent(auditData)(
         hc,
@@ -66,7 +66,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("authProviderId") shouldBe "0000001234567890"
-        sentEvent.detail("regime") shouldBe  "paye-poc"
+        sentEvent.detail("regime") shouldBe  "afi"
         sentEvent.detail("regimeId") shouldBe "KS969148D"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
@@ -89,7 +89,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
       auditData.set("authProviderId", "0000001234567890")
-      auditData.set("regime", "paye-poc")
+      auditData.set("regime", "afi")
       auditData.set("regimeId", Nino("KS969148D").value)
       await(service.sendDeleteRelationshipEvent(auditData)(
         hc,
@@ -105,7 +105,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("authProviderId") shouldBe "0000001234567890"
-        sentEvent.detail("regime") shouldBe  "paye-poc"
+        sentEvent.detail("regime") shouldBe  "afi"
         sentEvent.detail("regimeId") shouldBe "KS969148D"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
