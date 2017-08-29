@@ -1,20 +1,18 @@
 package uk.gov.hmrc.agentfirelationship
 
-import javax.inject.Inject
-
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService) extends IntegrationSpec with RelationshipActions {
+class CreateRelationshipIntegrationSpec extends IntegrationSpec with RelationshipActions {
 
-  feature("Create a relationship between an agent and an individual") {
+  val mongo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+    feature("Create a relationship between an agent and an individual") {
 
     info("As an agent")
     info("I want to create a relationship with a client individual for a specific service")
@@ -43,7 +41,7 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService
       val client1Id = "Client1"
       val client2Id = "Client2"
       val client3Id = "Client3"
-      val service = "PAYE"
+      val service = "afi"
       createRelationship(agentId, client1Id, service)
       createRelationship(agentId, client2Id, service)
 
@@ -60,20 +58,19 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService
       //cleanup
       deleteRelationship(agentId, client1Id, service)
       deleteRelationship(agentId, client2Id, service)
-
     }
     scenario("A relationship which is the same already exists") {
 
       Given("agent has a relationship")
       val agentId = "Agent123"
       val client1Id = "Client1"
-      val service = "PAYE"
+      val service = "afi"
       createRelationship(agentId, client1Id, service)
 
       When("I call the create-relationship endpoint")
       val createRelationshipResponse: WSResponse = createRelationship(agentId, client1Id, service)
 
-      Then("I will receive a 204  response ")
+      Then("I will receive a 201 response ")
       createRelationshipResponse.status shouldBe CREATED
 
       And("the new relationship should not be created")
@@ -81,10 +78,8 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService
       Await.result(agentRelationships, 10000 millis).length shouldBe 1
       //cleanup
       deleteRelationship(agentId, client1Id, service)
-      deleteRelationship(agentId, client1Id, service)
     }
   }
-
 
   feature("Delete a relationship between an agent and a client") {
 
@@ -105,6 +100,7 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService
       And("the relationship should be deleted")
       val viewRelationshipResponse: WSResponse = getRelationship(agentId, clientId, service)
       viewRelationshipResponse.status shouldBe NOT_FOUND
+      deleteRelationship(agentId, clientId, service)
     }
   }
 }

@@ -78,10 +78,10 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
     relationshipDeleted.map(if (_) Ok else NotFound)
   }
 
-  def payeCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findRelationships(Relationship(Arn(arn), "PAYE", clientId)) map { result =>
+  def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    mongoService.findRelationships(Relationship(Arn(arn), "afi", clientId)) map { result =>
       if (result.nonEmpty) Ok else {
-        Logger.info("No PAYE Relationship found")
+        Logger.info("No afi Relationship found")
         NotFound
       }
     }

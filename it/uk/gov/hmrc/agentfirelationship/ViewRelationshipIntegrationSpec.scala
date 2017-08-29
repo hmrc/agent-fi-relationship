@@ -2,6 +2,7 @@ package uk.gov.hmrc.agentfirelationship
 
 import play.api.libs.json.Json
 import play.api.libs.ws.WSResponse
+
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
 
 class ViewRelationshipIntegrationSpec extends IntegrationSpec with RelationshipActions {
@@ -47,6 +48,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with RelationshipA
 
       Then("I will receive a 404 NOT FOUND response")
       viewRelationshipResponse.status shouldBe NOT_FOUND
+      deleteRelationship(agentId,clientId,service)
     }
   }
 }

@@ -27,7 +27,7 @@ package object controllers {
 
   val validTestArn = "AARN1234567"
   val testCredId = "q213"
-  val testService = "PAYE"
+  val testService = "afi"
   val validTestNINO = "AE123456C"
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO)
 }

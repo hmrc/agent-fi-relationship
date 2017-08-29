@@ -63,7 +63,7 @@ Response Code(s)
 |---|---|
 | 200 | Relationship deleted |
 
-#### Access Control - View Relationship for PAYE
+#### Access Control - View Relationship for Afi
 ```
 GET   	/agent-fi-relationship/relationships/paye/agent/:arn/client/:clientId
 ```
@@ -73,7 +73,7 @@ Result
 [
   {
     "arn": "AAABBB111222",
-    "service": "PAYE",
+    "service": "afi",
     "clientId": "123456",
   }
 ]
