@@ -17,7 +17,7 @@ trait RelationshipActions extends ScalaFutures {
   def createRelationship ( agentId: String, clientId: String, service: String ): WSResponse =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
-      .post(Results.EmptyContent())
+      .put(Results.EmptyContent())
       .futureValue
 
   def getRelationship ( agentId: String, clientId: String, service: String ): WSResponse =

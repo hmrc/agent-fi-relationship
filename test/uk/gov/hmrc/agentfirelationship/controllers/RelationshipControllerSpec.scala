@@ -16,77 +16,163 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.audit.AuditService
+import uk.gov.hmrc.agentfirelationship.connectors.GovernmentGatewayProxyConnector
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 
 import scala.concurrent.Future
 
-class   RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
-  val mockRelationshipStoreController = new RelationshipController(mockMongoService)
+  val mockAuditService: AuditService = mock[AuditService]
+  val mockGGProxy: GovernmentGatewayProxyConnector = mock[GovernmentGatewayProxyConnector]
+  val mockRelationshipStoreController = new RelationshipController(mockGGProxy, mockAuditService, mockMongoService)
+
+  def testGGProxy: OngoingStubbing[Future[String]] =
+    when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
 
   override def beforeEach() {
-    reset(mockMongoService)
+    reset(mockMongoService, mockAuditService)
   }
 
   "RelationshipController" should {
-    "return Status: OK Body: List(Relationship(\"AARN1234567\", \"789\", \"456\")) for finding data" in {
-      when(mockMongoService.findRelationships(Relationship(Arn("AARN1234567"), "789", "456")))
-        .thenReturn(Future successful List(Relationship(Arn("AARN1234567"), "789", "456")))
-      val response = mockRelationshipStoreController.findRelationship("AARN1234567", "789", "456")(FakeRequest("GET", ""))
+    "return Status: OK when successfully finding a relationship" in {
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+
+      val response = mockRelationshipStoreController.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
-      verify(mockMongoService, times(1)).findRelationships(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
 
-    "return Status: Not Found for not finding data" in {
-      when(mockMongoService.findRelationships(Relationship(Arn("ARN77777"), "789", "456"))).thenReturn(Future successful List())
-      val response = mockRelationshipStoreController.findRelationship("ARN77777", "789", "456")(FakeRequest("GET", ""))
+    "return Status: NOT_FOUND for not finding data" in {
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful List())
+
+      val response = mockRelationshipStoreController.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
 
-    "return Status: Created for creating new record" in {
-      when(mockMongoService.createRelationship(Relationship(Arn("AARN1234567"), "789", "456"))).thenReturn(Future successful (()))
-      val response = mockRelationshipStoreController.createRelationship("AARN1234567", "789", "456")(FakeRequest("POST", ""))
+    "return Status: CREATED for creating new record" in {
+      testGGProxy
+      when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+      when(mockMongoService.findRelationships(any())(any()))
+        .thenReturn(Future successful List())
+
+      val response = mockRelationshipStoreController.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe CREATED
-      verify(mockMongoService, times(1)).createRelationship(any())
+      verify(mockMongoService, times(1)).createRelationship(any())(any())
+      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
+    }
+    "send an audit event if the relationship is successfully created" in {
+      testGGProxy
+      when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+      when(mockMongoService.findRelationships(any())(any()))
+        .thenReturn(Future successful List())
+
+      val response = mockRelationshipStoreController.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      await(response)
+      verify(mockAuditService, times(1)).sendCreateRelationshipEvent(any())(any(), any())
     }
 
-    "return Status: Ok for deleting a record" in {
-      when(mockMongoService.deleteRelationship(Relationship(Arn("AARN1234567"), "789", "456"))).thenReturn(Future successful true)
-      val response = mockRelationshipStoreController.deleteRelationship("AARN1234567", "789", "456")(FakeRequest("DELETE", ""))
+    "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
+      testGGProxy
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+      when(mockMongoService.findRelationships(any())(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+
+      val response = mockRelationshipStoreController.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+
+      status(response) mustBe CREATED
+      verify(mockMongoService, times(0)).createRelationship(any())(any())
+      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
+    }
+
+    "return Status: FORBIDDEN when 2 or more relationships already exists" in {
+      testGGProxy
+      when(mockMongoService.findAllRelationshipsForAgent(eqs(validTestArn))(any()))
+        .thenReturn(Future successful List(validTestRelationship, validTestRelationship))
+      when(mockMongoService.findRelationships(any())(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+
+      val response = mockRelationshipStoreController.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+
+      status(response) mustBe FORBIDDEN
+      verify(mockMongoService, times(0)).createRelationship(any())(any())
+      verify(mockMongoService, times(1)).findAllRelationshipsForAgent(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
+    }
+
+    "return Status: OK for deleting a record" in {
+      when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful true)
+      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+
+      val response = mockRelationshipStoreController.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
-      verify(mockMongoService, times(1)).deleteRelationship(any())
+      verify(mockMongoService, times(1)).deleteRelationship(any())(any())
+    }
+
+    "send an audit event if the relationship is successfully deleting" in {
+      when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful true)
+      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+
+      val response = mockRelationshipStoreController.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      await(response)
+      verify(mockAuditService, times(1)).sendDeleteRelationshipEvent(any())(any(), any())
+    }
+
+
+    "return Status: NOT_FOUND for failing to delete a record" in {
+      when(mockMongoService.deleteRelationship(any())(any()))
+        .thenReturn(Future successful false)
+      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+
+      val response = mockRelationshipStoreController.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+
+      status(response) mustBe NOT_FOUND
+      verify(mockMongoService, times(1)).deleteRelationship(any())(any())
     }
 
     "return Status: OK for finding data via access control endpoint" in {
-      when(mockMongoService.findRelationships(Relationship(Arn("AAABBB111222"), "PAYE", "123456")))
-        .thenReturn(Future successful List(Relationship(Arn("AAABBB111222"), "PAYE", "123456")))
-      val response = mockRelationshipStoreController.payeCheckRelationship("AAABBB111222", "123456")(FakeRequest("GET", ""))
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+
+      val response = mockRelationshipStoreController.payeCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
-      verify(mockMongoService, times(1)).findRelationships(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
 
-    "return Status: Not Found for not finding data via access control endpoint" in {
-      when(mockMongoService.findRelationships(Relationship(Arn("AAABBB111222"), "PAYE", "123456"))).thenReturn(Future successful List())
-      val response = mockRelationshipStoreController.payeCheckRelationship("AAABBB111222", "123456")(FakeRequest("GET", ""))
+    "return Status: NOT_FOUND for not finding data via access control endpoint" in {
+      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+        .thenReturn(Future successful List())
+
+      val response = mockRelationshipStoreController.payeCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any())
+      verify(mockMongoService, times(1)).findRelationships(any())(any())
     }
   }
 }
