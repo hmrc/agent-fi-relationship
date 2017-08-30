@@ -30,7 +30,7 @@ import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 
 import scala.concurrent.Future
 
-class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class   RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
   val mockRelationshipStoreController = new RelationshipController(mockMongoService)
 
@@ -38,7 +38,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     reset(mockMongoService)
   }
 
-  "RelationshipStoreController" should {
+  "RelationshipController" should {
     "return Status: OK Body: List(Relationship(\"AARN1234567\", \"789\", \"456\")) for finding data" in {
       when(mockMongoService.findRelationships(Relationship(Arn("AARN1234567"), "789", "456")))
         .thenReturn(Future successful List(Relationship(Arn("AARN1234567"), "789", "456")))

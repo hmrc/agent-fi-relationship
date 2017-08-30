@@ -1,9 +1,10 @@
 package uk.gov.hmrc.agentfirelationship
 
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
 
-class CreateRelationshipIntegrationSpec extends IntegrationSpec with RelationshipActions {
+class CreateRelationshipIntegrationSpec extends IntegrationSpec with GuiceOneServerPerSuite with RelationshipActions {
 
   feature("Create a relationship between an agent and an individual") {
 
