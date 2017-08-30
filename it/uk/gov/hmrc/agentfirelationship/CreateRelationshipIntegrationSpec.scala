@@ -1,18 +1,17 @@
 package uk.gov.hmrc.agentfirelationship
 
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import javax.inject.Inject
-
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService) extends IntegrationSpec with RelationshipActions {
+class CreateRelationshipIntegrationSpec @Inject()(mongo:RelationshipMongoService) extends IntegrationSpec with GuiceOneServerPerSuite with RelationshipActions {
 
   feature("Create a relationship between an agent and an individual") {
 

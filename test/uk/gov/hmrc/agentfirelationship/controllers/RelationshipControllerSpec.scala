@@ -26,9 +26,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.GovernmentGatewayProxyConnector
-import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.Future
 
@@ -45,7 +43,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     reset(mockMongoService, mockAuditService)
   }
 
-  "RelationshipStoreController" should {
+  "RelationshipController" should {
     "return Status: OK when successfully finding a relationship" in {
       when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful List(validTestRelationship))
@@ -91,7 +89,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
       val response = mockRelationshipStoreController.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
       await(response)
-      verify(mockAuditService, times(1)).sendCreateRelationshipEvent(any())(any(),any())
+      verify(mockAuditService, times(1)).sendCreateRelationshipEvent(any())(any(), any())
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
@@ -142,7 +140,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
       val response = mockRelationshipStoreController.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
       await(response)
-      verify(mockAuditService, times(1)).sendDeleteRelationshipEvent(any())(any(),any())
+      verify(mockAuditService, times(1)).sendDeleteRelationshipEvent(any())(any(), any())
     }
 
 
