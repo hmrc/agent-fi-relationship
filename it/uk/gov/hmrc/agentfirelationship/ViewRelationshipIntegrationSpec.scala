@@ -48,7 +48,6 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with RelationshipA
 
       Then("I will receive a 404 NOT FOUND response")
       viewRelationshipResponse.status shouldBe NOT_FOUND
-      deleteRelationship(agentId,clientId,service)
     }
   }
 }

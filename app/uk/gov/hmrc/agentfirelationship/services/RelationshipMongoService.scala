@@ -36,13 +36,13 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   // After it is first used
   def dataMigrationAfi()(implicit ec: ExecutionContext): Future[Unit] = {
     val query = BSONDocument(
-      "service" → "paye"
+      "service" → "PAYE"
     )
     val update = BSONDocument("$set" -> BSONDocument(
       "service" → "afi"
     ))
     collection.update(query, update, multi = true).map(wr => {
-      Logger.info("number of relationships updated from paye to afi " + wr.n)
+      Logger.info("number of relationships updated from PAYE to afi " + wr.n)
     })
   }
 

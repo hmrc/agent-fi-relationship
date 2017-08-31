@@ -14,12 +14,12 @@ class DataMigrationIntegrationSpec extends IntegrationSpec with RelationshipActi
   val mongo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
   feature("A data Migration has been requested") {
 
-    scenario("A relationship has the service name paye") {
+    scenario("A relationship has the service name PAYE") {
 
-      Given("agent has a relationship with the name paye")
+      Given("agent has a relationship with the name PAYE")
       val agentId = "Agent12345"
       val client1Id = "Client12345"
-      val service = "paye"
+      val service = "PAYE"
       createRelationship(agentId, client1Id, service)
       When("I call the dataMigrationAfi ")
 
