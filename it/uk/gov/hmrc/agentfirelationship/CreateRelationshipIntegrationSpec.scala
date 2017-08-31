@@ -15,7 +15,7 @@ import scala.concurrent.{Await, Future}
 @Singleton
 class CreateRelationshipIntegrationSpec @Inject()(mongo: RelationshipMongoService) extends IntegrationSpec with RelationshipActions with GuiceOneServerPerSuite  {
 
-    feature("Create a relationship between an agent and an individual") {
+   feature("Create a relationship between an agent and an individual") {
 
     info("As an agent")
     info("I want to create a relationship with a client individual for a specific service")
