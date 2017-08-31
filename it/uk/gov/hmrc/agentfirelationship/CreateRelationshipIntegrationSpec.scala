@@ -1,5 +1,8 @@
 package uk.gov.hmrc.agentfirelationship
 
+import javax.inject.{Inject, Singleton}
+
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
@@ -9,9 +12,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class CreateRelationshipIntegrationSpec extends IntegrationSpec with RelationshipActions {
+@Singleton
+class CreateRelationshipIntegrationSpec @Inject()(mongo: RelationshipMongoService) extends IntegrationSpec with RelationshipActions with GuiceOneServerPerSuite  {
 
-  val mongo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
     feature("Create a relationship between an agent and an individual") {
 
     info("As an agent")
@@ -58,6 +61,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with Relationshi
       //cleanup
       deleteRelationship(agentId, client1Id, service)
       deleteRelationship(agentId, client2Id, service)
+
     }
     scenario("A relationship which is the same already exists") {
 
@@ -81,6 +85,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with Relationshi
     }
   }
 
+
   feature("Delete a relationship between an agent and a client") {
 
     scenario("Delete an existing relationship between an agent and client for a given service") {
@@ -100,7 +105,6 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with Relationshi
       And("the relationship should be deleted")
       val viewRelationshipResponse: WSResponse = getRelationship(agentId, clientId, service)
       viewRelationshipResponse.status shouldBe NOT_FOUND
-      deleteRelationship(agentId, clientId, service)
     }
   }
 }

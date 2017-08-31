@@ -92,7 +92,7 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
       val auditData = new AuditData()
       auditData.set("authProviderId", credentialIdentifier)
       auditData.set("arn", arn)
-      auditData.set("regime", "paye-poc")
+      auditData.set("regime", "afi")
       auditData.set("regimeId", clientId)
       auditData
     }
