@@ -19,9 +19,11 @@ package uk.gov.hmrc.agentfirelationship.services
 import javax.inject.Inject
 
 import com.google.inject.Singleton
+import play.api.Logger
 import play.api.libs.json.Format
 import play.api.libs.json.Json.{format, toJsFieldJsValueWrapper}
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.bson.BSONDocument
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.mongo.ReactiveRepository
 
@@ -30,6 +32,21 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
+  //This is a temperary measure to update the current users in prod to the new value of service we will need a jira to delete it
+  // After it is first used
+  def dataMigrationAfi()(implicit ec: ExecutionContext): Future[Unit] = {
+    val query = BSONDocument(
+      "service" → "PAYE"
+    )
+    val update = BSONDocument("$set" -> BSONDocument(
+      "service" → "afi"
+    ))
+    collection.update(query, update, multi = true).map(wr => {
+      Logger.info("number of relationships updated from PAYE to afi " + wr.n)
+    })
+  }
+
+  dataMigrationAfi()(ExecutionContext.global)
 
   def findRelationships(relationship: Relationship)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find(Seq(

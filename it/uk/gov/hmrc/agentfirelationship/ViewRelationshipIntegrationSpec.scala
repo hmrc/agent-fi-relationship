@@ -3,6 +3,7 @@ package uk.gov.hmrc.agentfirelationship
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.Json
 import play.api.libs.ws.WSResponse
+
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
 
 class ViewRelationshipIntegrationSpec extends IntegrationSpec with GuiceOneServerPerSuite with RelationshipActions {

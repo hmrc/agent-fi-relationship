@@ -159,7 +159,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = mockRelationshipStoreController.payeCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = mockRelationshipStoreController.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
       verify(mockMongoService, times(1)).findRelationships(any())(any())
@@ -169,7 +169,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful List())
 
-      val response = mockRelationshipStoreController.payeCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = mockRelationshipStoreController.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any())(any())
