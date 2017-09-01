@@ -65,7 +65,7 @@ Response Code(s)
 
 #### Access Control - View Relationship for Afi
 ```
-GET   	/agent-fi-relationship/relationships/paye/agent/:arn/client/:clientId
+GET   	/agent-fi-relationship/relationships/afi/agent/:arn/client/:clientId
 ```
 
 Result
