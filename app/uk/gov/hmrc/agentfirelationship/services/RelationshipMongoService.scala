@@ -62,11 +62,4 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       "service" -> Some(relationship.service),
       "clientId" -> Some(relationship.clientId))
       .map(result => if (result.n == 0) false else result.ok)
-
-  def findAllRelationshipsForAgent(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    val searchOptions = Seq("arn" -> Some(arn))
-      .filter(_._2.isDefined)
-      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get))
-    find(searchOptions: _*)
-  }
 }

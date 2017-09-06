@@ -7,6 +7,7 @@ import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -69,6 +70,7 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo: RelationshipMongoServic
       val agentId = "Agent123"
       val client1Id = "Client1"
       val service = "afi"
+      val relationship = Relationship(Arn(agentId), service, client1Id)
       createRelationship(agentId, client1Id, service)
 
       When("I call the create-relationship endpoint")
@@ -78,7 +80,7 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo: RelationshipMongoServic
       createRelationshipResponse.status shouldBe CREATED
 
       And("the new relationship should not be created")
-      val agentRelationships: Future[List[Relationship]] = mongo.findAllRelationshipsForAgent(agentId)
+      val agentRelationships: Future[List[Relationship]] = mongo.findRelationships(relationship)
       Await.result(agentRelationships, 10000 millis).length shouldBe 1
       //cleanup
       deleteRelationship(agentId, client1Id, service)
