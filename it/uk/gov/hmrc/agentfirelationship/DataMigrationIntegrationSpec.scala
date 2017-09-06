@@ -5,6 +5,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -21,13 +22,14 @@ class DataMigrationIntegrationSpec extends IntegrationSpec with RelationshipActi
       val agentId = "Agent12345"
       val client1Id = "Client12345"
       val service = "PAYE"
+      val relationship = Relationship(Arn(agentId), service, client1Id)
       createRelationship(agentId, client1Id, service)
       When("I call the dataMigrationAfi ")
 
        mongo.dataMigrationAfi()
       Then("The relationship will have it's service changed to afi")
       eventually {
-        val agentRelationships: Future[List[Relationship]] = mongo.findAllRelationshipsForAgent(agentId)
+        val agentRelationships: Future[List[Relationship]] = mongo.findRelationships(relationship)
         val agentRelationshipsResult: Seq[Relationship] = Await.result(agentRelationships, 10000 millis)
         agentRelationshipsResult.length shouldBe agentRelationshipsResult.count(_.service == "afi")
       }

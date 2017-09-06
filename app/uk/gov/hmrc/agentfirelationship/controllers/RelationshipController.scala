@@ -48,20 +48,16 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
 
   def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     val relationship: Relationship = Relationship(Arn(arn), service, clientId)
-
-    (for {
-      relationshipList <- mongoService.findAllRelationshipsForAgent(arn)
-      existingRelationship <- mongoService.findRelationships(relationship)
-    } yield (relationshipList.length, existingRelationship.nonEmpty)) flatMap {
-      case (_, true) =>
-        Logger.info("Relationship already exists")
-        Future successful Created
-      case _ =>
+      mongoService.findRelationships(relationship) flatMap {
+      case Nil =>
         Logger.info("Creating a relationship")
         for {
           _ <- mongoService.createRelationship(relationship)
           _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, clientId))
         } yield Created
+      case _ =>
+        Logger.info("Relationship already exists")
+        Future successful Created
     }
   }
 
