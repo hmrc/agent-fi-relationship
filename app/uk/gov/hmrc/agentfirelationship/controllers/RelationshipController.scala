@@ -22,38 +22,36 @@ import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.GovernmentGatewayProxyConnector
+import uk.gov.hmrc.agentfirelationship.connectors.AuthConnector
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 
 @Singleton
-class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
+class RelationshipController @Inject()(authConnector: AuthConnector,
                                        auditService: AuditService,
                                        mongoService: RelationshipMongoService) extends BaseController {
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(Relationship(Arn(arn), service, clientId)) map { result =>
-      if (result.nonEmpty) Ok(toJson(result)) else {
-        Logger.info("Unable to find a relationship")
-        NotFound
-      }
+      if (result.nonEmpty) Ok(toJson(result)) else NotFound
     }
   }
 
   def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     val relationship: Relationship = Relationship(Arn(arn), service, clientId)
-      mongoService.findRelationships(relationship) flatMap {
+    mongoService.findRelationships(relationship) flatMap {
       case Nil =>
         Logger.info("Creating a relationship")
         for {
           _ <- mongoService.createRelationship(relationship)
-          _ = auditService.sendCreateRelationshipEvent(setAuditData(arn, clientId))
+          auditData <- setAuditData(arn, clientId)
+          _ <- auditService.sendCreateRelationshipEvent(auditData)
         } yield Created
       case _ =>
         Logger.info("Relationship already exists")
@@ -62,27 +60,24 @@ class RelationshipController @Inject()(gg: GovernmentGatewayProxyConnector,
   }
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    Logger.info("Deleting a relationship")
     val relationshipDeleted: Future[Boolean] = for {
       successOrFail <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
-      _ = auditService.sendDeleteRelationshipEvent(setAuditData(arn, clientId))
+      auditData <- setAuditData(arn, clientId)
+      _ <- auditService.sendDeleteRelationshipEvent(auditData)
     } yield successOrFail
     relationshipDeleted.map(if (_) Ok else NotFound)
   }
 
   def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(Relationship(Arn(arn), "afi", clientId)) map { result =>
-      if (result.nonEmpty) Ok else {
-        Logger.info("No afi Relationship found")
-        NotFound
-      }
+      if (result.nonEmpty) Ok else NotFound
     }
   }
 
   private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
-    gg.getCredIdFor(Arn(arn)).map { credentialIdentifier ⇒
+    authConnector.userDetails.map { userDetails =>
       val auditData = new AuditData()
-      auditData.set("authProviderId", credentialIdentifier)
+      auditData.set("authProviderId", userDetails.authProviderId)
       auditData.set("arn", arn)
       auditData.set("regime", "afi")
       auditData.set("regimeId", clientId)

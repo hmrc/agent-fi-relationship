@@ -18,14 +18,13 @@ package uk.gov.hmrc.agentfirelationship.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
-import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
-import uk.gov.hmrc.agentfirelationship.connectors.GovernmentGatewayProxyConnector
+import uk.gov.hmrc.agentfirelationship.connectors.{AuthConnector, UserDetails}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 
 import scala.concurrent.Future
@@ -33,14 +32,11 @@ import scala.concurrent.Future
 class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
   val mockAuditService: AuditService = mock[AuditService]
-  val mockGGProxy: GovernmentGatewayProxyConnector = mock[GovernmentGatewayProxyConnector]
-  val controller = new RelationshipController(mockGGProxy, mockAuditService, mockMongoService)
-
-  def testGGProxy: OngoingStubbing[Future[String]] =
-    when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val controller = new RelationshipController(mockAuthConnector, mockAuditService, mockMongoService)
 
   override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockGGProxy)
+    reset(mockMongoService, mockAuditService, mockAuthConnector)
   }
 
   "RelationshipController" should {
@@ -65,7 +61,9 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: CREATED for creating new record" in {
-      testGGProxy
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List())
@@ -78,7 +76,9 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "send an audit event if the relationship is successfully created" in {
-      testGGProxy
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List())
@@ -90,7 +90,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
-      testGGProxy
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -102,7 +102,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: CREATED when additional relationships are created" in {
-      testGGProxy
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockMongoService.findRelationships(any())(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -116,7 +116,8 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "return Status: OK for deleting a record" in {
       when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful true)
-      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
@@ -127,7 +128,8 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "send an audit event if the relationship is successfully deleting" in {
       when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
         .thenReturn(Future successful true)
-      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
       await(response)
@@ -138,7 +140,8 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "return Status: NOT_FOUND for failing to delete a record" in {
       when(mockMongoService.deleteRelationship(any())(any()))
         .thenReturn(Future successful false)
-      when(mockGGProxy.getCredIdFor(any())(any())).thenReturn(Future successful testCredId)
+      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 

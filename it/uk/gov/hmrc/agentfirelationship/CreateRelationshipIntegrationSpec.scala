@@ -1,12 +1,15 @@
 package uk.gov.hmrc.agentfirelationship
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
+import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
-import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions}
+import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,9 +17,40 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 @Singleton
-class CreateRelationshipIntegrationSpec @Inject()(mongo: RelationshipMongoService) extends IntegrationSpec with RelationshipActions with GuiceOneServerPerSuite  {
+class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
+  with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
+  me: DualSuite =>
 
-   feature("Create a relationship between an agent and an individual") {
+  def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+
+  override implicit lazy val app: Application = appBuilder.build()
+
+  protected def appBuilder: GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+      .configure(
+        "microservice.services.auth.port" -> wireMockPort,
+        "auditing.consumer.baseUri.port" -> wireMockPort,
+        "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}"
+      )
+
+  feature("A data Migration has been requested") {
+
+    scenario("A relationship has the service name PAYE") {
+
+      Given("agent has a relationship with the name PAYE")
+      givenCreatedAuditEventStub(auditDetails)
+      val relationship = Relationship(Arn(agentId), service, clientId)
+      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+
+      When("I search for a relationship that triggers the data migration")
+      val agentRelationships: List[Relationship] = Await.result(repo.findRelationships(relationship), 10 seconds)
+
+      Then("All relationships will have the afi service")
+      agentRelationships.length shouldBe agentRelationships.count(_.service == "afi")
+    }
+  }
+
+  feature("Create a relationship between an agent and an individual") {
 
     info("As an agent")
     info("I want to create a relationship with a client individual for a specific service")
@@ -25,87 +59,53 @@ class CreateRelationshipIntegrationSpec @Inject()(mongo: RelationshipMongoServic
     scenario("Create a new relationship with simple values") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
-      val agentId = "Agent123"
-      val clientId = "Client123"
-      val service = "Service123"
+      givenCreatedAuditEventStub(auditDetails)
 
       When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = createRelationship(agentId, clientId, service)
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I will receive a 201 CREATED response")
       createRelationshipResponse.status shouldBe CREATED
-
-      //cleanup
-      deleteRelationship(agentId, clientId, service)
     }
-    scenario("not Create a new relationship when agent already has 2") {
 
-      Given("agent has two relationships ")
-      val agentId = "Agent123"
-      val client1Id = "Client1"
-      val client2Id = "Client2"
-      val client3Id = "Client3"
-      val service = "afi"
-      createRelationship(agentId, client1Id, service)
-      createRelationship(agentId, client2Id, service)
-
-      When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = createRelationship(agentId, client3Id, service)
-
-      Then("I will receive a 403 FORBIDDEN response ")
-      createRelationshipResponse.status shouldBe FORBIDDEN
-
-      And("the new relationship should not be created")
-      val getRelationshipResponse: WSResponse = getRelationship(agentId, client3Id, service)
-      getRelationshipResponse.status shouldBe NOT_FOUND
-
-      //cleanup
-      deleteRelationship(agentId, client1Id, service)
-      deleteRelationship(agentId, client2Id, service)
-
-    }
     scenario("A relationship which is the same already exists") {
 
       Given("agent has a relationship")
-      val agentId = "Agent123"
-      val client1Id = "Client1"
-      val service = "afi"
-      val relationship = Relationship(Arn(agentId), service, client1Id)
-      createRelationship(agentId, client1Id, service)
+      givenCreatedAuditEventStub(auditDetails)
+      val relationship = Relationship(Arn(agentId), service, clientId)
+      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = createRelationship(agentId, client1Id, service)
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+
+      verifyAuditRequestSent(1, AgentClientRelationshipCreated)
 
       Then("I will receive a 201 response ")
       createRelationshipResponse.status shouldBe CREATED
 
       And("the new relationship should not be created")
-      val agentRelationships: Future[List[Relationship]] = mongo.findRelationships(relationship)
-      Await.result(agentRelationships, 10000 millis).length shouldBe 1
-      //cleanup
-      deleteRelationship(agentId, client1Id, service)
+      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(relationship)
+      Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
   }
-
 
   feature("Delete a relationship between an agent and a client") {
 
     scenario("Delete an existing relationship between an agent and client for a given service") {
 
       Given("there exists a relationship between an agent and client for a given service")
-      val agentId = "Agent123"
-      val clientId = "Client123"
-      val service = "Service123"
-      createRelationship(agentId, clientId, service)
+      givenCreatedAuditEventStub(auditDetails)
+      givenEndedAuditEventStub(auditDetails)
+      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
 
       When("I call the delete-relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = deleteRelationship(agentId, clientId, service)
+      val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
       deleteRelationshipResponse.status shouldBe OK
 
       And("the relationship should be deleted")
-      val viewRelationshipResponse: WSResponse = getRelationship(agentId, clientId, service)
+      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
   }
