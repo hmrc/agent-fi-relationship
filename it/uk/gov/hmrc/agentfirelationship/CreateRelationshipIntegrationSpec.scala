@@ -6,7 +6,6 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
@@ -77,8 +76,6 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
       When("I call the create-relationship endpoint")
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
-
-      verifyAuditRequestSent(1, AgentClientRelationshipCreated)
 
       Then("I will receive a 201 response ")
       createRelationshipResponse.status shouldBe CREATED
