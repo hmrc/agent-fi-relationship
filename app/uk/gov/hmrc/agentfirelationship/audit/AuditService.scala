@@ -72,22 +72,18 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     "regimeId"
   )
 
-  def sendCreateRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
-    audit.map { auditData =>
+  def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
       auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "agent fi create relationship",
         collectDetails(auditData.getDetails, createRelationshipDetailsFields))
-    }
   }
 
-  def sendDeleteRelationshipEvent(audit: Future[AuditData])(implicit hc: HeaderCarrier, request: Request[Any]): Unit = {
-    audit.map { auditData =>
-      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipEnded, "agent fi delete relationship",
-        collectDetails(auditData.getDetails, DeleteRelationshipFields))
-    }
+  def sendDeleteRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
+    auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipEnded, "agent fi delete relationship",
+      collectDetails(auditData.getDetails, DeleteRelationshipFields))
   }
 
   private def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)
-                               (implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
+                        (implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     send(createEvent(event, transactionName, details: _*))
   }
 

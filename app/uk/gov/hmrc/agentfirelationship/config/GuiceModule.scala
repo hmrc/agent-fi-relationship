@@ -20,8 +20,7 @@ import java.net.URL
 import javax.inject.Provider
 
 import com.google.inject.AbstractModule
-import com.google.inject.name.Names
-import play.api.Logger
+import com.google.inject.name.Names.named
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config._
 import uk.gov.hmrc.play.http.{HttpGet, HttpPost}
@@ -30,14 +29,17 @@ class GuiceModule extends AbstractModule with ServicesConfig {
   override def configure(): Unit = {
     bind(classOf[reactivemongo.api.DB]).toProvider(classOf[MongoDbProvider])
     bind(classOf[AuditConnector]).toInstance(MicroserviceGlobal.auditConnector)
+    bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[HttpPost]).toInstance(WSHttp)
-    bindBaseUrl("government-gateway-proxy")
+    bindBaseUrl("auth")
     ()
   }
+
   private def bindBaseUrl(serviceName: String) =
-    bind(classOf[URL]).annotatedWith(Names.named(s"$serviceName-baseUrl")).toProvider(new BaseUrlProvider(serviceName))
+    bind(classOf[URL]).annotatedWith(named(s"$serviceName-baseUrl")).toProvider(new BaseUrlProvider(serviceName))
 
   private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
     override lazy val get = new URL(baseUrl(serviceName))
   }
+
 }
