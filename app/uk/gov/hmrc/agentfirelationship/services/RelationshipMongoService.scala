@@ -48,13 +48,13 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
 
   dataMigrationAfi()(ExecutionContext.global)
 
-  def findRelationships(relationship: Relationship)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     dataMigrationAfi().flatMap{ _ =>
       find(Seq(
-        "arn" -> Some(relationship.arn.value),
-        "service" -> Some(relationship.service),
-        "clientId" -> Some(relationship.clientId))
-        .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get)): _*)
+        "arn" -> arn,
+        "service" -> service,
+        "clientId" -> clientId)
+        .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
     }
   }
 
@@ -64,11 +64,12 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     }
   }
 
-  def deleteRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def deleteRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     dataMigrationAfi().flatMap { _ =>
-      remove("arn" -> Some(relationship.arn.value),
-        "service" -> Some(relationship.service),
-        "clientId" -> Some(relationship.clientId))
+      remove(
+        "arn" -> arn,
+        "service" -> service,
+        "clientId" -> clientId)
         .map(result => if (result.n == 0) false else result.ok)
     }
   }
