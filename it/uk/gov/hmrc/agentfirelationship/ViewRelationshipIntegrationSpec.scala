@@ -33,7 +33,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, validDateFormatInString), 10 seconds)
 
       When("I call the View Relationship endpoint")
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)

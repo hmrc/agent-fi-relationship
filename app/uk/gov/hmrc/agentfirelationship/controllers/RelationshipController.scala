@@ -45,7 +45,7 @@ class RelationshipController @Inject()(authConnector: AuthConnector,
   }
 
   def createRelationship(arn: String, service: String, clientId: String, startDate:String): Action[AnyContent] = Action.async { implicit request =>
-    val relationship: Relationship = Relationship(Arn(arn), service, clientId, LocalDateTime.parse(startDate))
+    val relationship: Relationship = Relationship(Arn(arn), service, clientId, startDate)
     mongoService.findRelationships(arn,service,clientId) flatMap {
       case Nil =>
         Logger.info("Creating a relationship")

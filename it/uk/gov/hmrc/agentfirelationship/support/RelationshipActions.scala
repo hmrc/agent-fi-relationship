@@ -16,9 +16,9 @@ trait RelationshipActions extends ScalaFutures {
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def createRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
+  def createRelationship(agentId: String, clientId: String, service: String, startDate: String): Future[WSResponse] =
     wsClient
-      .url(s"$url/agent/$agentId/service/$service/client/$clientId")
+      .url(s"$url/agent/$agentId/service/$service/client/$clientId/startDate/$startDate")
       .put(Results.EmptyContent())
 
   def getRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
@@ -30,6 +30,4 @@ trait RelationshipActions extends ScalaFutures {
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
       .delete()
-
-
 }

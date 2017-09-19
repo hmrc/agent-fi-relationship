@@ -29,5 +29,7 @@ package object controllers {
   val testCredId = "q213"
   val testService = "afi"
   val validTestNINO = "AE123456C"
-  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO)
+  val validDateFormatInString = "2017-09-19T14:58:21.070"
+  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, validDateFormatInString)
+
 }

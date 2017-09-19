@@ -27,7 +27,8 @@ import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.{AuthConnector, UserDetails}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 
-import scala.concurrent.Future
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
@@ -41,23 +42,23 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
   "RelationshipController" should {
     "return Status: OK when successfully finding a relationship" in {
-      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "return Status: NOT_FOUND for not finding data" in {
-      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List())
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "return Status: CREATED for creating new record" in {
@@ -65,14 +66,14 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
-      when(mockMongoService.findRelationships(any())(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List())
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO, validDateFormatInString)(fakeRequest)
 
       status(response) mustBe CREATED
       verify(mockMongoService, times(1)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "send an audit event if the relationship is successfully created" in {
@@ -80,41 +81,41 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
-      when(mockMongoService.findRelationships(any())(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List())
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO, validDateFormatInString)(fakeRequest)
       await(response)
       verify(mockAuditService, times(1)).sendCreateRelationshipEvent(any())(any(), any())
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
       when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
-      when(mockMongoService.findRelationships(any())(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO,validDateFormatInString)(fakeRequest)
 
       status(response) mustBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "return Status: CREATED when additional relationships are created" in {
       when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
-      when(mockMongoService.findRelationships(any())(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO,validDateFormatInString)(fakeRequest)
 
       status(response) mustBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "return Status: OK for deleting a record" in {
-      when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
+      when(mockMongoService.deleteRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful true)
       when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
@@ -122,11 +123,11 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
-      verify(mockMongoService, times(1)).deleteRelationship(any())(any())
+      verify(mockMongoService, times(1)).deleteRelationship(any(),any(),any())(any())
     }
 
     "send an audit event if the relationship is successfully deleting" in {
-      when(mockMongoService.deleteRelationship(eqs(validTestRelationship))(any()))
+      when(mockMongoService.deleteRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful true)
       when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
@@ -138,7 +139,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
 
 
     "return Status: NOT_FOUND for failing to delete a record" in {
-      when(mockMongoService.deleteRelationship(any())(any()))
+      when(mockMongoService.deleteRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful false)
       when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
@@ -146,27 +147,27 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
-      verify(mockMongoService, times(1)).deleteRelationship(any())(any())
+      verify(mockMongoService, times(1)).deleteRelationship(any(),any(),any())(any())
     }
 
     "return Status: OK for finding data via access control endpoint" in {
-      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) mustBe OK
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
-      when(mockMongoService.findRelationships(eqs(validTestRelationship))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]))
         .thenReturn(Future successful List())
 
       val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) mustBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(),any(),any())(any())
     }
   }
 }
