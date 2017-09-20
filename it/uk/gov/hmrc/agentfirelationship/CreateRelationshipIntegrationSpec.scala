@@ -32,23 +32,6 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}"
       )
 
-  feature("A data Migration has been requested") {
-
-    scenario("A relationship has the service name PAYE") {
-
-      Given("agent has a relationship with the name PAYE")
-      givenCreatedAuditEventStub(auditDetails)
-      val relationship = Relationship(Arn(agentId), service, clientId)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
-
-      When("I search for a relationship that triggers the data migration")
-      val agentRelationships: List[Relationship] = Await.result(repo.findRelationships(relationship), 10 seconds)
-
-      Then("All relationships will have the afi service")
-      agentRelationships.length shouldBe agentRelationships.count(_.service == "afi")
-    }
-  }
-
   feature("Create a relationship between an agent and an individual") {
 
     info("As an agent")
