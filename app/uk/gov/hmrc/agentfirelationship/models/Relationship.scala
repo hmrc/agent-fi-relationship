@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-case class Relationship(arn: Arn, service: String, clientId: String, startDate:LocalDateTime = LocalDateTime.now)
+case class Relationship(arn: Arn, service: String, clientId: String, startDate: LocalDate)

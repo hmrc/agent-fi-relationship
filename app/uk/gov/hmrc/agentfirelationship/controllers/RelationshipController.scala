@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
@@ -44,13 +44,12 @@ class RelationshipController @Inject()(authConnector: AuthConnector,
     }
   }
 
-  def createRelationship(arn: String, service: String, clientId: String, startDate:String): Action[AnyContent] = Action.async { implicit request =>
-    val relationship: Relationship = Relationship(Arn(arn), service, clientId, LocalDateTime.parse(startDate))
-    mongoService.findRelationships(arn,service,clientId) flatMap {
+  def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] = Action.async { implicit request =>
+    mongoService.findRelationships(arn, service, clientId) flatMap {
       case Nil =>
         Logger.info("Creating a relationship")
         for {
-          _ <- mongoService.createRelationship(relationship)
+          _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDate.parse(startDate)))
           auditData <- setAuditData(arn, clientId)
           _ <- auditService.sendCreateRelationshipEvent(auditData)
         } yield Created

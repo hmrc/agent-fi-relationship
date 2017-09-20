@@ -1,5 +1,6 @@
 package uk.gov.hmrc.agentfirelationship
 
+import java.time.LocalDate
 import javax.inject.Singleton
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -38,11 +39,10 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
       Given("agent has a relationship with the name PAYE")
       givenCreatedAuditEventStub(auditDetails)
-      val relationship = Relationship(Arn(agentId), service, clientId)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I search for a relationship that triggers the data migration")
-      val agentRelationships: List[Relationship] = Await.result(repo.findRelationships(relationship), 10 seconds)
+      val agentRelationships: List[Relationship] = Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds)
 
       Then("All relationships will have the afi service")
       agentRelationships.length shouldBe agentRelationships.count(_.service == "afi")
@@ -61,7 +61,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       givenCreatedAuditEventStub(auditDetails)
 
       When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 CREATED response")
       createRelationshipResponse.status shouldBe CREATED
@@ -71,17 +71,16 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
       Given("agent has a relationship")
       givenCreatedAuditEventStub(auditDetails)
-      val relationship = Relationship(Arn(agentId), service, clientId)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")
       createRelationshipResponse.status shouldBe CREATED
 
       And("the new relationship should not be created")
-      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(relationship)
+      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
   }
@@ -93,7 +92,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the delete-relationship endpoint")
       val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
