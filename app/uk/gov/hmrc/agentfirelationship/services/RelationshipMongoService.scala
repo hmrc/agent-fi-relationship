@@ -32,45 +32,24 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
-  //This is a temperary measure to update the current users in prod to the new value of service we will need a jira to delete it
-  // After it is first used
-  def dataMigrationAfi()(implicit ec: ExecutionContext): Future[Unit] = {
-    val query = BSONDocument(
-      "service" → "PAYE"
-    )
-    val update = BSONDocument("$set" -> BSONDocument(
-      "service" → "afi"
-    ))
-    collection.update(query, update, multi = true).map(wr => {
-      Logger.info("number of relationships updated from PAYE to afi " + wr.n)
-    })
-  }
-
-  dataMigrationAfi()(ExecutionContext.global)
 
   def findRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    dataMigrationAfi().flatMap{ _ =>
       find(Seq(
         "arn" -> arn,
         "service" -> service,
         "clientId" -> clientId)
         .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
-    }
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
-    dataMigrationAfi().flatMap { _ =>
       insert(relationship).map(_ => ())
-    }
   }
 
   def deleteRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    dataMigrationAfi().flatMap { _ =>
       remove(
         "arn" -> arn,
         "service" -> service,
         "clientId" -> clientId)
         .map(result => if (result.n == 0) false else result.ok)
-    }
   }
 }
