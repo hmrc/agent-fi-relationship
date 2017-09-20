@@ -65,6 +65,10 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
       Then("I will receive a 201 CREATED response")
       createRelationshipResponse.status shouldBe CREATED
+
+      And("Confirm the relationship contains the start date")
+      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
+      Await.result(agentRelationships, 10 seconds).head.startDate.toString shouldBe testResponseDate
     }
 
     scenario("A relationship which is the same already exists") {
