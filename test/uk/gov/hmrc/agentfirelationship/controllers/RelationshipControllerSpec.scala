@@ -79,7 +79,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
       when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
-      when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
+      when(mockMongoService.createRelationship(eqs(validTestRelationship))(any())).thenReturn(Future successful (()))
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 

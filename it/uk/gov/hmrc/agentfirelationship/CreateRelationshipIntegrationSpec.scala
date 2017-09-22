@@ -1,6 +1,5 @@
 package uk.gov.hmrc.agentfirelationship
 
-import java.time.LocalDate
 import javax.inject.Singleton
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -10,7 +9,6 @@ import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

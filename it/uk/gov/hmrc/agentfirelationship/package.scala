@@ -1,6 +1,6 @@
 package uk.gov.hmrc
 
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 package object agentfirelationship {
   val fakeCredId = "fakeCredId"
@@ -8,5 +8,5 @@ package object agentfirelationship {
   val clientId = "Client123"
   val service = "afi"
   val auditDetails = Map("authProviderId" -> fakeCredId, "arn" -> agentId, "regime" -> "afi", "regimeId" -> clientId)
-  val testResponseDate = LocalDate.now.toString
+  val testResponseDate = LocalDateTime.now.toString
 }
