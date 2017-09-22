@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentfirelationship
 
+import java.time.LocalDateTime
+
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -29,5 +31,6 @@ package object controllers {
   val testCredId = "q213"
   val testService = "afi"
   val validTestNINO = "AE123456C"
-  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO)
+  val testResponseDate = LocalDateTime.now.toString
+  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, LocalDateTime.parse(testResponseDate))
 }

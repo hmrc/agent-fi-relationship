@@ -9,7 +9,6 @@ import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -44,27 +43,30 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       givenCreatedAuditEventStub(auditDetails)
 
       When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 CREATED response")
       createRelationshipResponse.status shouldBe CREATED
+
+      And("Confirm the relationship contains the start date")
+      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
+      Await.result(agentRelationships, 10 seconds).head.startDate.toString shouldBe testResponseDate
     }
 
     scenario("A relationship which is the same already exists") {
 
       Given("agent has a relationship")
       givenCreatedAuditEventStub(auditDetails)
-      val relationship = Relationship(Arn(agentId), service, clientId)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")
       createRelationshipResponse.status shouldBe CREATED
 
       And("the new relationship should not be created")
-      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(relationship)
+      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
   }
@@ -76,7 +78,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the delete-relationship endpoint")
       val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)

@@ -23,7 +23,7 @@ class FailuresIntegrationSpec extends IntegrationSpec with GuiceOneServerPerSuit
     scenario("Mongodb not available when creating relationship") {
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
-      val response = Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      val response = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
       When("I call the create-relationship endpoint")
       response.status shouldBe INTERNAL_SERVER_ERROR
       Then("I will receive a 500 INTERNAL SERVER ERROR response")
@@ -43,7 +43,7 @@ class FailuresIntegrationSpec extends IntegrationSpec with GuiceOneServerPerSuit
     scenario("Mongodb not available when viewing relationship") {
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
-      Await.result(createRelationship(agentId, clientId, service), 10 seconds)
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the View Relationship endpoint")
       val response = Await.result(getRelationship(agentId, clientId, service), 10 seconds)

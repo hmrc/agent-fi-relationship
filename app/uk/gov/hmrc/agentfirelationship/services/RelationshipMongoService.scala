@@ -33,22 +33,23 @@ import scala.concurrent.{ExecutionContext, Future}
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
 
-  def findRelationships(relationship: Relationship)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
       find(Seq(
-        "arn" -> Some(relationship.arn.value),
-        "service" -> Some(relationship.service),
-        "clientId" -> Some(relationship.clientId))
-        .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get)): _*)
+        "arn" -> arn,
+        "service" -> service,
+        "clientId" -> clientId)
+        .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
       insert(relationship).map(_ => ())
   }
 
-  def deleteRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Boolean] = {
-      remove("arn" -> Some(relationship.arn.value),
-        "service" -> Some(relationship.service),
-        "clientId" -> Some(relationship.clientId))
+  def deleteRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+      remove(
+        "arn" -> arn,
+        "service" -> service,
+        "clientId" -> clientId)
         .map(result => if (result.n == 0) false else result.ok)
   }
 }

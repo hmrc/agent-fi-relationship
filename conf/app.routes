@@ -1,8 +1,8 @@
 # microservice specific routes
 
 
-GET           /relationships/agent/:arn/service/:service/client/:clientId        @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findRelationship(arn: String, service: String, clientId: String)
-PUT           /relationships/agent/:arn/service/:service/client/:clientId        @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.createRelationship(arn: String, service: String, clientId: String)
-DELETE        /relationships/agent/:arn/service/:service/client/:clientId        @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.deleteRelationship(arn: String, service: String, clientId: String)
+GET           /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findRelationship(arn: String, service: String, clientId: String)
+PUT           /relationships/agent/:arn/service/:service/client/:clientId/startDate/:startDate        @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.createRelationship(arn: String, service: String, clientId: String, startDate: String)
+DELETE        /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.deleteRelationship(arn: String, service: String, clientId: String)
 
-GET           /relationships/afi/agent/:arn/client/:clientId                     @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.afiCheckRelationship(arn: String, clientId: String)
+GET           /relationships/afi/agent/:arn/client/:clientId                                          @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.afiCheckRelationship(arn: String, clientId: String)

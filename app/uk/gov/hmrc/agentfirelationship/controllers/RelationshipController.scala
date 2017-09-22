@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
+import java.time.LocalDateTime
 import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
@@ -38,18 +39,17 @@ class RelationshipController @Inject()(authConnector: AuthConnector,
                                        mongoService: RelationshipMongoService) extends BaseController {
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findRelationships(Relationship(Arn(arn), service, clientId)) map { result =>
+    mongoService.findRelationships(arn, service, clientId) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound
     }
   }
 
-  def createRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    val relationship: Relationship = Relationship(Arn(arn), service, clientId)
-    mongoService.findRelationships(relationship) flatMap {
+  def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] = Action.async { implicit request =>
+    mongoService.findRelationships(arn, service, clientId) flatMap {
       case Nil =>
         Logger.info("Creating a relationship")
         for {
-          _ <- mongoService.createRelationship(relationship)
+          _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.parse(startDate)))
           auditData <- setAuditData(arn, clientId)
           _ <- auditService.sendCreateRelationshipEvent(auditData)
         } yield Created
@@ -61,7 +61,7 @@ class RelationshipController @Inject()(authConnector: AuthConnector,
 
   def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     val relationshipDeleted: Future[Boolean] = for {
-      successOrFail <- mongoService.deleteRelationship(Relationship(Arn(arn), service, clientId))
+      successOrFail <- mongoService.deleteRelationship(arn, service, clientId)
       auditData <- setAuditData(arn, clientId)
       _ <- auditService.sendDeleteRelationshipEvent(auditData)
     } yield successOrFail
@@ -69,7 +69,7 @@ class RelationshipController @Inject()(authConnector: AuthConnector,
   }
 
   def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findRelationships(Relationship(Arn(arn), "afi", clientId)) map { result =>
+    mongoService.findRelationships(arn, "afi", clientId) map { result =>
       if (result.nonEmpty) Ok else NotFound
     }
   }
