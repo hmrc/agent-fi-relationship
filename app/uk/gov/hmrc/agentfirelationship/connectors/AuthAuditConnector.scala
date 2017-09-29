@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AuthConnector @Inject()(@Named("auth-baseUrl") baseUrl: URL, httpGet: HttpGet) {
+class AuthAuditConnector @Inject()(@Named("auth-baseUrl") baseUrl: URL, httpGet: HttpGet) {
   val authorityUrl = new URL(baseUrl, "/auth/authority")
 
   def userDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[UserDetails] = {

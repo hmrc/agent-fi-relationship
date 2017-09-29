@@ -24,7 +24,7 @@ import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
-import uk.gov.hmrc.agentfirelationship.connectors.{AuthConnector, UserDetails}
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentAuthConnector, AuthAuditConnector, UserDetails}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 
 import scala.concurrent.Future
@@ -32,8 +32,9 @@ import scala.concurrent.Future
 class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
   val mockAuditService: AuditService = mock[AuditService]
-  val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val controller = new RelationshipController(mockAuthConnector, mockAuditService, mockMongoService)
+  val mockAuthAuditConnector: AuthAuditConnector = mock[AuthAuditConnector]
+  val mockAuthConnector = mock[AgentAuthConnector]
+  val controller = new RelationshipController(mockAuthAuditConnector, mockAuditService, mockMongoService, mockAuthConnector)
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockAuthConnector)
@@ -61,7 +62,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: CREATED for creating new record" in {
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       when(mockMongoService.createRelationship(any())(any())).thenReturn(Future successful (()))
@@ -76,7 +77,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "send an audit event if the relationship is successfully created" in {
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       when(mockMongoService.createRelationship(eqs(validTestRelationship))(any())).thenReturn(Future successful (()))
@@ -90,7 +91,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record" in {
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -102,7 +103,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     }
 
     "return Status: CREATED when additional relationships are created" in {
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -116,7 +117,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "return Status: OK for deleting a record" in {
       when(mockMongoService.deleteRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
@@ -128,7 +129,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "send an audit event if the relationship is successfully deleting" in {
       when(mockMongoService.deleteRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
@@ -140,7 +141,7 @@ class RelationshipControllerSpec extends PlaySpec with MockitoSugar with GuiceOn
     "return Status: NOT_FOUND for failing to delete a record" in {
       when(mockMongoService.deleteRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
-      when(mockAuthConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
