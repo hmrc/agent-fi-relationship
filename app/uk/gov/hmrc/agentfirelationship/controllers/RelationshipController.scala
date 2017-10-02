@@ -23,7 +23,7 @@ import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentAuthConnector, AuthAuditConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector}
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -38,7 +38,7 @@ import scala.concurrent.Future
 class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        auditService: AuditService,
                                        mongoService: RelationshipMongoService,
-                                       authConnector: AgentAuthConnector) extends BaseController {
+                                       authConnector: AgentClientAuthConnector) extends BaseController {
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(arn, service, clientId) map { result =>
@@ -46,8 +46,8 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] = authConnector.authorizedForAfi {
-    implicit request =>
+  def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] =
+    authConnector.authorisedForAfi { implicit request =>
       implicit taxIdentifier =>
         forThisUser(Arn(arn), Nino(clientId)) {
           mongoService.findRelationships(arn, service, clientId) flatMap {
@@ -64,9 +64,9 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
           }
 
         }
-  }
+    }
 
-  def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorizedForAfi  {
+  def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
     implicit request =>
       implicit taxIdentifier =>
         forThisUser(Arn(arn), Nino(clientId)) {
@@ -99,8 +99,8 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
 
   private def forThisUser(requestedArn: Arn, requestedNino: Nino)(block: => Future[Result])(implicit taxIdentifier: TaxIdentifier) = {
     taxIdentifier match {
-      case arn @ Arn(_) if requestedArn != arn => Future.successful(Forbidden)
-      case nino @ Nino(_) if requestedNino != nino => Future.successful(Forbidden)
+      case arn@Arn(_) if requestedArn != arn => Future.successful(Forbidden)
+      case nino@Nino(_) if requestedNino != nino => Future.successful(Forbidden)
       case _ => block
     }
   }
