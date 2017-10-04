@@ -16,7 +16,7 @@ object MicroServiceBuild extends Build with MicroService {
     "org.reactivemongo" %% "play2-reactivemongo" % "0.12.0",
     ws,
     "uk.gov.hmrc" %% "microservice-bootstrap" % "5.16.0",
-    "uk.gov.hmrc" %% "play-authorisation" % "4.3.0",
+    "uk.gov.hmrc" %% "play-auth" % "2.4.2",
     "uk.gov.hmrc" %% "play-health" % "2.1.0",
     "uk.gov.hmrc" %% "play-ui" % "7.4.0",
     "uk.gov.hmrc" %% "play-config" % "4.3.0",

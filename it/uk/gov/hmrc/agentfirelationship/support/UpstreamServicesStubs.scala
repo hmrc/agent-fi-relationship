@@ -12,7 +12,8 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
 import uk.gov.hmrc.play.it.Port
 
-trait UpstreamServicesStubs extends BeforeAndAfterAll with BeforeAndAfterEach with Eventually {
+trait UpstreamServicesStubs extends BeforeAndAfterAll
+  with BeforeAndAfterEach with Eventually with ClientUserAuthStubs with AgentAuthStubs {
 
   this: Suite =>
 

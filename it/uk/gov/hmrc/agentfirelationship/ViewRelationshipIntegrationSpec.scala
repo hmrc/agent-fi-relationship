@@ -17,6 +17,9 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
 
   def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
 
+  override def arn = agentId
+  override def nino = clientId
+
   override implicit lazy val app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -33,6 +36,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
+      isLoggedInAndIsSubscribedAsAgent
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the View Relationship endpoint")
