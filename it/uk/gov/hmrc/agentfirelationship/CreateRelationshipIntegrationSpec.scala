@@ -91,7 +91,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       isLoggedInWithoutAffinityGroup
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
-      Then("I will receive a 201 CREATED response")
+      Then("I will receive a 403 FORBIDDEN response")
       createRelationshipResponse.status shouldBe FORBIDDEN
     }
 
@@ -104,7 +104,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       isLoggedInWithInvalidEnrolments
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
-      Then("I will receive a 201 CREATED response")
+      Then("I will receive a 403 FORBIDDEN response")
       createRelationshipResponse.status shouldBe FORBIDDEN
     }
   }
@@ -192,7 +192,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
     isLoggedInWithoutAffinityGroup
     val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
 
-    Then("I will receive a 201 CREATED response")
+    Then("I will receive a 403 FORBIDDEN response")
     deleteRelationshipResponse.status shouldBe FORBIDDEN
   }
 
@@ -205,7 +205,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
     isLoggedInWithInvalidEnrolments
     val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
 
-    Then("I will receive a 201 CREATED response")
+    Then("I will receive a 403 FORBIDDEN response")
     deleteRelationshipResponse.status shouldBe FORBIDDEN
   }
 }
