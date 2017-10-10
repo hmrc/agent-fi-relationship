@@ -24,25 +24,25 @@ import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.config.MicroserviceAuthConnector
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.auth.core.authorise.{AffinityGroup, Enrolment}
+import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
 
 @Singleton
 class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
-  implicit def hc(implicit rh: RequestHeader) = HeaderCarrier.fromHeadersAndSession(rh.headers)
+  implicit def hc(implicit rh: RequestHeader) = fromHeadersAndSession(rh.headers)
   override def authConnector: AuthConnector = MicroserviceAuthConnector
 
   private type AfiAction = Request[AnyContent] => TaxIdentifier => Future[Result]
 
   def authorisedForAfi(action: AfiAction): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised(AuthProvider).retrieve(affinityGroupAllEnrolls) {
+      authorised(AuthProviders(GovernmentGateway)).retrieve(affinityGroupAllEnrolls) {
         case Some(AffinityGroup.Agent) ~ allEnrolments =>
           extractArn(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { arn =>
             action(request)(arn)

@@ -21,7 +21,7 @@ import javax.inject.{Inject, Named}
 
 import com.google.inject.Singleton
 import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
 
 import scala.concurrent.{ExecutionContext, Future}
 

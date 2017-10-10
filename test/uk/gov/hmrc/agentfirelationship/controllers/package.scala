@@ -21,11 +21,9 @@ import java.time.LocalDateTime
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.auth.core.InsufficientEnrolments
-import uk.gov.hmrc.auth.core.authorise.ConfidenceLevel.L200
-import uk.gov.hmrc.auth.core.authorise.{AffinityGroup, Enrolment, EnrolmentIdentifier, Enrolments}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -41,13 +39,12 @@ package object controllers {
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, LocalDateTime.parse(testResponseDate))
 
   val agentEnrolment = Set(
-    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)), confidenceLevel = L200,
+    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),
       state = "", delegatedAuthRule = None)
   )
 
   val clientEnrolment = Set(
-    Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), confidenceLevel = L200,
-      state = "", delegatedAuthRule = None)
+    Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None)
   )
 
   val clientAffinityAndEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
