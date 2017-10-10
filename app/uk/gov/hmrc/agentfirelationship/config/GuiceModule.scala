@@ -21,9 +21,9 @@ import javax.inject.Provider
 
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names.named
+import uk.gov.hmrc.http.{HttpGet, HttpPost}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config._
-import uk.gov.hmrc.play.http.{HttpGet, HttpPost}
 
 class GuiceModule extends AbstractModule with ServicesConfig {
   override def configure(): Unit = {
