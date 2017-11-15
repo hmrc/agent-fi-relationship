@@ -42,6 +42,17 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
 extends BaseController {
 
+  def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    mongoService.findClientRelationshipsQuery(service, clientId) map { result =>
+      if (result.nonEmpty) Ok(toJson(result)) else NotFound
+    }
+  }
+
+  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    val relationshipsDelted: Future[Boolean] = mongoService.deleteRelationships(service, clientId)
+    relationshipsDelted.map(if (_) Ok else NotFound)
+  }
+
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(arn, service, clientId) map { result =>
       if (result.nonEmpty) {
@@ -71,7 +82,6 @@ extends BaseController {
               Logger.info("Relationship already exists")
               Future successful Created
           }
-
         }
     }
 
@@ -85,7 +95,6 @@ extends BaseController {
             _ <- auditService.sendDeleteRelationshipEvent(auditData)
           } yield successOrFail
           relationshipDeleted.map(if (_) Ok else NotFound)
-
         }
   }
 
