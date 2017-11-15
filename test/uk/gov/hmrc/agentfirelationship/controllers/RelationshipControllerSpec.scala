@@ -191,15 +191,15 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
     "return Status: OK for deleting a record as a client" in {
       authStub(clientAffinityAndEnrolments)
-      when(mockMongoService.deleteRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.deleteRelationships(eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
-      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+      //when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      //when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
-      val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).deleteRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1)).deleteRelationships(any(), any())(any())
     }
 
     "return Status: OK for deleting a record as an agent" in {
@@ -230,15 +230,15 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
     "return Status: NOT_FOUND for failing to delete a record as a client" in {
       authStub(clientAffinityAndEnrolments)
-      when(mockMongoService.deleteRelationship(any(), any(), any())(any()))
+      when(mockMongoService.deleteRelationships(any(), any())(any()))
         .thenReturn(Future successful false)
-      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+      //when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      //when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
-      val response = controller.deleteRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).deleteRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1)).deleteRelationships(any(), any())(any())
     }
 
     "return Status: NOT_FOUND for failing to delete a record as an agent" in {
@@ -266,10 +266,10 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     "return Status: FORBIDDEN when logged in Client NINO does not match given NINO when deleting relationship" in {
       authStub(clientAffinityAndEnrolments)
 
-      val response = controller.deleteRelationship(validTestArn, testService, "AB123456C")(fakeRequest)
+      val response = controller.deleteClientRelationships(testService, "AB123456C")(fakeRequest)
 
       status(response) shouldBe FORBIDDEN
-      verify(mockMongoService, times(0)).deleteRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(0)).deleteRelationships(any(), any())(any())
     }
 
     "return Status: OK for finding data via access control endpoint" in {
