@@ -40,6 +40,17 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        mongoService: RelationshipMongoService,
                                        authConnector: AgentClientAuthConnector) extends BaseController {
 
+  def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    mongoService.findClientRelationshipsQuery(service, clientId) map { result =>
+      if (result.nonEmpty) Ok(toJson(result)) else NotFound
+    }
+  }
+
+  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    val relationshipsDelted: Future[Boolean] = mongoService.deleteRelationships(service, clientId)
+    relationshipsDelted.map(if (_) Ok else NotFound)
+  }
+
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(arn, service, clientId) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound
@@ -62,7 +73,6 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
               Logger.info("Relationship already exists")
               Future successful Created
           }
-
         }
     }
 
@@ -76,7 +86,6 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
             _ <- auditService.sendDeleteRelationshipEvent(auditData)
           } yield successOrFail
           relationshipDeleted.map(if (_) Ok else NotFound)
-
         }
   }
 

@@ -24,6 +24,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json.{format, toJsFieldJsValueWrapper}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.BSONDocument
+import reactivemongo.play.json.collection.JSONCollection
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.mongo.ReactiveRepository
 
@@ -34,22 +35,38 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
 
   def findRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-      find(Seq(
-        "arn" -> arn,
-        "service" -> service,
-        "clientId" -> clientId)
-        .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
+    find(Seq(
+      "arn" -> arn,
+      "service" -> service,
+      "clientId" -> clientId)
+      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
+  }
+
+  def findClientRelationshipsQuery(service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    find(Seq(
+      "service" -> service,
+      "clientId" -> clientId)
+      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
-      insert(relationship).map(_ => ())
+    insert(relationship).map(_ => ())
   }
 
   def deleteRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-      remove(
-        "arn" -> arn,
-        "service" -> service,
-        "clientId" -> clientId)
-        .map(result => if (result.n == 0) false else result.ok)
+    remove(
+      "arn" -> arn,
+      "service" -> service,
+      "clientId" -> clientId)
+      .map(result => if (result.n == 0) false else result.ok)
   }
+
+  def deleteRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    remove(
+      "service" -> service,
+      "clientId" -> clientId)
+      .map(result => if (result.n == 0) false else result.ok)
+  }
+
+
 }
