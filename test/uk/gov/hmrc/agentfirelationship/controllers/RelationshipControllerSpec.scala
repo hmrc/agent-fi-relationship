@@ -29,7 +29,7 @@ import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
@@ -50,7 +50,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     when(mockPlayAuthConnector.authorise(any(), any[Retrieval[~[Option[AffinityGroup], Enrolments]]]())(any(), any())).thenReturn(returnValue)
 
   "RelationshipController" should {
-    "return Status: OK when successfully finding a relationship" in {
+    "return Status: OK when successfully finding relationship" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -189,17 +189,19 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       verify(mockMongoService, times(0)).findRelationships(any(), any(), any())(any())
     }
 
-    "return Status: OK for deleting a record as a client" in {
+    "return Status: OK for deleting multiple records as a client" in {
       authStub(clientAffinityAndEnrolments)
+      when(mockMongoService.findClientRelationships(eqs(testService), eqs(validTestNINO))(any())).thenReturn(Future successful List(validTestRelationship,validTestRelationship))
       when(mockMongoService.deleteRelationships(eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
-      //when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
-      //when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1)).deleteRelationships(any(), any())(any())
+      verify(mockAuditService, times(2)).sendDeleteRelationshipEvent(any())(any(), any())
     }
 
     "return Status: OK for deleting a record as an agent" in {
@@ -228,12 +230,13 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     }
 
 
-    "return Status: NOT_FOUND for failing to delete a record as a client" in {
+    "return Status: NOT_FOUND for failing to delete a records as a client" in {
       authStub(clientAffinityAndEnrolments)
       when(mockMongoService.deleteRelationships(any(), any())(any()))
         .thenReturn(Future successful false)
-      //when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
-      //when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+      when(mockMongoService.findClientRelationships(any[String], any[String])(any[ExecutionContext])).thenReturn(Future successful List.empty)
 
       val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
 
@@ -263,7 +266,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       verify(mockMongoService, times(0)).deleteRelationship(any(), any(), any())(any())
     }
 
-    "return Status: FORBIDDEN when logged in Client NINO does not match given NINO when deleting relationship" in {
+    "return Status: FORBIDDEN when logged in Client NINO does not match given NINO when deleting relationships" in {
       authStub(clientAffinityAndEnrolments)
 
       val response = controller.deleteClientRelationships(testService, "AB123456C")(fakeRequest)
