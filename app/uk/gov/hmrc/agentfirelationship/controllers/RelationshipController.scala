@@ -19,6 +19,8 @@ package uk.gov.hmrc.agentfirelationship.controllers
 import java.time.LocalDateTime
 import javax.inject.{Inject, Named, Singleton}
 
+import akka.actor.FSM.Failure
+import akka.actor.Status.Success
 import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
@@ -42,15 +44,29 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
 extends BaseController {
 
+
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findClientRelationshipsQuery(service, clientId) map { result =>
+    mongoService.findClientRelationships(service, clientId) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound
     }
   }
 
-  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    val relationshipsDelted: Future[Boolean] = mongoService.deleteRelationships(service, clientId)
-    relationshipsDelted.map(if (_) Ok else NotFound)
+  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+    implicit request =>
+      implicit taxIdentifier =>
+        if (Nino(clientId) != taxIdentifier) Future successful Forbidden
+        else {
+          val relationshipsDeleted: Future[Boolean] = for {
+            clientRelationships <- mongoService.findClientRelationships(service, clientId)
+            successOrFail <- mongoService.deleteRelationships(service, clientId)
+            _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
+          } yield successOrFail
+          relationshipsDeleted.map(if (_) Ok else NotFound)
+        }
+  }
+
+  private def submitRelationshipsDeletionAudit(x: List[Relationship], clientId: String)(implicit hc: HeaderCarrier, request: Request[_]) = x.map { relationship =>
+    setAuditData(relationship.arn.toString, clientId).map(auditService.sendDeleteRelationshipEvent)
   }
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>

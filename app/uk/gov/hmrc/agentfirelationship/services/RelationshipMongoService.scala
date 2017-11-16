@@ -42,7 +42,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
-  def findClientRelationshipsQuery(service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findClientRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find(Seq(
       "service" -> service,
       "clientId" -> clientId)
@@ -67,6 +67,4 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       "clientId" -> clientId)
       .map(result => if (result.n == 0) false else result.ok)
   }
-
-
 }
