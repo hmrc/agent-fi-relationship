@@ -44,6 +44,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
 extends BaseController {
 
+
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findClientRelationships(service, clientId) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound

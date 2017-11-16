@@ -67,6 +67,4 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       "clientId" -> clientId)
       .map(result => if (result.n == 0) false else result.ok)
   }
-
-
 }

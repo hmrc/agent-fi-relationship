@@ -192,11 +192,12 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     }
 
     "return Status: OK for deleting multiple records as a client" in {
-      authStub(clientAffinityAndEnrolments)
-      when(mockMongoService.findClientRelationships(eqs(testService), eqs(validTestNINO))(any()))
-        .thenReturn(Future successful List(validTestRelationship,validTestRelationship))
+
+      when(mockMongoService.findClientRelationships(eqs(testService), eqs(validTestNINO))(any())).thenReturn(Future successful List(validTestRelationship,validTestRelationship))
       when(mockMongoService.deleteRelationships(eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
       val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
 
