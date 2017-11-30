@@ -39,6 +39,7 @@ class GuiceModule(val environment: Environment, val configuration: Configuration
     bind(classOf[HttpPost]).toInstance(WSHttp)
     bindBaseUrl("auth")
     bindBaseUrl("agent-mapping")
+    bindBaseUrl("des")
     bindBooleanProperty("features.copy-cesa-relationships")
   }
 
