@@ -41,6 +41,9 @@ class GuiceModule(val environment: Environment, val configuration: Configuration
     bindBaseUrl("agent-mapping")
     bindBaseUrl("des")
     bindBooleanProperty("features.copy-cesa-relationships")
+    bindBooleanProperty("features.check-cesa-relationships")
+    bindProperty("des.environment", "des.environment")
+    bindProperty("des.authorizationToken", "des.authorization-token")
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -48,6 +51,13 @@ class GuiceModule(val environment: Environment, val configuration: Configuration
 
   private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
     override lazy val get = new URL(baseUrl(serviceName))
+  }
+
+  private def bindProperty(objectName: String, propertyName: String) =
+    bind(classOf[String]).annotatedWith(Names.named(objectName)).toProvider(new PropertyProvider(propertyName))
+
+  private class PropertyProvider(confKey: String) extends Provider[String] {
+    override lazy val get = getConfString(confKey, throw new IllegalStateException(s"No value found for configuration property $confKey"))
   }
 
   private def bindBooleanProperty(propertyName: String) =
