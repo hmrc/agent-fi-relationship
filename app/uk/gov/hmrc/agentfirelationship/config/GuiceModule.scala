@@ -20,19 +20,25 @@ import java.net.URL
 import javax.inject.Provider
 
 import com.google.inject.AbstractModule
+import com.google.inject.name.Names
 import com.google.inject.name.Names.named
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.{HttpGet, HttpPost}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config._
 
-class GuiceModule extends AbstractModule with ServicesConfig {
+class GuiceModule(val environment: Environment, val configuration: Configuration) extends AbstractModule with ServicesConfig {
+
+  override val runModeConfiguration: Configuration = configuration
+  override protected def mode = environment.mode
+
   override def configure(): Unit = {
     bind(classOf[reactivemongo.api.DB]).toProvider(classOf[MongoDbProvider])
     bind(classOf[AuditConnector]).toInstance(MicroserviceGlobal.auditConnector)
     bind(classOf[HttpGet]).toInstance(WSHttp)
     bind(classOf[HttpPost]).toInstance(WSHttp)
     bindBaseUrl("auth")
-    ()
+    bindBooleanProperty("features.copy-cesa-relationships")
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -40,6 +46,14 @@ class GuiceModule extends AbstractModule with ServicesConfig {
 
   private class BaseUrlProvider(serviceName: String) extends Provider[URL] {
     override lazy val get = new URL(baseUrl(serviceName))
+  }
+
+  private def bindBooleanProperty(propertyName: String) =
+    bind(classOf[Boolean]).annotatedWith(Names.named(propertyName)).toProvider(new BooleanPropertyProvider(propertyName))
+
+  private class BooleanPropertyProvider(confKey: String) extends Provider[Boolean] {
+    override lazy val get: Boolean = configuration.getBoolean(confKey)
+      .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
   }
 
 }
