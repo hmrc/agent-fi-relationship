@@ -27,7 +27,7 @@ object MicroServiceBuild extends Build with MicroService {
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
     "org.mockito" % "mockito-core" % "2.7.22" % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope,
-    "com.github.tomakehurst" % "wiremock" % "1.58" % scope
+    "com.github.tomakehurst" % "wiremock" % "2.11.0" % scope
   )
 
 }

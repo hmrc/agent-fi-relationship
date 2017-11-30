@@ -7,7 +7,6 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
-import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
 import uk.gov.hmrc.play.it.Port
@@ -81,7 +80,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
         .withBody(s"""{"authProviderId": "$fakeCredId"}""".stripMargin)))
   }
 
-  private def similarToJson(value: String) = equalToJson(value.stripMargin, JSONCompareMode.LENIENT)
+  private def similarToJson(value: String) = equalToJson(value.stripMargin, true, true)
 }
 
 
