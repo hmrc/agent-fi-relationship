@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.time.LocalDateTime
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 
 import play.api.Logger
 import play.api.libs.json.Json.toJson
@@ -38,11 +38,20 @@ import scala.concurrent.Future
 class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        auditService: AuditService,
                                        mongoService: RelationshipMongoService,
-                                       authConnector: AgentClientAuthConnector) extends BaseController {
+                                       authConnector: AgentClientAuthConnector,
+                                       @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
+extends BaseController {
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findRelationships(arn, service, clientId) map { result =>
-      if (result.nonEmpty) Ok(toJson(result)) else NotFound
+      if (result.nonEmpty) {
+        Ok(toJson(result))
+      } else {
+        if(copyCesaRelationships){
+          Logger.debug("Copy Cesa Relationship coming soon! Stay tuned.")
+        }
+        NotFound
+      }
     }
   }
 
