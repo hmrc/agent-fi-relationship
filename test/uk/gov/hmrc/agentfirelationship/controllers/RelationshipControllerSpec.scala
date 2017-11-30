@@ -40,7 +40,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
 
-  val controller = new RelationshipController(mockAuthAuditConnector, mockAuditService, mockMongoService, mockAgentClientAuthConnector, false)
+  val controller = new RelationshipController(mockAuthAuditConnector, mockAuditService, mockMongoService, mockAgentClientAuthConnector, false, false)
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector)

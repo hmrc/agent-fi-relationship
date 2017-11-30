@@ -39,6 +39,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        auditService: AuditService,
                                        mongoService: RelationshipMongoService,
                                        authConnector: AgentClientAuthConnector,
+                                       @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
 extends BaseController {
 
