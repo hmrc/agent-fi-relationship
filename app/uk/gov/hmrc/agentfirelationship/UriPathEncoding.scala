@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.models
+package uk.gov.hmrc.agentfirelationship
 
-import java.time.LocalDateTime
+import java.nio.charset.StandardCharsets
 
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import play.utils.UriEncoding
 
-case class Relationship(arn: Arn, service: String, clientId: String, startDate: LocalDateTime, fromCesa: Boolean = false)
+object UriPathEncoding {
+
+  def encodePathSegments(pathSegments: String*): String =
+    pathSegments.map(encodePathSegment).mkString("/", "/", "")
+
+  def encodePathSegment(pathSegment: String): String =
+    UriEncoding.encodePathSegment(pathSegment, StandardCharsets.UTF_8.name)
+
+}

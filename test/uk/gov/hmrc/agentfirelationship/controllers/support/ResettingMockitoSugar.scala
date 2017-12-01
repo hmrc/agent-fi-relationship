@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.models
+package uk.gov.hmrc.agentfirelationship.controllers.support
 
-import java.time.LocalDateTime
+import org.mockito.Mockito
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfterEach, Suite}
 
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import scala.reflect.Manifest
 
-case class Relationship(arn: Arn, service: String, clientId: String, startDate: LocalDateTime, fromCesa: Boolean = false)
+trait ResettingMockitoSugar extends MockitoSugar with BeforeAndAfterEach {
+  this: Suite =>
+
+  var mocksToReset = Seq.empty[Any]
+
+  def resettingMock[T <: AnyRef](implicit manifest: Manifest[T]): T = {
+    val m = mock[T](manifest)
+    mocksToReset = mocksToReset :+ m
+    m
+  }
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    Mockito.reset(mocksToReset: _*)
+  }
+}

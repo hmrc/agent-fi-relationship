@@ -24,7 +24,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector, UserDetails}
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -36,14 +36,20 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
   val mockAuditService: AuditService = mock[AuditService]
   val mockAuthAuditConnector: AuthAuditConnector = mock[AuthAuditConnector]
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
+  val mockCesaRelationship: CesaRelationshipCopyService = mock[CesaRelationshipCopyService]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector {
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
 
-  val controller = new RelationshipController(mockAuthAuditConnector, mockAuditService, mockMongoService, mockAgentClientAuthConnector, false)
+  val controller = new RelationshipController(
+    mockAuthAuditConnector,
+    mockAuditService,
+    mockMongoService,
+    mockAgentClientAuthConnector,
+    mockCesaRelationship, false, false)
 
   override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockPlayAuthConnector)
+    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
   }
 
   private def authStub(returnValue: Future[~[Option[AffinityGroup], Enrolments]]) =
@@ -62,6 +68,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
     "return Status: NOT_FOUND for not finding data" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List())
+      when(mockMongoService.findCesaRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
@@ -284,6 +292,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List())
+      when(mockMongoService.findCesaRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
       val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)

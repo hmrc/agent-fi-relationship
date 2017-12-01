@@ -25,7 +25,7 @@ import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector}
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -39,21 +39,50 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        auditService: AuditService,
                                        mongoService: RelationshipMongoService,
                                        authConnector: AgentClientAuthConnector,
+                                       checkCesaService: CesaRelationshipCopyService,
+                                       @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
-extends BaseController {
+  extends BaseController {
 
-  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findRelationships(arn, service, clientId) map { result =>
+  private def searchCesaRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    implicit val auditData = new AuditData()
+    mongoService.findRelationships(arn, service, clientId) flatMap { result =>
       if (result.nonEmpty) {
-        Ok(toJson(result))
+        Future.successful(Ok(toJson(result)))
       } else {
-        if(copyCesaRelationships){
-          Logger.debug("Copy Cesa Relationship coming soon! Stay tuned.")
+        mongoService.findCesaRelationships(arn, service, clientId) flatMap { cesaRelationship =>
+          if (cesaRelationship.nonEmpty) {
+            Future successful Ok(toJson(cesaRelationship))
+          } else {
+            if (checkCesaRelationships) {
+              checkCesaService.lookupCesaForOldRelationship(Arn(arn), Nino(clientId)).flatMap { saAgentRefs =>
+                if (saAgentRefs.isEmpty) {
+                  Future successful NotFound
+                } else {
+                  if (copyCesaRelationships) {
+                    mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.now(), fromCesa = true))
+                      .flatMap(_ => mongoService.findRelationships(arn, service, clientId))
+                      .map(newResult => Ok(toJson(newResult)))
+                      .recover {
+                        case ex =>
+                          Logger.error("Relationship creation failed", ex)
+                          Ok(toJson(result))
+                      }
+                  } else {
+                    Future successful Ok(toJson(result))
+                  }
+                }
+              }
+            } else {
+              Future.successful(NotFound)
+            }
+          }
         }
-        NotFound
       }
     }
   }
+
+  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = searchCesaRelationship(arn, service, clientId)
 
   def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] =
     authConnector.authorisedForAfi { implicit request =>
@@ -89,11 +118,7 @@ extends BaseController {
         }
   }
 
-  def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findRelationships(arn, "afi", clientId) map { result =>
-      if (result.nonEmpty) Ok else NotFound
-    }
-  }
+  def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = searchCesaRelationship(arn, "afi", clientId)
 
   private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
     authAuditConnector.userDetails.map { userDetails =>
