@@ -41,6 +41,7 @@ package object controllers {
   val validTestNINO = "AE123456C"
   val testResponseDate: String = LocalDateTime.now.toString
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, LocalDateTime.parse(testResponseDate))
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, LocalDateTime.parse(testResponseDate), fromCesa = true)
 
   val agentEnrolment = Set(
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),

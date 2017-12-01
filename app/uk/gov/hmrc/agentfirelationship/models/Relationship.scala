@@ -20,4 +20,4 @@ import java.time.LocalDateTime
 
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-case class Relationship(arn: Arn, service: String, clientId: String, startDate: LocalDateTime)
+case class Relationship(arn: Arn, service: String, clientId: String, startDate: LocalDateTime, fromCesa: Boolean = false)

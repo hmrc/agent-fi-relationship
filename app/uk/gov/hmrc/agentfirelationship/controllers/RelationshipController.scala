@@ -32,7 +32,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
-import scala.collection.immutable.Set
 import scala.concurrent.Future
 
 @Singleton
@@ -45,37 +44,45 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
   extends BaseController {
 
-  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+  private def searchCesaRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val auditData = new AuditData()
     mongoService.findRelationships(arn, service, clientId) flatMap { result =>
       if (result.nonEmpty) {
         Future.successful(Ok(toJson(result)))
       } else {
-        if (checkCesaRelationships) {
-          checkCesaService.lookupCesaForOldRelationship(Arn(arn), Nino(clientId)).flatMap { saAgentRefs =>
-            if (saAgentRefs.isEmpty) {
-              Future successful NotFound
-            } else {
-              if (copyCesaRelationships) {
-                mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.now()))
-                  .flatMap(_ => mongoService.findRelationships(arn, service, clientId))
-                  .map(newResult => Ok(toJson(newResult)))
-                  .recover {
-                    case ex =>
-                      Logger.error("Relationship creation failed", ex)
-                      Ok(toJson(result))
+        mongoService.findCesaRelationships(arn, service, clientId) flatMap { cesaRelationship =>
+          if (cesaRelationship.nonEmpty) {
+            Future successful Ok(toJson(cesaRelationship))
+          } else {
+            if (checkCesaRelationships) {
+              checkCesaService.lookupCesaForOldRelationship(Arn(arn), Nino(clientId)).flatMap { saAgentRefs =>
+                if (saAgentRefs.isEmpty) {
+                  Future successful NotFound
+                } else {
+                  if (copyCesaRelationships) {
+                    mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.now(), fromCesa = true))
+                      .flatMap(_ => mongoService.findRelationships(arn, service, clientId))
+                      .map(newResult => Ok(toJson(newResult)))
+                      .recover {
+                        case ex =>
+                          Logger.error("Relationship creation failed", ex)
+                          Ok(toJson(result))
+                      }
+                  } else {
+                    Future successful Ok(toJson(result))
                   }
-              } else {
-                Future successful Ok(toJson(result))
+                }
               }
+            } else {
+              Future.successful(NotFound)
             }
           }
-        } else {
-          Future.successful(NotFound)
         }
       }
     }
   }
+
+  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = searchCesaRelationship(arn, service, clientId)
 
   def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] =
     authConnector.authorisedForAfi { implicit request =>
@@ -111,11 +118,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
         }
   }
 
-  def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findRelationships(arn, "afi", clientId) map { result =>
-      if (result.nonEmpty) Ok else NotFound
-    }
-  }
+  def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = searchCesaRelationship(arn, "afi", clientId)
 
   private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
     authAuditConnector.userDetails.map { userDetails =>

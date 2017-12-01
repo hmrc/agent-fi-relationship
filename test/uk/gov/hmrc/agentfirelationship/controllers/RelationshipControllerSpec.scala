@@ -49,7 +49,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     mockCesaRelationship, false, false)
 
   override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockPlayAuthConnector)
+    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
   }
 
   private def authStub(returnValue: Future[~[Option[AffinityGroup], Enrolments]]) =
@@ -68,6 +68,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
     "return Status: NOT_FOUND for not finding data" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List())
+      when(mockMongoService.findCesaRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
@@ -290,6 +292,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List())
+      when(mockMongoService.findCesaRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
       val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
