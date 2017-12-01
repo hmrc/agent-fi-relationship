@@ -103,7 +103,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       verify(mockCesaRelationship, times(1)).lookupCesaForOldRelationship(any(), any())(any(), any(), any(), any())
     }
 
-    "return Status: OK when failed to copy relationship from Cesa " in {
+    "return Status: NOT FOUND when failed to copy relationship from Cesa " in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
       when(mockCesaRelationship.lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(any(), any(),any(),any()))
