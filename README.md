@@ -52,6 +52,30 @@ Response Code(s)
 | 201 | Relationship found and returned |
 | 404 | Relationship not found |
 
+#### View Relationships
+```
+GET           /relationships/getRelationships/service/:service/clientId/:clientId
+```
+
+Result
+```
+[
+  {
+    "arn": "AARN123",
+    "service": "service123",
+    "clientId": "clientId123",
+  },
+  {...}
+]
+```
+
+Response Code(s)
+
+| Status Code | Description |
+|---|---|
+| 201 | Relationship found and returned |
+| 404 | Relationship not found |
+
 #### Delete Relationship
 ```
 DELETE   	/agent-fi-relationship/relationships/agent/:arn/service/:service/client/:clientId
@@ -62,6 +86,17 @@ Response Code(s)
 | Status Code | Description |
 |---|---|
 | 200 | Relationship deleted |
+
+#### Delete Relationships
+```
+DELETE   	DELETE        /relationships/de-auth-agents/service/:service/clientId/:clientId
+```
+
+Response Code(s)
+
+| Status Code | Description |
+|---|---|
+| 200 | Relationships deleted |
 
 #### Access Control - View Relationship for Afi
 ```
