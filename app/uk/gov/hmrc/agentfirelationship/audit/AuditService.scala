@@ -34,7 +34,7 @@ import scala.util.Try
 import uk.gov.hmrc.http.HeaderCarrier
 
 object AgentClientRelationshipEvent extends Enumeration {
-  val AgentClientRelationshipCreated, AgentClientRelationshipEnded = Value
+  val AgentClientRelationshipCreated, AgentClientRelationshipEnded, AgentClientRelationshipCreatedFromExisting = Value
   type AgentClientRelationshipEvent = Value
 }
 
@@ -72,6 +72,13 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     "regimeId"
   )
 
+  val createdFromExistingRelationship = Seq(
+    "agentReferenceNumber",
+    "saAgentRef",
+    "regime",
+    "regimeId"
+  )
+
   def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
       auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "agent fi create relationship",
         collectDetails(auditData.getDetails, createRelationshipDetailsFields))
@@ -80,6 +87,11 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
   def sendDeleteRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipEnded, "agent fi delete relationship",
       collectDetails(auditData.getDetails, DeleteRelationshipFields))
+  }
+
+  def sendCreateRelationshipFromExisting(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
+    auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreatedFromExisting, "Agent client relationship created from CESA",
+      collectDetails(auditData.getDetails, createdFromExistingRelationship))
   }
 
   private def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)

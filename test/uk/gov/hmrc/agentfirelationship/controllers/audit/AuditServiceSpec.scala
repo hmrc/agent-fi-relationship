@@ -115,5 +115,45 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.tags("X-Request-ID") shouldBe "dummy request id"
       }
     }
+
+    "send an Create Relationship From Existing event with correct fields" in {
+      val mockConnector = mock[AuditConnector]
+      val service = new AuditService(mockConnector)
+
+      val hc = HeaderCarrier(
+        authorization = Some(Authorization("dummy bearer token")),
+        sessionId = Some(SessionId("dummy session id")),
+        requestId = Some(RequestId("dummy request id"))
+      )
+
+      val auditData = new AuditData()
+      auditData.set("agentReferenceNumber", Arn("1234").value)
+      auditData.set("saAgentRef", "SA6012")
+      auditData.set("regime", "afi")
+      auditData.set("regimeId", Nino("KS969148D").value)
+      await(service.sendCreateRelationshipFromExisting(auditData)(
+        hc,
+        FakeRequest("GET", "/path"))
+      )
+
+      eventually {
+        val captor = ArgumentCaptor.forClass(classOf[DataEvent])
+        verify(mockConnector).sendEvent(captor.capture())(any(), any())
+        val sentEvent = captor.getValue.asInstanceOf[DataEvent]
+
+        sentEvent.auditType shouldBe "AgentClientRelationshipCreatedFromExisting"
+        sentEvent.auditSource shouldBe "agent-fi-relationship"
+        sentEvent.detail("agentReferenceNumber") shouldBe "1234"
+        sentEvent.detail("saAgentRef") shouldBe "SA6012"
+        sentEvent.detail("regime") shouldBe "afi"
+        sentEvent.detail("regimeId") shouldBe "KS969148D"
+        sentEvent.tags.contains("Authorization") shouldBe false
+        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
+        sentEvent.tags("transactionName") shouldBe "Agent client relationship created from CESA"
+        sentEvent.tags("path") shouldBe "/path"
+        sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
+        sentEvent.tags("X-Request-ID") shouldBe "dummy request id"
+      }
+    }
   }
 }

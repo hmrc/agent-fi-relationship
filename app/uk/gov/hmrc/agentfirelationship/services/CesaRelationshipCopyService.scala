@@ -35,14 +35,13 @@ class CesaRelationshipCopyService @Inject()(des: DesConnector,
 
   def lookupCesaForOldRelationship(arn: Arn, nino: Nino)
                                   (implicit ec: ExecutionContext, hc: HeaderCarrier, request: Request[Any], auditData: AuditData): Future[Set[SaAgentReference]] = {
-    auditData.set("nino", nino)
+    auditData.set("regimeId", nino)
     for {
       references <- des.getClientSaAgentSaReferences(nino)
       matching <- intersection(references) {
         mapping.getSaAgentReferencesFor(arn)
       }
       _ = auditData.set("saAgentRef", matching.mkString(","))
-      _ = auditData.set("CESARelationship", matching.nonEmpty)
     } yield {
       matching
     }

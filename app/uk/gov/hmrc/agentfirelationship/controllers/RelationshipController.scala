@@ -62,7 +62,12 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                   if (copyCesaRelationships) {
                     mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.now(), fromCesa = true))
                       .flatMap(_ => mongoService.findRelationships(arn, service, clientId))
-                      .map(newResult => Ok(toJson(newResult)))
+                      .map(newResult => {
+                        auditData.set("agentReferenceNumber", arn)
+                        auditData.set("regime", "afi")
+                        auditService.sendCreateRelationshipFromExisting(auditData)
+                        Ok(toJson(newResult))
+                      })
                       .recover {
                         case ex =>
                           Logger.error("Relationship creation failed", ex)
