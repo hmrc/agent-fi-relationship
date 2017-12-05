@@ -44,7 +44,9 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
   extends BaseController {
 
-  private def searchCesaRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+  def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] = findRelationship(arn, "afi", clientId)
+
+  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val auditData = new AuditData()
     mongoService.findRelationships(arn, service, clientId) flatMap { result =>
       if (result.nonEmpty) {
@@ -87,8 +89,6 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = searchCesaRelationship(arn, service, clientId)
-
   def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] =
     authConnector.authorisedForAfi { implicit request =>
       implicit taxIdentifier =>
@@ -122,8 +122,6 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
 
         }
   }
-
-  def afiCheckRelationship(arn: String, clientId: String): Action[AnyContent] = searchCesaRelationship(arn, "afi", clientId)
 
   private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
     authAuditConnector.userDetails.map { userDetails =>

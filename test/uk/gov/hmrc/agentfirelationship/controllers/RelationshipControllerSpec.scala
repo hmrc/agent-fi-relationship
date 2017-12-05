@@ -284,7 +284,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
@@ -296,7 +296,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
-      val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())

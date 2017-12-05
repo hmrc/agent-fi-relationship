@@ -11,10 +11,10 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
-class ViewRelationshipWhenFlagsOnIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
+class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
   with GuiceOneServerPerSuite with RelationshipActions with MongoApp {
   me: DualSuite =>
 
@@ -33,7 +33,7 @@ class ViewRelationshipWhenFlagsOnIntegrationSpec extends IntegrationSpec with Up
         "microservice.services.des.port" -> wireMockPort,
         "microservice.services.agent-mapping.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
-        "features.copy-cesa-relationships" -> true,
+        "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> true
       )
 
@@ -93,16 +93,16 @@ class ViewRelationshipWhenFlagsOnIntegrationSpec extends IntegrationSpec with Up
 
       Then("I will receive a 200 OK response")
       viewRelationshipResponse.status shouldBe OK
-      Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) should not be empty
+      Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
 
-      And("The response body will contain the relationship details")
+      And("The response body will not contain the relationship details")
       val jsonResponse = Json.parse(viewRelationshipResponse.body)
-      val actualAgentId = (jsonResponse(0) \ "arn").as[String]
-      val actualClientId = (jsonResponse(0) \ "clientId").as[String]
-      val actualService = (jsonResponse(0) \ "service").as[String]
-      actualAgentId shouldBe agentId
-      actualClientId shouldBe clientId
-      actualService shouldBe service
+      val actualAgentId = (jsonResponse(0) \ "arn").asOpt[String]
+      val actualClientId = (jsonResponse(0) \ "clientId").asOpt[String]
+      val actualService = (jsonResponse(0) \ "service").asOpt[String]
+      actualAgentId shouldBe None
+      actualClientId shouldBe None
+      actualService shouldBe None
     }
   }
 }

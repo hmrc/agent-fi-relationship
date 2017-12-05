@@ -65,7 +65,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
@@ -77,7 +77,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationshipCesa))
 
-      val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
@@ -92,7 +92,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       when(mockCesaRelationship.lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(any(), any(),any(),any()))
         .thenReturn(Future successful Set[SaAgentReference]())
 
-      val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
@@ -110,7 +110,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       when(mockMongoService.createRelationship(any())(any()))
         .thenReturn(Future failed new Exception("Error"))
 
-      val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
+      val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
