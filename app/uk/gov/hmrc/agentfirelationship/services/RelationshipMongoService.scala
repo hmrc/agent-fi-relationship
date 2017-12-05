@@ -39,12 +39,12 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
         .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
-  def findCesaRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findCeasedRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find(Seq(
       "arn" -> arn,
       "service" -> service,
       "clientId" -> clientId,
-      "fromCesa" -> "true")
+      "fromCesa" -> "true") // FIXME change to status check
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 

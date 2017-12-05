@@ -69,7 +69,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     "return Status: NOT_FOUND for not finding data" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findCesaRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
@@ -293,7 +293,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findCesaRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful List())
 
       val response = controller.afiCheckRelationship(validTestArn, validTestNINO)(fakeRequest)
