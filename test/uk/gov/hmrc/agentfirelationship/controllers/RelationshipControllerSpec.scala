@@ -238,7 +238,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
         .thenReturn(Future successful false)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
-      when(mockMongoService.findClientRelationships(eqs(testService), eqs(validTestNINO))(any())).
+      when(mockMongoService.findClientRelationships(any[String], any[String])(any[ExecutionContext])).
+        thenReturn(Future successful List.empty)
 
       val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
 
