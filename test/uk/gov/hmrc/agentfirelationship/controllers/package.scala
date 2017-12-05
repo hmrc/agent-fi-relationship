@@ -23,6 +23,7 @@ import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
@@ -31,12 +32,16 @@ package object controllers {
   implicit val hc = new HeaderCarrier
   val fakeRequest = FakeRequest("GET", "")
 
+  val saAgentRef = SaAgentReference("T1113T")
+  val saAgentRef2 = SaAgentReference("T1123T")
+  val saAgentRef3 = SaAgentReference("T1133T")
   val validTestArn = "AARN1234567"
   val testCredId = "q213"
   val testService = "afi"
   val validTestNINO = "AE123456C"
   val testResponseDate: String = LocalDateTime.now.toString
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, LocalDateTime.parse(testResponseDate))
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, LocalDateTime.parse(testResponseDate), fromCesa = true)
 
   val agentEnrolment = Set(
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),

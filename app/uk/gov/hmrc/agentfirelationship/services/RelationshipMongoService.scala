@@ -19,11 +19,9 @@ package uk.gov.hmrc.agentfirelationship.services
 import javax.inject.Inject
 
 import com.google.inject.Singleton
-import play.api.Logger
 import play.api.libs.json.Format
 import play.api.libs.json.Json.{format, toJsFieldJsValueWrapper}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONDocument
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.mongo.ReactiveRepository
 
@@ -39,6 +37,15 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
         "service" -> service,
         "clientId" -> clientId)
         .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
+  }
+
+  def findCeasedRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    find(Seq(
+      "arn" -> arn,
+      "service" -> service,
+      "clientId" -> clientId,
+      "fromCesa" -> "true") // FIXME change to status check
+      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {

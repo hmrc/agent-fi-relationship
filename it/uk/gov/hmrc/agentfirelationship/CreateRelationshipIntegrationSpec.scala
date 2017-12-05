@@ -31,7 +31,8 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
         "microservice.services.auth.port" -> wireMockPort,
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
-        "features.copy-cesa-relationships" -> false
+        "features.copy-cesa-relationships" -> false,
+        "features.check-cesa-relationships" -> false
       )
 
   feature("Create a relationship between an agent and an individual as an agent") {
