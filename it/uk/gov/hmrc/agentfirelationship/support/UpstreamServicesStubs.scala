@@ -9,10 +9,11 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
+import uk.gov.hmrc.agentfirelationship.stubs.{DesStubs, MappingStubs}
 import uk.gov.hmrc.play.it.Port
 
 trait UpstreamServicesStubs extends BeforeAndAfterAll
-  with BeforeAndAfterEach with Eventually with ClientUserAuthStubs with AgentAuthStubs {
+  with BeforeAndAfterEach with Eventually with ClientUserAuthStubs with AgentAuthStubs with DesStubs with MappingStubs {
 
   this: Suite =>
 
@@ -38,6 +39,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
     super.beforeEach()
     reset()
     givenAuthReturnsUserDetails()
+    givenImplicitAuditEvents()
   }
 
   def givenCreatedAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
@@ -62,6 +64,22 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |}"""
       ))
       .willReturn(aResponse().withStatus(200)))
+  }
+
+  def givenCesaCopyAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
+    stubFor(post(urlPathEqualTo("/write/audit"))
+      .withRequestBody(similarToJson(
+        s"""{
+           |  "auditSource": "agent-fi-relationship",
+           |  "auditType": "$AgentClientRelationshipCreatedFromExisting",
+           |  "detail": ${Json.toJson(detail)}
+           |}"""
+      ))
+      .willReturn(aResponse().withStatus(200)))
+  }
+
+  def givenImplicitAuditEvents() = {
+    stubFor(post(urlPathEqualTo("/write/audit/merged")).willReturn(aResponse().withStatus(200)))
   }
 
   def givenAuthReturnsUserDetails(): Unit = {
