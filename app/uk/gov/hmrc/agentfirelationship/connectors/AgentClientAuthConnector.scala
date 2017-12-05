@@ -36,6 +36,7 @@ import scala.concurrent.Future
 @Singleton
 class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
   implicit def hc(implicit rh: RequestHeader) = fromHeadersAndSession(rh.headers)
+
   override def authConnector: AuthConnector = MicroserviceAuthConnector
 
   private type AfiAction = Request[AnyContent] => TaxIdentifier => Future[Result]
@@ -62,7 +63,6 @@ class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
           Logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
           Future.successful(Forbidden)
       }
-
   }
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =
@@ -72,5 +72,4 @@ class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
   private def extractNino(enrolls: Set[Enrolment]): Option[Nino] = {
     enrolls.find(_.key == "HMRC-NI").flatMap(_.getIdentifier("NINO")).map(x => Nino(x.value))
   }
-
 }

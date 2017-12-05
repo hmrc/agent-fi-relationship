@@ -19,9 +19,12 @@ package uk.gov.hmrc.agentfirelationship.services
 import javax.inject.Inject
 
 import com.google.inject.Singleton
+import play.api.Logger
 import play.api.libs.json.Format
 import play.api.libs.json.Json.{format, toJsFieldJsValueWrapper}
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.bson.BSONDocument
+import reactivemongo.play.json.collection.JSONCollection
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.mongo.ReactiveRepository
 
@@ -58,5 +61,19 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
         "service" -> service,
         "clientId" -> clientId)
         .map(result => if (result.n == 0) false else result.ok)
+  }
+
+  def findClientRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    find(Seq(
+      "service" -> service,
+      "clientId" -> clientId)
+      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
+  }
+
+  def deleteRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    remove(
+      "service" -> service,
+      "clientId" -> clientId)
+      .map(result => if (result.n == 0) false else result.ok)
   }
 }
