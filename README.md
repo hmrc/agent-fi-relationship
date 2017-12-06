@@ -54,7 +54,7 @@ Response Code(s)
 
 #### View Relationships
 ```
-GET           /relationships/getRelationships/service/:service/clientId/:clientId
+GET           /agent-fi-relationship/relationships/service/:service/clientId/:clientId
 ```
 
 Result
@@ -89,7 +89,7 @@ Response Code(s)
 
 #### Delete Relationships
 ```
-DELETE   	DELETE        /relationships/de-auth-agents/service/:service/clientId/:clientId
+DELETE        /agent-fi-relationship/relationships/service/:service/clientId/:clientId
 ```
 
 Response Code(s)

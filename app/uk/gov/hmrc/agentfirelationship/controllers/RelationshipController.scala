@@ -136,7 +136,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
         else {
           val relationshipsDeleted: Future[Boolean] = for {
             clientRelationships <- mongoService.findClientRelationships(service, clientId)
-            successOrFail <- mongoService.deleteRelationships(service, clientId)
+            successOrFail <- mongoService.deleteAllClientIdRelationships(service, clientId)
             _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
           } yield successOrFail
           relationshipsDeleted.map(if (_) Ok else NotFound)

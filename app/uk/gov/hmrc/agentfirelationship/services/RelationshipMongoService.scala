@@ -70,7 +70,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
-  def deleteRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     remove(
       "service" -> service,
       "clientId" -> clientId)
