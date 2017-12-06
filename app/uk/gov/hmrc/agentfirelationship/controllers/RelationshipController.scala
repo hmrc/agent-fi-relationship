@@ -123,6 +123,30 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
         }
   }
 
+  def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+    mongoService.findClientRelationships(service, clientId) map { result =>
+      if (result.nonEmpty) Ok(toJson(result)) else NotFound
+    }
+  }
+
+  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+    implicit request =>
+      implicit taxIdentifier =>
+        if (Nino(clientId) != taxIdentifier) Future successful Forbidden
+        else {
+          val relationshipsDeleted: Future[Boolean] = for {
+            clientRelationships <- mongoService.findClientRelationships(service, clientId)
+            successOrFail <- mongoService.deleteAllClientIdRelationships(service, clientId)
+            _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
+          } yield successOrFail
+          relationshipsDeleted.map(if (_) Ok else NotFound)
+        }
+  }
+
+  private def submitRelationshipsDeletionAudit(x: List[Relationship], clientId: String)(implicit hc: HeaderCarrier, request: Request[_]) = x.map { relationship =>
+    setAuditData(relationship.arn.toString, clientId).map(auditService.sendDeleteRelationshipEvent)
+  }
+
   private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
     authAuditConnector.userDetails.map { userDetails =>
       val auditData = new AuditData()
