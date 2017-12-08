@@ -19,36 +19,36 @@ package uk.gov.hmrc.agentfirelationship.services
 import javax.inject.Inject
 
 import com.google.inject.Singleton
-import play.api.Logger
-import play.api.libs.json.Format
-import play.api.libs.json.Json.{format, toJsFieldJsValueWrapper}
+import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONDocument
-import reactivemongo.play.json.collection.JSONCollection
+import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
-  extends ReactiveRepository[Relationship, String]("fi-relationship", mongoComponent.mongoConnector.db, format[Relationship], implicitly[Format[String]]) {
+  extends ReactiveRepository[Relationship, BSONObjectID]("fi-relationship",
+    mongoComponent.mongoConnector.db,
+    Relationship.relationshipFormat,
+    ReactiveMongoFormats.objectIdFormats) {
 
   def findRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-      find(Seq(
-        "arn" -> arn,
-        "service" -> service,
-        "clientId" -> clientId)
-        .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
+    find("arn" -> arn,
+      "service" -> service,
+      "clientId" -> clientId,
+      "relationshipStatus" -> Active)
   }
 
   def findCeasedRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    find(Seq(
+    find(
       "arn" -> arn,
       "service" -> service,
       "clientId" -> clientId,
       "fromCesa" -> "true") // FIXME change to status check
-      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
@@ -64,10 +64,9 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def findClientRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    find(Seq(
-      "service" -> service,
-      "clientId" -> clientId)
-      .map(option => option._1 -> toJsFieldJsValueWrapper(option._2)): _*)
+    find("service" -> service,
+      "clientId" -> clientId,
+      "relationshipStatus" -> Active)
   }
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {

@@ -78,6 +78,16 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
     }
 
+    "return Status: NOT_FOUND for inactive relationship" in {
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List(inactiveTestRelationship))
+
+      val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+
+      status(response) shouldBe NOT_FOUND
+      verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
+    }
+
     "return Status: CREATED for creating new record as a client" in {
       authStub(clientAffinityAndEnrolments)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
