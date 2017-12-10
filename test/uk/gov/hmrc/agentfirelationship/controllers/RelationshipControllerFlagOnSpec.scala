@@ -24,6 +24,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
@@ -62,32 +63,32 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       mockCesaRelationship, true, true)
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
-      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
     }
 
     "return Status: OK when successfully finding a relationship in Cesa" in {
-      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findCESARelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List(validTestRelationshipCesa))
 
       val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
-      verify(mockMongoService, times(1)).findCeasedRelationships(any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findCESARelationships(any(), any(), any(), any())(any())
     }
 
     "return Status: NOT FOUND when no relationship in Cesa and Agent Mapping is found" in {
-      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findCESARelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockCesaRelationship.lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(any(), any(),any(),any()))
         .thenReturn(Future successful Set[SaAgentReference]())
@@ -95,15 +96,15 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
-      verify(mockMongoService, times(1)).findCeasedRelationships(any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findCESARelationships(any(), any(), any(), any())(any())
       verify(mockCesaRelationship, times(1)).lookupCesaForOldRelationship(any(), any())(any(), any(), any(), any())
     }
 
     "return Status: NOT FOUND when failed to copy relationship from Cesa " in {
-      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findCeasedRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(mockMongoService.findCESARelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO),eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockCesaRelationship.lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(any(), any(),any(),any()))
         .thenReturn(Future successful Set[SaAgentReference]())
@@ -113,8 +114,8 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any())(any())
-      verify(mockMongoService, times(1)).findCeasedRelationships(any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1)).findCESARelationships(any(), any(), any(), any())(any())
       verify(mockCesaRelationship, times(1)).lookupCesaForOldRelationship(any(), any())(any(), any(), any(), any())
     }
   }

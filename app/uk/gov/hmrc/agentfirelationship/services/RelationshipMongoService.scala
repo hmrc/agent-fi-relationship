@@ -22,7 +22,7 @@ import com.google.inject.Singleton
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -36,18 +36,23 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     Relationship.relationshipFormat,
     ReactiveMongoFormats.objectIdFormats) {
 
-  def findRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find("arn" -> arn,
       "service" -> service,
       "clientId" -> clientId,
-      "relationshipStatus" -> Active)
+      "relationshipStatus" -> status).recoverWith {
+      case ex =>
+        ex.printStackTrace()
+        Future.failed(ex)
+    }
   }
 
-  def findCeasedRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findCESARelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find(
       "arn" -> arn,
       "service" -> service,
       "clientId" -> clientId,
+      "relationshipStatus" -> status,
       "fromCesa" -> "true") // FIXME change to status check
   }
 
@@ -63,10 +68,10 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
         .map(result => if (result.n == 0) false else result.ok)
   }
 
-  def findClientRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find("service" -> service,
       "clientId" -> clientId,
-      "relationshipStatus" -> Active)
+      "relationshipStatus" -> status)
   }
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {

@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, InActive}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Inactive}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
@@ -42,7 +42,6 @@ package object controllers {
   val validTestNINO = "AE123456C"
   val testResponseDate: String = LocalDateTime.now.toString
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Active, LocalDateTime.parse(testResponseDate), None)
-  val inactiveTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, InActive, LocalDateTime.parse("2016-01-01"), Some(LocalDateTime.now()))
   val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Active, LocalDateTime.parse(testResponseDate), None, fromCesa = true)
 
   val agentEnrolment = Set(
