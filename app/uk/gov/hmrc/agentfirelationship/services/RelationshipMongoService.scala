@@ -40,11 +40,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     find("arn" -> arn,
       "service" -> service,
       "clientId" -> clientId,
-      "relationshipStatus" -> status).recoverWith {
-      case ex =>
-        ex.printStackTrace()
-        Future.failed(ex)
-    }
+      "relationshipStatus" -> status)
   }
 
   def findCESARelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
