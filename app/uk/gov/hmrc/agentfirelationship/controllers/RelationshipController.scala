@@ -25,7 +25,6 @@ import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
@@ -67,7 +66,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                       arn = Arn(arn),
                       service = service,
                       clientId = clientId,
-                      relationshipStatus = Active,
+                      relationshipStatus = RelationshipStatus.Active,
                       startDate = LocalDateTime.now(ZoneId.of("UTC")),
                       endDate = None,
                       fromCesa = true)
@@ -107,7 +106,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
             case Nil =>
               Logger.info("Creating a relationship")
               for {
-                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, Active, LocalDateTime.parse(startDate), None))
+                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, RelationshipStatus.Active, LocalDateTime.parse(startDate), None))
                 auditData <- setAuditData(arn, clientId)
                 _ <- auditService.sendCreateRelationshipEvent(auditData)
               } yield Created

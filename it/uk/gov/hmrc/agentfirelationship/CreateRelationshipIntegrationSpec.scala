@@ -6,7 +6,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 
@@ -52,9 +52,13 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Then("I will receive a 201 CREATED response")
       createRelationshipResponse.status shouldBe CREATED
 
+      val agentRelationship: Relationship = Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds).head
+
       And("Confirm the relationship contains the start date")
-      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
-      Await.result(agentRelationships, 10 seconds).head.startDate.toString shouldBe testResponseDate
+      agentRelationship.startDate.toString shouldBe testResponseDate
+
+      And("Confirm the relationship contains the relationship status as ACTIVE")
+      agentRelationship.relationshipStatus shouldBe RelationshipStatus.Active
     }
 
     scenario("A relationship which is the same already exists") {
@@ -111,7 +115,6 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
     }
   }
 
-
   feature("Create a relationship between an agent and an individual as a client") {
 
     info("I want to create a relationship with a client individual for a specific service")
@@ -152,8 +155,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
   }
-
-
+  
   feature("Delete a relationship between an agent and a client") {
 
     scenario("Delete an existing relationship between an agent and client for a given service") {
