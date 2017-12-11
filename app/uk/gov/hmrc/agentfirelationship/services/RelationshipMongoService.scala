@@ -16,15 +16,17 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
+import java.time.{LocalDateTime, ZoneId}
 import javax.inject.Inject
 
 import com.google.inject.Singleton
+import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONObjectID
+import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +36,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, BSONObjectID]("fi-relationship",
     mongoComponent.mongoConnector.db,
     Relationship.relationshipFormat,
-    ReactiveMongoFormats.objectIdFormats) {
+    ReactiveMongoFormats.objectIdFormats) with AtomicUpdate[Relationship] {
 
   def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find("arn" -> arn,
@@ -56,12 +58,15 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       insert(relationship).map(_ => ())
   }
 
-  def deleteRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-      remove(
-        "arn" -> arn,
-        "service" -> service,
-        "clientId" -> clientId)
-        .map(result => if (result.n == 0) false else result.ok)
+  def deauthoriseRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    atomicUpdate(
+      finder = BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId),
+      modifierBson = BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
+        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString))).map(_.map { update =>
+      update.writeResult.errMsg.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for arn:" +
+        s" $arn, clientId: $clientId service: $service failed: $error"))
+      update.writeResult.ok
+    }.getOrElse(false))
   }
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
@@ -76,4 +81,6 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       "clientId" -> clientId)
       .map(result => if (result.n == 0) false else result.ok)
   }
+
+  override def isInsertion(newRecord: BSONObjectID, oldRecord: Relationship): Boolean = false
 }

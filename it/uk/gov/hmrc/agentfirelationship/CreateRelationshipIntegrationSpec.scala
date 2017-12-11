@@ -176,6 +176,12 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
+
+//    scenario("Client deauthorises all of his agents, setting status to Inactive for all"){
+//      Given("there exists a relationship or more for particular clientId")
+//      givenCreatedAuditEventStub(auditDetails)
+//      giv
+//    }
   }
 
   scenario("The user is not logged in with GG credentials") {

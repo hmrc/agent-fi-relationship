@@ -123,7 +123,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
       implicit taxIdentifier =>
         forThisUser(Arn(arn), Nino(clientId)) {
           val relationshipDeleted: Future[Boolean] = for {
-            successOrFail <- mongoService.deleteRelationship(arn, service, clientId)
+            successOrFail <- mongoService.deauthoriseRelationship(arn, service, clientId)
             auditData <- setAuditData(arn, clientId)
             _ <- auditService.sendDeleteRelationshipEvent(auditData)
           } yield successOrFail
