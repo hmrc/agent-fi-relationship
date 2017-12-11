@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, ZoneId}
 import javax.inject.{Inject, Named, Singleton}
 
 import play.api.Logger
@@ -24,7 +24,7 @@ import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector}
-import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
@@ -48,11 +48,11 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val auditData = new AuditData()
-    mongoService.findRelationships(arn, service, clientId) flatMap { result =>
+    mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { result =>
       if (result.nonEmpty) {
         Future.successful(Ok(toJson(result)))
       } else {
-        mongoService.findCeasedRelationships(arn, service, clientId) flatMap { cesaRelationship =>
+        mongoService.findCESARelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { cesaRelationship =>
           if (cesaRelationship.nonEmpty) {
             Future successful Ok(toJson(cesaRelationship))
           } else {
@@ -62,8 +62,17 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                   Future successful NotFound
                 } else {
                   if (copyCesaRelationships) {
-                    mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.now(), fromCesa = true))
-                      .flatMap(_ => mongoService.findRelationships(arn, service, clientId))
+                    val activeRelationship = Relationship(
+                      arn = Arn(arn),
+                      service = service,
+                      clientId = clientId,
+                      relationshipStatus = RelationshipStatus.Active,
+                      startDate = LocalDateTime.now(ZoneId.of("UTC")),
+                      endDate = None,
+                      fromCesa = true)
+
+                    mongoService.createRelationship(activeRelationship)
+                      .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
                       .map(newResult => {
                         auditData.set("agentReferenceNumber", arn)
                         auditData.set("regime", "afi")
@@ -93,11 +102,11 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     authConnector.authorisedForAfi { implicit request =>
       implicit taxIdentifier =>
         forThisUser(Arn(arn), Nino(clientId)) {
-          mongoService.findRelationships(arn, service, clientId) flatMap {
+          mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
             case Nil =>
               Logger.info("Creating a relationship")
               for {
-                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, LocalDateTime.parse(startDate)))
+                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, RelationshipStatus.Active, LocalDateTime.parse(startDate), None))
                 auditData <- setAuditData(arn, clientId)
                 _ <- auditService.sendCreateRelationshipEvent(auditData)
               } yield Created
@@ -124,7 +133,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
   }
 
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findClientRelationships(service, clientId) map { result =>
+    mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound
     }
   }
@@ -135,7 +144,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
         if (Nino(clientId) != taxIdentifier) Future successful Forbidden
         else {
           val relationshipsDeleted: Future[Boolean] = for {
-            clientRelationships <- mongoService.findClientRelationships(service, clientId)
+            clientRelationships <- mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active)
             successOrFail <- mongoService.deleteAllClientIdRelationships(service, clientId)
             _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
           } yield successOrFail
