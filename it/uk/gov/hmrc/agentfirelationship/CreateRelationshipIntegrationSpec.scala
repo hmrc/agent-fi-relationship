@@ -1,14 +1,17 @@
 package uk.gov.hmrc.agentfirelationship
 
+import java.time.LocalDateTime
 import javax.inject.Singleton
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Inactive}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -24,6 +27,9 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId
   override def nino = clientId
+
+  val testResponseDate: String = LocalDateTime.now.toString
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -166,7 +172,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       isLoggedInAndIsSubscribedAsAgent
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
-      When("I call the delete-relationship endpoint")
+      When("I call the deauth relationship endpoint")
       val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
@@ -177,11 +183,24 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
 
-//    scenario("Client deauthorises all of his agents, setting status to Inactive for all"){
-//      Given("there exists a relationship or more for particular clientId")
-//      givenCreatedAuditEventStub(auditDetails)
-//      giv
-//    }
+    scenario("Client deauthorises all of his agents, setting status to Inactive for all"){
+      givenEndedAuditEventStub(auditDetails)
+      isLoggedInAsClient
+
+      Given("there exists a relationship or more for particular clientId")
+      Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
+      Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
+
+      When("I call the de-auth relationship endpoint")
+      val deleteRelationshipResponse: WSResponse = Await.result(deleteClientRelationships(clientId, service), 10 seconds)
+
+      Then("I should get a 200 OK response")
+      deleteRelationshipResponse.status shouldBe OK
+
+     And("the relationship should be deleted")
+      val agentRelationships: Future[List[Relationship]] = repo.findClientRelationships(service, clientId, Inactive)
+      Await.result(agentRelationships, 10 seconds).length shouldBe 2
+    }
   }
 
   scenario("The user is not logged in with GG credentials") {

@@ -28,6 +28,7 @@ import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import reactivemongo.play.json.ImplicitBSONHandlers._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,7 +54,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
-      insert(relationship).map(_ => ())
+    insert(relationship).map(_ => ())
   }
 
   def deauthoriseRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
@@ -61,8 +62,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       finder = BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId),
       modifierBson = BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
         "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString))).map(_.map { update =>
-      update.writeResult.errMsg.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for arn:" +
-        s" $arn, clientId: $clientId service: $service failed: $error"))
+      update.writeResult.errMsg.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for arn: $arn service: $service and clientId: $clientId failed: $error"))
       update.writeResult.ok
     }.getOrElse(false))
   }
@@ -74,10 +74,15 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    remove(
-      "service" -> service,
-      "clientId" -> clientId)
-      .map(result => if (result.n == 0) false else result.ok)
+    collection.update(
+      BSONDocument("service" -> service, "clientId" -> clientId),
+      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
+        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
+      multi = true
+    ).map { result =>
+      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for service: $service and clientId: $clientId failed: $error"))
+      result.ok
+    }
   }
 
   override def isInsertion(newRecord: BSONObjectID, oldRecord: Relationship): Boolean = false

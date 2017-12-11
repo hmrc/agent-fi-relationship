@@ -30,4 +30,9 @@ trait RelationshipActions extends ScalaFutures {
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
       .delete()
+
+  def deleteClientRelationships(clientId: String, service: String): Future[WSResponse] =
+    wsClient
+      .url(s"$url/service/$service/clientId/$clientId")
+      .delete()
 }

@@ -333,5 +333,20 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
     }
+
+    "return Status: OK for de-authorising all relationships for a specific client id" in {
+      authStub(clientAffinityAndEnrolments)
+      when(mockMongoService.findClientRelationships(eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
+        .thenReturn(Future successful List(validTestRelationship))
+      when(mockMongoService.deleteAllClientIdRelationships(eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful true)
+      when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
+      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
+
+      val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
+
+      status(response) shouldBe OK
+      verify(mockMongoService, times(1)).findClientRelationships(any(), any(), any())(any())
+    }
   }
 }
