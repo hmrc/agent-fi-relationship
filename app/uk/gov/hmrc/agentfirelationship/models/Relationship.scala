@@ -30,7 +30,5 @@ case class Relationship(arn: Arn,
                         fromCesa: Boolean = false)
 
 object Relationship {
-
   implicit val relationshipFormat = Json.format[Relationship]
-
 }
