@@ -47,8 +47,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     find(
       "arn" -> arn,
       "service" -> service,
-      "clientId" -> clientId,
-      "fromCesa" -> "true")
+      "clientId" -> clientId)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {

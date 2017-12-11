@@ -52,9 +52,9 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
       if (result.nonEmpty) {
         Future.successful(Ok(toJson(result)))
       } else {
-        mongoService.findAnyRelationships(arn, service, clientId) flatMap { cesaRelationship =>
-          if (cesaRelationship.nonEmpty) {
-            Future successful Ok(toJson(cesaRelationship))
+        mongoService.findAnyRelationships(arn, service, clientId) flatMap { previousRelationships =>
+          if (previousRelationships.nonEmpty) {
+            Future successful NotFound
           } else {
             if (checkCesaRelationships) {
               checkCesaService.lookupCesaForOldRelationship(Arn(arn), Nino(clientId)).flatMap { saAgentRefs =>

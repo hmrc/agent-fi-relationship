@@ -72,7 +72,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
     }
 
-    "return Status: OK when successfully finding a relationship in Cesa" in {
+    "return Status: NOT_FOUND if any previous relationships are found" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
@@ -80,7 +80,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
 
       val response = controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
-      status(response) shouldBe OK
+      status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
       verify(mockMongoService, times(1)).findAnyRelationships(any(), any(), any())(any())
     }
