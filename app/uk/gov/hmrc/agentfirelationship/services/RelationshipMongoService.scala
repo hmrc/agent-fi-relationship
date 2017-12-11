@@ -43,13 +43,11 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       "relationshipStatus" -> status)
   }
 
-  def findCESARelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+  def findAnyRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find(
       "arn" -> arn,
       "service" -> service,
-      "clientId" -> clientId,
-      "relationshipStatus" -> status,
-      "fromCesa" -> "true") // FIXME change to status check
+      "clientId" -> clientId)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
