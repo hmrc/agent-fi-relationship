@@ -28,7 +28,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
   val testResponseDate: String = LocalDateTime.now.toString
   val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
   val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Terminated)
-  val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None, fromCesa = true)
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None, fromCesa = Some(true))
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

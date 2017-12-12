@@ -69,7 +69,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                       relationshipStatus = RelationshipStatus.Active,
                       startDate = LocalDateTime.now(ZoneId.of("UTC")),
                       endDate = None,
-                      fromCesa = true)
+                      fromCesa = Some(true))
 
                     mongoService.createRelationship(activeRelationship)
                       .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
