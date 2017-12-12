@@ -138,7 +138,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+  def deauthClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
     implicit request =>
       implicit taxIdentifier =>
         if (Nino(clientId) != taxIdentifier) Future successful Forbidden

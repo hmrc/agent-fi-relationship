@@ -7,7 +7,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Inactive}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentfirelationship.{agentId, clientId, service}
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -27,7 +27,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
 
   val testResponseDate: String = LocalDateTime.now.toString
   val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
-  val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Inactive)
+  val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Terminated)
   val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None, fromCesa = true)
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -61,22 +61,22 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
       result shouldBe empty
     }
 
-    "return inactive relationships" in {
+    "return TERMINATED relationships" in {
       await(repo.createRelationship(validTestRelationship))
       await(repo.createRelationship(validTestRelationshipCesa))
       await(repo.createRelationship(invalidTestRelationship))
 
       await(repo.findAll()).size shouldBe 3
 
-      val result = await(repo.findRelationships(arn,service, nino, Inactive))
+      val result = await(repo.findRelationships(arn,service, nino, Terminated))
 
       result should not be empty
       result.head shouldBe invalidTestRelationship
     }
 
-    "return empty results if no inactive relationships found" in {
+    "return empty results if no TERMINATED relationships found" in {
       await(repo.createRelationship(validTestRelationship))
-      val result = await(repo.findRelationships(arn,service, nino, Inactive))
+      val result = await(repo.findRelationships(arn,service, nino, Terminated))
 
       result shouldBe empty
     }

@@ -58,15 +58,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def deauthoriseRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    collection.update(
-      BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId),
-      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
-        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
-      multi = false
-    ).map { result =>
-      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for failed: $error"))
-      if (result.nModified > 0) true else false
-    }
+    updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId))(false, ec)
   }
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
@@ -76,28 +68,19 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    collection.update(
-      BSONDocument("service" -> service, "clientId" -> clientId),
-      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
-        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
-      multi = true
-    ).map { result =>
-      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for failed: $error"))
-      if (result.nModified > 0) true else false
-    }
+    updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId))(true, ec)
   }
 
- /* private def updateStatusToInactive(params: (String, String)*)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] = {
+  private def updateStatusToTerminated(selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] = {
     collection.update(
-      BSONDocument(params),
-      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
+      selector,
+      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Terminated.key,
         "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
       multi = multi
     ).map { result =>
-      println(result.nModified)
-      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for ${params.mkString} failed: $error"))
+      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
       if (result.nModified > 0) true else false
     }
-  }*/
+  }
 
 }

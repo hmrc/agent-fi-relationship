@@ -25,7 +25,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector, UserDetails}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Inactive}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
@@ -220,7 +220,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
-      val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
+      val response = controller.deauthClientRelationships(testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1)).deleteAllClientIdRelationships(any(), any())(any())
@@ -275,7 +275,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findClientRelationships(any[String], any[String], any[RelationshipStatus])(any[ExecutionContext])).
         thenReturn(Future successful List.empty)
 
-      val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
+      val response = controller.deauthClientRelationships(testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).deleteAllClientIdRelationships(any(), any())(any())
@@ -343,7 +343,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful UserDetails(testCredId))
       when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful())
 
-      val response = controller.deleteClientRelationships(testService, validTestNINO)(fakeRequest)
+      val response = controller.deauthClientRelationships(testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1)).findClientRelationships(any(), any(), any())(any())
