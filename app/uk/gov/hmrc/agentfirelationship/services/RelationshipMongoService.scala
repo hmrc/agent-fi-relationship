@@ -24,11 +24,11 @@ import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.mongo.{AtomicUpdate, ReactiveRepository}
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import reactivemongo.play.json.ImplicitBSONHandlers._
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,7 +37,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   extends ReactiveRepository[Relationship, BSONObjectID]("fi-relationship",
     mongoComponent.mongoConnector.db,
     Relationship.relationshipFormat,
-    ReactiveMongoFormats.objectIdFormats) with AtomicUpdate[Relationship] {
+    ReactiveMongoFormats.objectIdFormats) {
 
   def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find("arn" -> arn,
@@ -58,13 +58,15 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def deauthoriseRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    atomicUpdate(
-      finder = BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId),
-      modifierBson = BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
-        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString))).map(_.map { update =>
-      update.writeResult.errMsg.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for arn: $arn service: $service and clientId: $clientId failed: $error"))
-      update.writeResult.ok
-    }.getOrElse(false))
+    collection.update(
+      BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId),
+      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
+        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
+      multi = false
+    ).map { result =>
+      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for failed: $error"))
+      if (result.nModified > 0) true else false
+    }
   }
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
@@ -80,10 +82,22 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
         "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
       multi = true
     ).map { result =>
-      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for service: $service and clientId: $clientId failed: $error"))
-      result.ok
+      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for failed: $error"))
+      if (result.nModified > 0) true else false
     }
   }
 
-  override def isInsertion(newRecord: BSONObjectID, oldRecord: Relationship): Boolean = false
+ /* private def updateStatusToInactive(params: (String, String)*)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] = {
+    collection.update(
+      BSONDocument(params),
+      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Inactive.key,
+        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
+      multi = multi
+    ).map { result =>
+      println(result.nModified)
+      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to Inactive for ${params.mkString} failed: $error"))
+      if (result.nModified > 0) true else false
+    }
+  }*/
+
 }

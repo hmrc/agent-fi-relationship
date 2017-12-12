@@ -118,7 +118,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
         }
     }
 
-  def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+  def deauthRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
     implicit request =>
       implicit taxIdentifier =>
         forThisUser(Arn(arn), Nino(clientId)) {
