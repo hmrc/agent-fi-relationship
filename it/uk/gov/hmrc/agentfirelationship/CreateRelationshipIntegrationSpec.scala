@@ -166,7 +166,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
   scenario("The user is not logged in with GG credentials") {
     isNotLoggedIn
     When("I call the create-relationship endpoint")
-    val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
     Then("I will receive a 401 response ")
     deleteRelationshipResponse.status shouldBe UNAUTHORIZED
@@ -179,7 +179,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     When("I call the create-relationship endpoint")
     isLoggedInWithoutAffinityGroup
-    val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
     Then("I will receive a 403 FORBIDDEN response")
     deleteRelationshipResponse.status shouldBe FORBIDDEN
@@ -192,7 +192,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     When("I call the create-relationship endpoint")
     isLoggedInWithInvalidEnrolments
-    val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
     Then("I will receive a 403 FORBIDDEN response")
     deleteRelationshipResponse.status shouldBe FORBIDDEN

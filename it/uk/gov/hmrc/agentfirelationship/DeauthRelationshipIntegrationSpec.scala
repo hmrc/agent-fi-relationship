@@ -53,7 +53,7 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the deauth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+      val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
       deleteRelationshipResponse.status shouldBe OK
@@ -72,7 +72,7 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
 
       When("I call the deauth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, "INVALID"), 10 seconds)
+      val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, "INVALID"), 10 seconds)
 
       Then("I should get a 404 NotFound response")
       deleteRelationshipResponse.status shouldBe NOT_FOUND
@@ -91,7 +91,7 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
 
       When("I call the deauth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId2, clientId, service), 10 seconds)
+      val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId2, clientId, service), 10 seconds)
 
       Then("I should get a 403 Forbidden response")
       deleteRelationshipResponse.status shouldBe FORBIDDEN
@@ -106,7 +106,7 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
       When("I call the de-auth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteClientRelationships(clientId, service), 10 seconds)
+      val deleteRelationshipResponse: WSResponse = Await.result(deauthClientRelationships(clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
       deleteRelationshipResponse.status shouldBe OK
@@ -125,7 +125,7 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
       When("I call the de-auth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteClientRelationships(clientId, "INVALID"), 10 seconds)
+      val deleteRelationshipResponse: WSResponse = Await.result(deauthClientRelationships(clientId, "INVALID"), 10 seconds)
 
       Then("I should get a 200 OK response")
       deleteRelationshipResponse.status shouldBe NOT_FOUND
@@ -144,7 +144,7 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
       When("I call the de-auth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteClientRelationships("AE123456A", service), 10 seconds)
+      val deleteRelationshipResponse: WSResponse = Await.result(deauthClientRelationships("AE123456A", service), 10 seconds)
 
       Then("I should get a 403 Forbidden response")
       deleteRelationshipResponse.status shouldBe FORBIDDEN

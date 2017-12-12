@@ -26,12 +26,12 @@ trait RelationshipActions extends ScalaFutures {
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
       .get()
 
-  def deleteRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
+  def deauthRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
       .delete()
 
-  def deleteClientRelationships(clientId: String, service: String): Future[WSResponse] =
+  def deauthClientRelationships(clientId: String, service: String): Future[WSResponse] =
     wsClient
       .url(s"$url/service/$service/clientId/$clientId")
       .delete()
