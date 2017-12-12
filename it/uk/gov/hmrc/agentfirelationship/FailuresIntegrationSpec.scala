@@ -42,7 +42,7 @@ class FailuresIntegrationSpec extends IntegrationSpec
 
       When("I call the delete-relationship endpoint")
       isLoggedInAndIsSubscribedAsAgent
-      val response = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
+      val response = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I should get a 500 INTERNAL SERVER ERROR response")
       response.status shouldBe INTERNAL_SERVER_ERROR

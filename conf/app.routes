@@ -3,9 +3,9 @@
 
 GET           /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findRelationship(arn: String, service: String, clientId: String)
 PUT           /relationships/agent/:arn/service/:service/client/:clientId/startDate/:startDate        @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.createRelationship(arn: String, service: String, clientId: String, startDate: String)
-DELETE        /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.deauthRelationship(arn: String, service: String, clientId: String)
+DELETE        /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.terminateRelationship(arn: String, service: String, clientId: String)
 
 GET           /relationships/afi/agent/:arn/client/:clientId                                          @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findAfiRelationship(arn: String, clientId: String)
 
 GET           /relationships/service/:service/clientId/:clientId                                      @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findClientRelationships(service: String, clientId: String)
-DELETE        /relationships/service/:service/clientId/:clientId                                      @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.deauthClientRelationships(service: String,clientId: String)
+DELETE        /relationships/service/:service/clientId/:clientId                                      @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.terminateClientRelationships(service: String,clientId: String)
