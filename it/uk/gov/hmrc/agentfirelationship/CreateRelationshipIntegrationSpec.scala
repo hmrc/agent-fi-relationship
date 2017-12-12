@@ -161,40 +161,4 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
   }
-
-
-  scenario("The user is not logged in with GG credentials") {
-    isNotLoggedIn
-    When("I call the create-relationship endpoint")
-    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
-
-    Then("I will receive a 401 response ")
-    deleteRelationshipResponse.status shouldBe UNAUTHORIZED
-  }
-
-  scenario("The user does not have an affinity group") {
-
-    Given("a create-relationship request with basic string values for Agent ID, client ID and service")
-    givenCreatedAuditEventStub(auditDetails)
-
-    When("I call the create-relationship endpoint")
-    isLoggedInWithoutAffinityGroup
-    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
-
-    Then("I will receive a 403 FORBIDDEN response")
-    deleteRelationshipResponse.status shouldBe FORBIDDEN
-  }
-
-  scenario("The user has invalid enrolments") {
-
-    Given("a create-relationship request with basic string values for Agent ID, client ID and service")
-    givenCreatedAuditEventStub(auditDetails)
-
-    When("I call the create-relationship endpoint")
-    isLoggedInWithInvalidEnrolments
-    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
-
-    Then("I will receive a 403 FORBIDDEN response")
-    deleteRelationshipResponse.status shouldBe FORBIDDEN
-  }
 }

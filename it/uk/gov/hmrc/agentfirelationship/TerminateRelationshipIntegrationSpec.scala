@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 @Singleton
-class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
+class TerminateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
   with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
   me: DualSuite =>
 
@@ -42,9 +42,9 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
         "features.check-cesa-relationships" -> false
       )
 
-  feature("De-authorise a relationship between an agent and a client") {
+  feature("Terminate a relationship between an agent and a client") {
 
-    scenario("Agent de-authorises an existing relationship with client for a given service") {
+    scenario("Agent terminates an existing relationship with client for a given service") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -52,18 +52,18 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       isLoggedInAndIsSubscribedAsAgent
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
-      When("I call the deauth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
+      When("I call the terminates relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
-      deleteRelationshipResponse.status shouldBe OK
+      terminateRelationshipResponse.status shouldBe OK
 
-      And("the relationship should be deleted")
+      And("the relationship should be terminated")
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
 
-    scenario("Agent fails to de-authorise the relation with client for an invalid service") {
+    scenario("Agent fails to terminates the relation with client for an invalid service") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -71,18 +71,18 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       isLoggedInAndIsSubscribedAsAgent
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
 
-      When("I call the deauth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, "INVALID"), 10 seconds)
+      When("I call the terminates relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, "INVALID"), 10 seconds)
 
       Then("I should get a 404 NotFound response")
-      deleteRelationshipResponse.status shouldBe NOT_FOUND
+      terminateRelationshipResponse.status shouldBe NOT_FOUND
 
       And("the relationship should remain unaffected")
       val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId, Active)
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
 
-    scenario("Agent fails to de-authorise the relation with client for an invalid agent id") {
+    scenario("Agent fails to terminates the relation with client for an invalid agent id") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -90,14 +90,14 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       isLoggedInAndIsSubscribedAsAgent
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
 
-      When("I call the deauth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId2, clientId, service), 10 seconds)
+      When("I call the terminates relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId2, clientId, service), 10 seconds)
 
       Then("I should get a 403 Forbidden response")
-      deleteRelationshipResponse.status shouldBe FORBIDDEN
+      terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("Client de-authorises all of client's agents, setting status to terminated for all"){
+    scenario("Client terminates all of client's agents, setting status to terminated for all"){
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAsClient
 
@@ -105,18 +105,18 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
-      When("I call the de-auth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deauthClientRelationships(clientId, service), 10 seconds)
+      When("I call the terminate relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
-      deleteRelationshipResponse.status shouldBe OK
+      terminateRelationshipResponse.status shouldBe OK
 
-      And("the relationship should be deleted")
+      And("the relationship should be terminated")
       val agentRelationships: Future[List[Relationship]] = repo.findClientRelationships(service, clientId, Terminated)
       Await.result(agentRelationships, 10 seconds).length shouldBe 2
     }
 
-    scenario("Client fails to de-authorise all of client's agents for an invalid service"){
+    scenario("Client fails to terminate all of client's agents for an invalid service"){
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAsClient
 
@@ -124,18 +124,18 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
-      When("I call the de-auth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deauthClientRelationships(clientId, "INVALID"), 10 seconds)
+      When("I call the terminate relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, "INVALID"), 10 seconds)
 
       Then("I should get a 200 OK response")
-      deleteRelationshipResponse.status shouldBe NOT_FOUND
+      terminateRelationshipResponse.status shouldBe NOT_FOUND
 
-      And("the relationship should be deleted")
+      And("the relationship should be terminated")
       val agentRelationships: Future[List[Relationship]] = repo.findClientRelationships(service, clientId, Active)
       Await.result(agentRelationships, 10 seconds).length shouldBe 2
     }
 
-    scenario("Client fails to de-authorises all of client's agents for an invalid client id"){
+    scenario("Client fails to terminate all of client's agents for an invalid client id"){
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAsClient
 
@@ -143,11 +143,46 @@ class DeauthRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
-      When("I call the de-auth relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deauthClientRelationships("AE123456A", service), 10 seconds)
+      When("I call the terminate relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships("AE123456A", service), 10 seconds)
 
       Then("I should get a 403 Forbidden response")
-      deleteRelationshipResponse.status shouldBe FORBIDDEN
+      terminateRelationshipResponse.status shouldBe FORBIDDEN
+    }
+
+    scenario("The user is not logged in with GG credentials") {
+      isNotLoggedIn
+      When("I call the create-relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I will receive a 401 response ")
+      terminateRelationshipResponse.status shouldBe UNAUTHORIZED
+    }
+
+    scenario("The user does not have an affinity group") {
+
+      Given("a create-relationship request with basic string values for Agent ID, client ID and service")
+      givenCreatedAuditEventStub(auditDetails)
+
+      When("I call the create-relationship endpoint")
+      isLoggedInWithoutAffinityGroup
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I will receive a 403 FORBIDDEN response")
+      terminateRelationshipResponse.status shouldBe FORBIDDEN
+    }
+
+    scenario("The user has invalid enrolments") {
+
+      Given("a create-relationship request with basic string values for Agent ID, client ID and service")
+      givenCreatedAuditEventStub(auditDetails)
+
+      When("I call the create-relationship endpoint")
+      isLoggedInWithInvalidEnrolments
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I will receive a 403 FORBIDDEN response")
+      terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
   }
 }

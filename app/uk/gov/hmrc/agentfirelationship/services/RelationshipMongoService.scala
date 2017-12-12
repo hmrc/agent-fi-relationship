@@ -57,7 +57,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     insert(relationship).map(_ => ())
   }
 
-  def deauthoriseRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def terminateRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId))(false, ec)
   }
 
