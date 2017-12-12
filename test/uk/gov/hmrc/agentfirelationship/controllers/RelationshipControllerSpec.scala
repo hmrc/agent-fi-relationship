@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -89,7 +91,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List())
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
       verify(mockMongoService, times(1)).createRelationship(any())(any())
@@ -105,7 +107,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List())
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
       verify(mockMongoService, times(1)).createRelationship(any())(any())
@@ -121,7 +123,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List())
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
       await(response)
       verify(mockAuditService, times(1)).sendCreateRelationshipEvent(any())(any(), any())
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
@@ -133,7 +136,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
@@ -146,7 +149,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
@@ -159,7 +162,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
@@ -172,7 +175,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
-      val response = controller.createRelationship(validTestArn, testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
       verify(mockMongoService, times(0)).createRelationship(any())(any())
@@ -182,7 +185,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when creating relationship" in {
       authStub(agentAffinityAndEnrolments)
 
-      val response = controller.createRelationship("TARN0000001", testService, validTestNINO, testResponseDate)(fakeRequest)
+      val response = controller.createRelationship("TARN0000001", testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe FORBIDDEN
       verify(mockMongoService, times(0)).createRelationship(any())(any())
@@ -192,7 +195,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     "return Status: FORBIDDEN when logged in Client NINO does not match given NINO when creating relationship" in {
       authStub(clientAffinityAndEnrolments)
 
-      val response = controller.createRelationship(validTestArn, testService, "AB123456C", testResponseDate)(fakeRequest)
+      val response = controller.createRelationship(validTestArn, testService, "AB123456C")(fakeCreateRequest)
 
       status(response) shouldBe FORBIDDEN
       verify(mockMongoService, times(0)).createRelationship(any())(any())

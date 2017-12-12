@@ -18,7 +18,9 @@ package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
 
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
+import play.mvc.Http.HeaderNames
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -31,7 +33,13 @@ import scala.concurrent.Future
 
 package object controllers {
   implicit val hc = new HeaderCarrier
+  val testResponseDate = LocalDateTime.now
+
   val fakeRequest = FakeRequest("GET", "")
+
+  val fakeCreateRequest: FakeRequest[JsObject] = FakeRequest("PUT", "/")
+        .withHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
+        .withBody(Json.obj("startDate" -> testResponseDate))
 
   val saAgentRef = SaAgentReference("T1113T")
   val saAgentRef2 = SaAgentReference("T1123T")
@@ -40,9 +48,8 @@ package object controllers {
   val testCredId = "q213"
   val testService = "afi"
   val validTestNINO = "AE123456C"
-  val testResponseDate: String = LocalDateTime.now.toString
-  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Active, LocalDateTime.parse(testResponseDate), None)
-  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Terminated, LocalDateTime.parse(testResponseDate), None, fromCesa = Some(true))
+  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Active, testResponseDate, None)
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Terminated, testResponseDate, None, fromCesa = Some(true))
 
   val agentEnrolment = Set(
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),

@@ -19,7 +19,9 @@ package uk.gov.hmrc.agentfirelationship.controllers
 import java.time.{LocalDateTime, ZoneId}
 import javax.inject.{Inject, Named, Singleton}
 
+import org.joda.time.DateTime
 import play.api.Logger
+import play.api.libs.json.{Format, Json}
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
@@ -98,15 +100,18 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  def createRelationship(arn: String, service: String, clientId: String, startDate: String): Action[AnyContent] =
-    authConnector.authorisedForAfi { implicit request =>
-      implicit taxIdentifier =>
+  case class Invitation(startDate: LocalDateTime)
+  implicit val invitationFormat = Json.format[Invitation]
+
+  def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>
+    authConnector.authorisedForAfi { implicit taxIdentifier =>
+      withJsonBody[Invitation] { invitation =>
         forThisUser(Arn(arn), Nino(clientId)) {
           mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
             case Nil =>
               Logger.info("Creating a relationship")
               for {
-                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, RelationshipStatus.Active, LocalDateTime.parse(startDate), None))
+                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, RelationshipStatus.Active, invitation.startDate, None))
                 auditData <- setAuditData(arn, clientId)
                 _ <- auditService.sendCreateRelationshipEvent(auditData)
               } yield Created
@@ -114,22 +119,25 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
               Logger.info("Relationship already exists")
               Future successful Created
           }
-
         }
+      }
     }
+  }
 
-  def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+  def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit taxIdentifier =>
-        forThisUser(Arn(arn), Nino(clientId)) {
-          val relationshipDeleted: Future[Boolean] = for {
-            successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
-            auditData <- setAuditData(arn, clientId)
-            _ <- auditService.sendDeleteRelationshipEvent(auditData)
-          } yield successOrFail
-          relationshipDeleted.map(if (_) Ok else NotFound)
+      authConnector.authorisedForAfi {
+        implicit taxIdentifier =>
+          forThisUser(Arn(arn), Nino(clientId)) {
+            val relationshipDeleted: Future[Boolean] = for {
+              successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
+              auditData <- setAuditData(arn, clientId)
+              _ <- auditService.sendDeleteRelationshipEvent(auditData)
+            } yield successOrFail
+            relationshipDeleted.map(if (_) Ok else NotFound)
 
-        }
+          }
+      }
   }
 
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
@@ -138,18 +146,20 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  def terminateClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+  def terminateClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit taxIdentifier =>
-        if (Nino(clientId) != taxIdentifier) Future successful Forbidden
-        else {
-          val relationshipsDeleted: Future[Boolean] = for {
-            clientRelationships <- mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active)
-            successOrFail <- mongoService.deleteAllClientIdRelationships(service, clientId)
-            _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
-          } yield successOrFail
-          relationshipsDeleted.map(if (_) Ok else NotFound)
-        }
+      authConnector.authorisedForAfi {
+        implicit taxIdentifier =>
+          if (Nino(clientId) != taxIdentifier) Future successful Forbidden
+          else {
+            val relationshipsDeleted: Future[Boolean] = for {
+              clientRelationships <- mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active)
+              successOrFail <- mongoService.deleteAllClientIdRelationships(service, clientId)
+              _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
+            } yield successOrFail
+            relationshipsDeleted.map(if (_) Ok else NotFound)
+          }
+      }
   }
 
   private def submitRelationshipsDeletionAudit(x: List[Relationship], clientId: String)(implicit hc: HeaderCarrier, request: Request[_]) = x.map { relationship =>
