@@ -28,8 +28,8 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
   override def arn = agentId
   override def nino = clientId
 
-  val testResponseDate: String = LocalDateTime.now.toString
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
+  val testResponseDate = LocalDateTime.now
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -61,7 +61,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       val agentRelationship: Relationship = Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds).head
 
       And("Confirm the relationship contains the start date")
-      agentRelationship.startDate.toString shouldBe testResponseDate
+      agentRelationship.startDate shouldBe testResponseDate
 
       And("Confirm the relationship contains the relationship status as ACTIVE")
       agentRelationship.relationshipStatus shouldBe RelationshipStatus.Active
@@ -140,7 +140,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
       And("Confirm the relationship contains the start date")
       val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
-      Await.result(agentRelationships, 10 seconds).head.startDate.toString shouldBe testResponseDate
+      Await.result(agentRelationships, 10 seconds).head.startDate shouldBe testResponseDate
     }
 
     scenario("A relationship which is the same already exists") {

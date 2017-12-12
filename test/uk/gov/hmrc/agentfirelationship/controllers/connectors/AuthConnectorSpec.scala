@@ -40,10 +40,10 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     override def authConnector: PlayAuthConnector = mockPlayAuthConnector
   }
 
-  private type AfiAction = Request[AnyContent] => TaxIdentifier => Future[Result]
+  private type AfiAction =  TaxIdentifier => Future[Result]
 
-  val agentAction: AfiAction = { implicit request => implicit arn => Future successful Ok }
-  val clientAction: AfiAction = { implicit request => implicit nino => Future successful Ok }
+  val agentAction: AfiAction = { implicit arn => Future successful Ok }
+  val clientAction: AfiAction = { implicit nino => Future successful Ok }
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
@@ -54,7 +54,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return OK for an Agent with HMRC-AS-AGENT enrolment" in {
       authStub(agentAffinityAndEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction).apply(FakeRequest()))
+      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction))
 
       status(response) shouldBe OK
     }
@@ -62,7 +62,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return OK for a Client with HMRC-NI enrolment" in {
       authStub(clientAffinityAndEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(clientAction).apply(FakeRequest()))
+      val response: Result = await(mockAuthConnector.authorisedForAfi(clientAction))
 
       status(response) shouldBe OK
     }
@@ -70,7 +70,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN for an Agent with no enrolment" in {
       authStub(agentNoEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction).apply(FakeRequest()))
+      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -78,7 +78,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN for a Client with no enrolment" in {
       authStub(clientNoEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(clientAction).apply(FakeRequest()))
+      val response: Result = await(mockAuthConnector.authorisedForAfi(clientAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -86,7 +86,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN when auth fails to return retrieve enrolments and affinity group" in {
       authStub(neitherHaveAffinityOrEnrolment)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction).apply(FakeRequest()))
+      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -94,7 +94,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN when auth throws an error" in {
       authStub(failedAuthStub)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction).apply(FakeRequest()))
+      val response: Result = await(mockAuthConnector.authorisedForAfi(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }

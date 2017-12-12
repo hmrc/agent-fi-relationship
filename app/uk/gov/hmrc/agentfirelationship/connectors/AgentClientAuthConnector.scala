@@ -28,6 +28,7 @@ import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -39,30 +40,29 @@ class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
 
   override def authConnector: AuthConnector = MicroserviceAuthConnector
 
-  private type AfiAction = Request[AnyContent] => TaxIdentifier => Future[Result]
+  private type AfiAction = TaxIdentifier => Future[Result]
 
-  def authorisedForAfi(action: AfiAction): Action[AnyContent] = Action.async {
-    implicit request =>
-      authorised(AuthProviders(GovernmentGateway)).retrieve(affinityGroupAllEnrolls) {
-        case Some(AffinityGroup.Agent) ~ allEnrolments =>
-          extractArn(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { arn =>
-            action(request)(arn)
-          }
-        case Some(_) ~ allEnrolments =>
-          extractNino(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { nino =>
-            action(request)(nino)
-          }
-        case _ =>
-          Logger.warn("Invalid affinity group or enrolments whilst trying to manipulate relationships")
-          Future.successful(Forbidden)
-      }.recoverWith {
-        case ex: NoActiveSession =>
-          Logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)
-          Future.successful(Unauthorized)
-        case ex: AuthorisationException =>
-          Logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
-          Future.successful(Forbidden)
-      }
+  def authorisedForAfi(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] = {
+    authorised(AuthProviders(GovernmentGateway)).retrieve(affinityGroupAllEnrolls) {
+      case Some(AffinityGroup.Agent) ~ allEnrolments =>
+        extractArn(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { arn =>
+          action(arn)
+        }
+      case Some(_) ~ allEnrolments =>
+        extractNino(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { nino =>
+          action(nino)
+        }
+      case _ =>
+        Logger.warn("Invalid affinity group or enrolments whilst trying to manipulate relationships")
+        Future.successful(Forbidden)
+    }.recoverWith {
+      case ex: NoActiveSession =>
+        Logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)
+        Future.successful(Unauthorized)
+      case ex: AuthorisationException =>
+        Logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
+        Future.successful(Forbidden)
+    }
   }
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =

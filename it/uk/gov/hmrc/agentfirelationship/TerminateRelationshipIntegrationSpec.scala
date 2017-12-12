@@ -29,8 +29,8 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
   override def arn = agentId
   override def nino = clientId
 
-  val testResponseDate: String = LocalDateTime.now.toString
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
+  val testResponseDate = LocalDateTime.now
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
