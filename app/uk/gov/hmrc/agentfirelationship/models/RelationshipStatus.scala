@@ -24,12 +24,12 @@ sealed trait RelationshipStatus {
 
 object RelationshipStatus {
   case object Active extends RelationshipStatus { val key = "ACTIVE" }
-  case object Inactive extends RelationshipStatus { val key = "INACTIVE" }
+  case object Terminated extends RelationshipStatus { val key = "TERMINATED" }
 
   private implicit def statusWrites =  new Writes[RelationshipStatus] {
     override def writes(status: RelationshipStatus): JsValue = status match {
       case Active => JsString(Active.key)
-      case Inactive => JsString(Inactive.key)
+      case Terminated => JsString(Terminated.key)
       case _ => throw new RuntimeException(s"Unable to parse the status to json: $status")
     }
   }
@@ -37,7 +37,7 @@ object RelationshipStatus {
   private implicit def  statusReads = new Reads[RelationshipStatus] {
     override def reads(json: JsValue): JsResult[RelationshipStatus] = json match {
       case JsString(Active.key) => JsSuccess(Active)
-      case JsString(Inactive.key) => JsSuccess(Inactive)
+      case JsString(Terminated.key) => JsSuccess(Terminated)
       case _ => throw new RuntimeException(s"Unable to parse the json to status: $json")
     }
   }

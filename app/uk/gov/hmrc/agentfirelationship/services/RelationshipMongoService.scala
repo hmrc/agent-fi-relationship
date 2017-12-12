@@ -16,14 +16,17 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
+import java.time.{LocalDateTime, ZoneId}
 import javax.inject.Inject
 
 import com.google.inject.Singleton
+import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import reactivemongo.bson.{BSONDocument, BSONObjectID}
+import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -51,15 +54,11 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
-      insert(relationship).map(_ => ())
+    insert(relationship).map(_ => ())
   }
 
-  def deleteRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-      remove(
-        "arn" -> arn,
-        "service" -> service,
-        "clientId" -> clientId)
-        .map(result => if (result.n == 0) false else result.ok)
+  def deauthoriseRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId))(false, ec)
   }
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
@@ -69,9 +68,19 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    remove(
-      "service" -> service,
-      "clientId" -> clientId)
-      .map(result => if (result.n == 0) false else result.ok)
+    updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId))(true, ec)
   }
+
+  private def updateStatusToTerminated(selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] = {
+    collection.update(
+      selector,
+      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Terminated.key,
+        "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
+      multi = multi
+    ).map { result =>
+      result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
+      if (result.nModified > 0) true else false
+    }
+  }
+
 }

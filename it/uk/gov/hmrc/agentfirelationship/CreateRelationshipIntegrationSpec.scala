@@ -1,14 +1,17 @@
 package uk.gov.hmrc.agentfirelationship
 
+import java.time.LocalDateTime
 import javax.inject.Singleton
 
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -24,6 +27,9 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId
   override def nino = clientId
+
+  val testResponseDate: String = LocalDateTime.now.toString
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -155,33 +161,12 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
   }
-  
-  feature("Delete a relationship between an agent and a client") {
 
-    scenario("Delete an existing relationship between an agent and client for a given service") {
-
-      Given("there exists a relationship between an agent and client for a given service")
-      givenCreatedAuditEventStub(auditDetails)
-      givenEndedAuditEventStub(auditDetails)
-      isLoggedInAndIsSubscribedAsAgent
-      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
-
-      When("I call the delete-relationship endpoint")
-      val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
-
-      Then("I should get a 200 OK response")
-      deleteRelationshipResponse.status shouldBe OK
-
-      And("the relationship should be deleted")
-      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
-      viewRelationshipResponse.status shouldBe NOT_FOUND
-    }
-  }
 
   scenario("The user is not logged in with GG credentials") {
     isNotLoggedIn
     When("I call the create-relationship endpoint")
-    val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
     Then("I will receive a 401 response ")
     deleteRelationshipResponse.status shouldBe UNAUTHORIZED
@@ -194,7 +179,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     When("I call the create-relationship endpoint")
     isLoggedInWithoutAffinityGroup
-    val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
     Then("I will receive a 403 FORBIDDEN response")
     deleteRelationshipResponse.status shouldBe FORBIDDEN
@@ -207,7 +192,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     When("I call the create-relationship endpoint")
     isLoggedInWithInvalidEnrolments
-    val deleteRelationshipResponse: WSResponse = Await.result(deleteRelationship(agentId, clientId, service), 10 seconds)
+    val deleteRelationshipResponse: WSResponse = Await.result(deauthRelationship(agentId, clientId, service), 10 seconds)
 
     Then("I will receive a 403 FORBIDDEN response")
     deleteRelationshipResponse.status shouldBe FORBIDDEN

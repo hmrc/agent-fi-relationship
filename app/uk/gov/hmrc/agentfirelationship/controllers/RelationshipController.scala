@@ -118,12 +118,12 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
         }
     }
 
-  def deleteRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+  def deauthRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
     implicit request =>
       implicit taxIdentifier =>
         forThisUser(Arn(arn), Nino(clientId)) {
           val relationshipDeleted: Future[Boolean] = for {
-            successOrFail <- mongoService.deleteRelationship(arn, service, clientId)
+            successOrFail <- mongoService.deauthoriseRelationship(arn, service, clientId)
             auditData <- setAuditData(arn, clientId)
             _ <- auditService.sendDeleteRelationshipEvent(auditData)
           } yield successOrFail
@@ -138,7 +138,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  def deleteClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
+  def deauthClientRelationships(service: String, clientId: String): Action[AnyContent] = authConnector.authorisedForAfi {
     implicit request =>
       implicit taxIdentifier =>
         if (Nino(clientId) != taxIdentifier) Future successful Forbidden
