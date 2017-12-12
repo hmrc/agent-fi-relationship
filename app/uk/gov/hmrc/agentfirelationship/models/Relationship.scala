@@ -27,7 +27,7 @@ case class Relationship(arn: Arn,
                         relationshipStatus: RelationshipStatus,
                         startDate: LocalDateTime,
                         endDate: Option[LocalDateTime],
-                        fromCesa: Boolean = false)
+                        fromCesa: Option[Boolean] = Some(false))
 
 object Relationship {
   implicit val relationshipFormat = Json.format[Relationship]
