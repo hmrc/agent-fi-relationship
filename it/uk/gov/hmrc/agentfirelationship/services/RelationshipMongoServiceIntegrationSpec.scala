@@ -1,8 +1,8 @@
 package uk.gov.hmrc.agentfirelationship.services
 
+import java.time.LocalDateTime
 import javax.inject.Singleton
 
-import org.joda.time.DateTime
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -12,7 +12,6 @@ import uk.gov.hmrc.agentfirelationship.{agentId, clientId, service}
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.test.UnitSpec
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
@@ -25,12 +24,11 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId
   override def nino = clientId
-  val testResponseDate = DateTime.now
 
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)
+  val testResponseDate: String = LocalDateTime.now.toString
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testResponseDate), None)
   val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Some(Terminated))
-  val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None, fromCesa = Some(true))
-
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testResponseDate), None, fromCesa = Some(true))
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

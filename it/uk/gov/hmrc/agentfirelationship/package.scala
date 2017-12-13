@@ -1,6 +1,6 @@
 package uk.gov.hmrc
 
-import org.joda.time.DateTime
+import java.time.LocalDateTime
 
 package object agentfirelationship {
   val fakeCredId = "fakeCredId"
@@ -9,5 +9,5 @@ package object agentfirelationship {
   val clientId = "AE123456C"
   val service = "afi"
   val auditDetails = Map("authProviderId" -> fakeCredId, "arn" -> agentId, "regime" -> "afi", "regimeId" -> clientId)
-  val testResponseDate = DateTime.now
+  val testResponseDate = LocalDateTime.now
 }
