@@ -31,7 +31,6 @@ class ApplicationStart @Inject()(lifecycle: ApplicationLifecycle,
                                  mongoService: RelationshipMongoService,
                                  implicit val ec: ExecutionContext) {
   def start() = {
-    println("calling start method")
     Logger.info("Updating AFI relationships to have relationshipStatus set Active," +
       " remove this after records have been successfully updated")
     mongoService.addActiveRelationshipStatus().foreach {

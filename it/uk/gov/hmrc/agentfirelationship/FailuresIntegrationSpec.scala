@@ -11,10 +11,12 @@ import scala.concurrent.duration._
 class FailuresIntegrationSpec extends IntegrationSpec
   with GuiceOneServerPerSuite
   with UpstreamServicesStubs
-  with RelationshipActions  {
+  with RelationshipActions {
 
   override implicit lazy val app: Application = appBuilder.build()
+
   override def arn = agentId
+
   override def nino = clientId
 
   protected def appBuilder: GuiceApplicationBuilder =
