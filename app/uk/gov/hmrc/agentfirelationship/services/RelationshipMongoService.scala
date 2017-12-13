@@ -41,7 +41,6 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
 
 //[APB-1829] This needs to be removed after all records have been updated. Currently we know there is <1000 records so it should be fine. But perhaps there would be overload if it is left in production.
   def addActiveRelationshipStatus()(implicit ec: ExecutionContext): Future[Boolean] = {
-    println("calling the add active method")
     collection.update(
       BSONDocument("service" -> "afi","relationshipStatus" -> BSONDocument("$exists" -> false)),
       BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Active.key)),
@@ -96,5 +95,4 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       if (result.nModified > 0) true else false
     }
   }
-
 }
