@@ -67,11 +67,10 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                       arn = Arn(arn),
                       service = service,
                       clientId = clientId,
-                      relationshipStatus = RelationshipStatus.Active,
+                      relationshipStatus = Some(RelationshipStatus.Active),
                       startDate = DateTime.now(DateTimeZone.UTC),
                       endDate = None,
                       fromCesa = Some(true))
-
                     mongoService.createRelationship(activeRelationship)
                       .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
                       .map(newResult => {
@@ -110,7 +109,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
             case Nil =>
               Logger.info("Creating a relationship")
               for {
-                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, RelationshipStatus.Active, invitation.startDate, None))
+                _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None))
                 auditData <- setAuditData(arn, clientId)
                 _ <- auditService.sendCreateRelationshipEvent(auditData)
               } yield Created

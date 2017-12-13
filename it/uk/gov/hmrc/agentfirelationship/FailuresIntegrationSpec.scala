@@ -21,7 +21,8 @@ class FailuresIntegrationSpec extends IntegrationSpec
     new GuiceApplicationBuilder()
       .configure(
         "microservice.services.auth.port" -> wireMockPort,
-        "mongodb.uri" -> "mongodb://nowhere:27017/none"
+        "mongodb.uri" -> "mongodb://nowhere:27017/none",
+        "features.run-mongodb-migration" -> false
       )
 
   feature("Do not handle infrastructure failures, propagates errors downstream") {

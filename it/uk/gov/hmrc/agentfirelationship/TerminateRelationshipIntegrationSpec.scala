@@ -27,9 +27,9 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId
   override def nino = clientId
-
   val testResponseDate = DateTime.now
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, testResponseDate, None)
+
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
