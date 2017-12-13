@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import org.joda.time.DateTime
+import java.time.LocalDateTime
+
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
@@ -24,8 +25,8 @@ case class Relationship(arn: Arn,
                         service: String,
                         clientId: String,
                         relationshipStatus: Option[RelationshipStatus] = Some(RelationshipStatus.Active),
-                        startDate: DateTime,
-                        endDate: Option[DateTime],
+                        startDate: LocalDateTime,
+                        endDate: Option[LocalDateTime],
                         fromCesa: Option[Boolean] = Some(false))
 
 object Relationship {

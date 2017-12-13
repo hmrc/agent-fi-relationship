@@ -1,6 +1,7 @@
 package uk.gov.hmrc.agentfirelationship.support
 
-import org.joda.time.DateTime
+import java.time.LocalDateTime
+
 import org.scalatest.Suite
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.ServerProvider
@@ -17,7 +18,7 @@ trait RelationshipActions extends ScalaFutures {
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def createRelationship(agentId: String, clientId: String, service: String, startDate: DateTime): Future[WSResponse] =
+  def createRelationship(agentId: String, clientId: String, service: String, startDate: LocalDateTime): Future[WSResponse] =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
       .put(Json.obj("startDate"-> startDate))
