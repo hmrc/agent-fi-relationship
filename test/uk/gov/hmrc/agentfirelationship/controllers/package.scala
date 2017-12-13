@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship
 
-import java.time.LocalDateTime
-
+import org.joda.time.DateTime
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
@@ -33,7 +32,7 @@ import scala.concurrent.Future
 
 package object controllers {
   implicit val hc = new HeaderCarrier
-  val testResponseDate = LocalDateTime.now
+  val testResponseDate = DateTime.now
 
   val fakeRequest = FakeRequest("GET", "")
 
