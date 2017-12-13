@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import java.time.{LocalDateTime, ZoneId}
 import javax.inject.{Inject, Named, Singleton}
 
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Logger
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
@@ -69,7 +68,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                       service = service,
                       clientId = clientId,
                       relationshipStatus = RelationshipStatus.Active,
-                      startDate = LocalDateTime.now(ZoneId.of("UTC")),
+                      startDate = DateTime.now(DateTimeZone.UTC),
                       endDate = None,
                       fromCesa = Some(true))
 
@@ -100,7 +99,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
     }
   }
 
-  case class Invitation(startDate: LocalDateTime)
+  case class Invitation(startDate: DateTime)
   implicit val invitationFormat = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>

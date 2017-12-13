@@ -1,8 +1,8 @@
 package uk.gov.hmrc.agentfirelationship
 
-import java.time.LocalDateTime
 import javax.inject.Singleton
 
+import org.joda.time.DateTime
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -28,7 +28,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
   override def arn = agentId
   override def nino = clientId
 
-  val testResponseDate = LocalDateTime.now
+  val testResponseDate = DateTime.now
   val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
