@@ -44,6 +44,7 @@ class GuiceModule(val environment: Environment, val configuration: Configuration
     bindBooleanProperty("features.check-cesa-relationships")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
+    bind(classOf[ApplicationStart]).asEagerSingleton() //[APB-1829] DELETE THIS after this has been released, you can delete this as it is no longer necessary
   }
 
   private def bindBaseUrl(serviceName: String) =

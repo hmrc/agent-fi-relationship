@@ -29,7 +29,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
   override def nino = clientId
 
   val testResponseDate = LocalDateTime.now
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, testResponseDate, None)
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -64,7 +64,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
       agentRelationship.startDate shouldBe testResponseDate
 
       And("Confirm the relationship contains the relationship status as ACTIVE")
-      agentRelationship.relationshipStatus shouldBe RelationshipStatus.Active
+      agentRelationship.relationshipStatus shouldBe Some(RelationshipStatus.Active)
     }
 
     scenario("A relationship which is the same already exists") {

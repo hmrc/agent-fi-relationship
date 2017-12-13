@@ -30,7 +30,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
   override def nino = clientId
 
   val testResponseDate = LocalDateTime.now
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, testResponseDate, None)
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

@@ -39,6 +39,20 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     Relationship.relationshipFormat,
     ReactiveMongoFormats.objectIdFormats) {
 
+//[APB-1829] This needs to be removed after all records have been updated. Currently we know there is <1000 records so it should be fine. But perhaps there would be overload if it is left in production.
+  def addActiveRelationshipStatus()(implicit ec: ExecutionContext): Future[Boolean] = {
+    println("calling the add active method")
+    collection.update(
+      BSONDocument("service" -> "afi","relationshipStatus" -> BSONDocument("$exists" -> false)),
+      BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Active.key)),
+      multi = true
+    ).map { result =>
+      result.writeErrors.foreach(error => Logger.warn(s"Updating relationships to have status have failed, error: $error"))
+      if (result.nModified > 0) true else false
+
+    }
+  }
+
   def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find("arn" -> arn,
       "service" -> service,

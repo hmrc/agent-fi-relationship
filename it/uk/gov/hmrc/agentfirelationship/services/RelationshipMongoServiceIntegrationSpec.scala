@@ -12,6 +12,7 @@ import uk.gov.hmrc.agentfirelationship.{agentId, clientId, service}
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.test.UnitSpec
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
@@ -26,9 +27,9 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
   override def nino = clientId
 
   val testResponseDate: String = LocalDateTime.now.toString
-  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None)
-  val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Terminated)
-  val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Active, LocalDateTime.parse(testResponseDate), None, fromCesa = Some(true))
+  val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testResponseDate), None)
+  val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Some(Terminated))
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testResponseDate), None, fromCesa = Some(true))
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -39,6 +40,36 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false
       )
+
+  "Update AFI relationships which do not have relationshipStatus to have relationshipStatus: ACTIVE" should {
+    "all relationships without status, now have status ACTIVE" in {
+      val create = for {
+        _ <- repo.createRelationship(validTestRelationship)
+        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = None))
+        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = None))
+        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
+      } yield ()
+      await(create)
+      await(repo.addActiveRelationshipStatus())
+
+      await(repo.findRelationships(agentId, "afi", clientId, Active)).length shouldBe 3
+      await(repo.findRelationships(agentId, "afi", clientId, Terminated)).length shouldBe 1
+    }
+
+    "relationships with status are unaffected" in {
+      val create = for {
+        _ <- repo.createRelationship(validTestRelationship)
+        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
+        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
+        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
+      } yield ()
+      await(create)
+      await(repo.addActiveRelationshipStatus())
+
+      await(repo.findRelationships(agentId, "afi", clientId, Active)).length shouldBe 1
+      await(repo.findRelationships(agentId, "afi", clientId, Terminated)).length shouldBe 3
+    }
+  }
 
   "RelationshipMongoService" should {
     "return active relationships for findRelationships" in {
