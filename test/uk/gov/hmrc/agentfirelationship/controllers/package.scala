@@ -32,14 +32,6 @@ import scala.concurrent.Future
 
 package object controllers {
   implicit val hc = new HeaderCarrier
-  val testResponseDate = DateTime.now
-
-  val fakeRequest = FakeRequest("GET", "")
-
-  val fakeCreateRequest: FakeRequest[JsObject] = FakeRequest("PUT", "/")
-        .withHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
-        .withBody(Json.obj("startDate" -> testResponseDate))
-
   val saAgentRef = SaAgentReference("T1113T")
   val saAgentRef2 = SaAgentReference("T1123T")
   val saAgentRef3 = SaAgentReference("T1133T")
@@ -47,8 +39,15 @@ package object controllers {
   val testCredId = "q213"
   val testService = "afi"
   val validTestNINO = "AE123456C"
-  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Active, testResponseDate, None)
-  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Terminated, testResponseDate, None, fromCesa = Some(true))
+  val testResponseDate = DateTime.now
+
+  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
+  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
+  val fakeRequest = FakeRequest("GET", "")
+  val fakeCreateRequest: FakeRequest[JsObject] = FakeRequest("PUT", "/")
+    .withHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
+    .withBody(Json.obj("startDate" -> testResponseDate))
+
 
   val agentEnrolment = Set(
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),

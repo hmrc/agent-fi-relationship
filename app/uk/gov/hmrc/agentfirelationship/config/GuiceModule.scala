@@ -30,6 +30,7 @@ import uk.gov.hmrc.play.config._
 class GuiceModule(val environment: Environment, val configuration: Configuration) extends AbstractModule with ServicesConfig {
 
   override val runModeConfiguration: Configuration = configuration
+
   override protected def mode = environment.mode
 
   override def configure(): Unit = {
@@ -44,6 +45,9 @@ class GuiceModule(val environment: Environment, val configuration: Configuration
     bindBooleanProperty("features.check-cesa-relationships")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
+    if(configuration.getBoolean("features.run-mongodb-migration").getOrElse(true)) {
+      bind(classOf[ApplicationStart]).asEagerSingleton() //[APB-1829] DELETE THIS after this has been released, you can delete this as it is no longer necessary
+    }
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -67,5 +71,4 @@ class GuiceModule(val environment: Environment, val configuration: Configuration
     override lazy val get: Boolean = configuration.getBoolean(confKey)
       .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
   }
-
 }

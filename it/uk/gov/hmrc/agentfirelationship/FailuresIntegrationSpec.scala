@@ -11,17 +11,20 @@ import scala.concurrent.duration._
 class FailuresIntegrationSpec extends IntegrationSpec
   with GuiceOneServerPerSuite
   with UpstreamServicesStubs
-  with RelationshipActions  {
+  with RelationshipActions {
 
   override implicit lazy val app: Application = appBuilder.build()
+
   override def arn = agentId
+
   override def nino = clientId
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
         "microservice.services.auth.port" -> wireMockPort,
-        "mongodb.uri" -> "mongodb://nowhere:27017/none"
+        "mongodb.uri" -> "mongodb://nowhere:27017/none",
+        "features.run-mongodb-migration" -> false
       )
 
   feature("Do not handle infrastructure failures, propagates errors downstream") {
