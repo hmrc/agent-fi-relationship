@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach

@@ -18,9 +18,9 @@ package uk.gov.hmrc.agentfirelationship.controllers
 
 import javax.inject.{Inject, Named, Singleton}
 
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Logger
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
@@ -68,7 +68,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                       service = service,
                       clientId = clientId,
                       relationshipStatus = RelationshipStatus.Active,
-                      startDate = DateTime.now,
+                      startDate = DateTime.now(DateTimeZone.UTC),
                       endDate = None,
                       fromCesa = Some(true))
 

@@ -19,9 +19,9 @@ package uk.gov.hmrc.agentfirelationship.services
 import javax.inject.Inject
 
 import com.google.inject.Singleton
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Logger
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{Json}
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
@@ -76,7 +76,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     collection.update(
       selector,
       BSONDocument("$set" -> BSONDocument("relationshipStatus" -> RelationshipStatus.Terminated.key,
-        "endDate" -> Json.toJson(DateTime.now))),
+        "endDate" -> Json.toJson(DateTime.now(DateTimeZone.UTC)))),
       multi = multi
     ).map { result =>
       result.writeErrors.foreach(error => Logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
