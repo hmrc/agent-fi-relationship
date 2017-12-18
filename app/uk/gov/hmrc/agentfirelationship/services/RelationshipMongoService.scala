@@ -39,7 +39,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     Relationship.relationshipFormat,
     ReactiveMongoFormats.objectIdFormats) {
 
-//[APB-1829] This needs to be removed after all records have been updated. Currently we know there is <1000 records so it should be fine. But perhaps there would be overload if it is left in production.
+  //APB-1829 - This needs to be removed after all records have been updated. Currently we know there is <1000 records so it should be fine. But perhaps there would be overload if it is left in production.
   def addActiveRelationshipStatus()(implicit ec: ExecutionContext): Future[Boolean] = {
     collection.update(
       BSONDocument("service" -> "afi","relationshipStatus" -> BSONDocument("$exists" -> false)),
@@ -49,6 +49,18 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       result.writeErrors.foreach(error => Logger.warn(s"Updating relationships to have status have failed, error: $error"))
       if (result.nModified > 0) true else false
 
+    }
+  }
+
+  //APB-1871 - This should also be removed once data migration has occurred
+  def migrateFromAfi()(implicit ec: ExecutionContext): Future[Boolean] = {
+    collection.update(
+      BSONDocument("service" -> "afi"),
+      BSONDocument("$set" -> BSONDocument("service" -> "PERSONAL-INCOME-RECORD")),
+      multi = true
+    ).map { result =>
+      result.writeErrors.foreach(error => Logger.warn(s"Migrating relationships from afi to PERSONAL-INCOME-RECORD failed, error: $error"))
+      if (result.nModified > 0) true else false
     }
   }
 

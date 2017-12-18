@@ -30,12 +30,18 @@ import scala.concurrent.{ExecutionContext, Future}
 class ApplicationStart @Inject()(lifecycle: ApplicationLifecycle,
                                  mongoService: RelationshipMongoService,
                                  implicit val ec: ExecutionContext) {
-  def start() = {
+  def start(): Future[Unit] = {
     Logger.info("Updating AFI relationships to have relationshipStatus set Active," +
       " remove this after records have been successfully updated")
-    mongoService.addActiveRelationshipStatus().foreach {
-      case true => Logger.warn("relationships have been updated to have relationshipStatus: Active")
-      case false => ()
+
+    (for {
+      status <- mongoService.addActiveRelationshipStatus()
+      service <- mongoService.migrateFromAfi()
+    } yield (status, service)).map {
+      case (true, true) => Logger.warn("Relationships have been updated with active status and PERSONAL-INCOME-RECORD service")
+      case (true, false) => Logger.warn("Relationships have been updated to have relationshipStatus: Active")
+      case (false, true) => Logger.warn("Relationships have been updated with PERSONAL-INCOME-RECORD service")
+      case _ => Logger.warn("No data migration has occurred")
     }
   }
 
