@@ -46,7 +46,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                                        @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
   extends BaseController {
 
-  def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] = findRelationship(arn, "afi", clientId)
+  def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] = findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val auditData = new AuditData()

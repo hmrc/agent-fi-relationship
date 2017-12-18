@@ -46,7 +46,7 @@ package object controllers {
   val saAgentRef3 = SaAgentReference("T1133T")
   val validTestArn = "AARN1234567"
   val testCredId = "q213"
-  val testService = "afi"
+  val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
 
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
