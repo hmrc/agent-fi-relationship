@@ -127,8 +127,8 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       When("I call the terminate relationship endpoint")
       val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, "INVALID"), 10 seconds)
 
-      Then("I should get a 200 OK response")
-      terminateRelationshipResponse.status shouldBe NOT_FOUND
+      Then("I should get a 500 response")
+      terminateRelationshipResponse.status shouldBe INTERNAL_SERVER_ERROR
 
       And("the relationship should be terminated")
       val agentRelationships: Future[List[Relationship]] = repo.findClientRelationships(service, clientId, Active)
