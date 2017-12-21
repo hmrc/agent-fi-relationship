@@ -280,7 +280,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
       val response = controller.terminateClientRelationships(testService, validTestNINO)(fakeRequest)
 
-      status(response) shouldBe NOT_FOUND
+      status(response) shouldBe INTERNAL_SERVER_ERROR
       verify(mockMongoService, times(1)).deleteAllClientIdRelationships(any(), any())(any())
     }
 

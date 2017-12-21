@@ -156,7 +156,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
               successOrFail <- mongoService.deleteAllClientIdRelationships(service, clientId)
               _ = submitRelationshipsDeletionAudit(clientRelationships, clientId)
             } yield successOrFail
-            relationshipsDeleted.map(if (_) Ok else NotFound)
+            relationshipsDeleted.map(if (_) Ok else InternalServerError)
           }
       }
   }
