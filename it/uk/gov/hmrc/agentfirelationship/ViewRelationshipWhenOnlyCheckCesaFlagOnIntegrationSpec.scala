@@ -62,9 +62,47 @@ class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec extends Integration
       actualService shouldBe service
     }
 
+    scenario("Client views an existing relationship") {
+
+      Given("there exists a relationship between an agent and client for a given service")
+      givenCreatedAuditEventStub(auditDetails)
+      isLoggedInAsClient
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
+
+      When("I call the View Relationship endpoint")
+      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I will receive a 200 OK response")
+      viewRelationshipResponse.status shouldBe OK
+
+      And("The response body will contain the relationship details")
+      val jsonResponse = Json.parse(viewRelationshipResponse.body)
+      val actualAgentId = (jsonResponse(0) \ "arn").as[String]
+      val actualClientId = (jsonResponse(0) \ "clientId").as[String]
+      val actualService = (jsonResponse(0) \ "service").as[String]
+      actualAgentId shouldBe agentId
+      actualClientId shouldBe clientId
+      actualService shouldBe service
+    }
+
     scenario("Agent views a non-existent relationship") {
 
       Given("no relationship exists for a combination of agent, client and service")
+      isLoggedInAndIsSubscribedAsAgent
+      Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
+      givenClientHasNoActiveRelationshipWithAgentInCESA(Nino(clientId))
+
+      When("I call the View Relationship endpoint")
+      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I will receive a 404 NOT FOUND response")
+      viewRelationshipResponse.status shouldBe NOT_FOUND
+    }
+
+    scenario("Client views a non-existent relationship") {
+
+      Given("no relationship exists for a combination of agent, client and service")
+      isLoggedInAsClient
       Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
       givenClientHasNoActiveRelationshipWithAgentInCESA(Nino(clientId))
 
@@ -78,6 +116,38 @@ class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec extends Integration
     scenario("Agent views a relationship existing only in CESA") {
 
       Given("relationship exists in CESA and has been mapped for a combination of agent and client")
+      isLoggedInAndIsSubscribedAsAgent
+      Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
+      givenClientHasRelationshipWithAgentInCESA(Nino(clientId), "foo")
+      givenArnIsKnownFor(Arn(agentId), SaAgentReference("foo"))
+      givenCesaCopyAuditEventStub(Map(
+        "agentReferenceNumber" -> agentId,
+        "saAgentRef" -> "foo",
+        "regime" -> "afi",
+        "regimeId" -> clientId
+      ))
+
+      When("I call the View Relationship endpoint")
+      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I will receive a 200 OK response")
+      viewRelationshipResponse.status shouldBe OK
+      Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
+
+      And("The response body will not contain the relationship details")
+      val jsonResponse = Json.parse(viewRelationshipResponse.body)
+      val actualAgentId = (jsonResponse(0) \ "arn").asOpt[String]
+      val actualClientId = (jsonResponse(0) \ "clientId").asOpt[String]
+      val actualService = (jsonResponse(0) \ "service").asOpt[String]
+      actualAgentId shouldBe None
+      actualClientId shouldBe None
+      actualService shouldBe None
+    }
+
+    scenario("Client views a relationship existing only in CESA") {
+
+      Given("relationship exists in CESA and has been mapped for a combination of agent and client")
+      isLoggedInAsClient
       Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
       givenClientHasRelationshipWithAgentInCESA(Nino(clientId), "foo")
       givenArnIsKnownFor(Arn(agentId), SaAgentReference("foo"))

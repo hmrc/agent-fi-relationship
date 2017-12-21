@@ -76,6 +76,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
     scenario("Agent views a relationship existing only in CESA") {
 
       Given("relationship exists in CESA and has been mapped for a combination of agent and client")
+      isLoggedInAndIsSubscribedAsAgent
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
       givenClientHasRelationshipWithAgentInCESA(Nino(clientId), "foo")
       givenArnIsKnownFor(Arn(agentId), SaAgentReference("foo"))
