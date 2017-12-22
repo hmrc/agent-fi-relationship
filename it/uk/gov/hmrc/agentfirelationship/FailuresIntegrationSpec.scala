@@ -53,6 +53,7 @@ class FailuresIntegrationSpec extends IntegrationSpec
 
     scenario("Mongodb not available when viewing relationship") {
       Given("there exists a relationship between an agent and client for a given service")
+      isLoggedInAndIsSubscribedAsAgent
       givenCreatedAuditEventStub(auditDetails)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 

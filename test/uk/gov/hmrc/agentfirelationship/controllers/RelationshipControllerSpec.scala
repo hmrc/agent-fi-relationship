@@ -61,6 +61,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
 
   "RelationshipController" should {
     "return Status: OK when successfully finding a relationship" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -71,6 +72,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     }
 
     "return Status: NOT_FOUND for not finding data" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List())
       when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
@@ -316,6 +318,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     }
 
     "return Status: OK for finding data via access control endpoint" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -326,6 +329,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOn
     }
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))

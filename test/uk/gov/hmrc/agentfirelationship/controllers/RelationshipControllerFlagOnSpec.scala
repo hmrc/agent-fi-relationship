@@ -63,6 +63,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
       mockCesaRelationship, true, true)
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
 
@@ -73,6 +74,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
     }
 
     "return Status: NOT_FOUND if any previous relationships are found" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
@@ -86,6 +88,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
     }
 
     "return Status: NOT FOUND when no relationship in Cesa and Agent Mapping is found" in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
@@ -102,6 +105,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with G
     }
 
     "return Status: NOT FOUND when failed to copy relationship from Cesa " in {
+      authStub(clientAffinityAndEnrolments)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))
         .thenReturn(Future successful List())
       when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))

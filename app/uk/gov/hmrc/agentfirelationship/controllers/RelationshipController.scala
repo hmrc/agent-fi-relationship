@@ -50,48 +50,52 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
 
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val auditData = new AuditData()
-    mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { result =>
-      if (result.nonEmpty) {
-        Future.successful(Ok(toJson(result)))
-      } else {
-        mongoService.findAnyRelationships(arn, service, clientId) flatMap { previousRelationships =>
-          if (previousRelationships.nonEmpty) {
-            Future successful NotFound
+    authConnector.authorisedForAfi { implicit taxIdentifier =>
+      forThisUser(Arn(arn), Nino(clientId)) {
+        mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { result =>
+          if (result.nonEmpty) {
+            Future.successful(Ok(toJson(result)))
           } else {
-            if (checkCesaRelationships) {
-              checkCesaService.lookupCesaForOldRelationship(Arn(arn), Nino(clientId)).flatMap { saAgentRefs =>
-                if (saAgentRefs.isEmpty) {
-                  Future successful NotFound
-                } else {
-                  if (copyCesaRelationships) {
-                    val activeRelationship = Relationship(
-                      arn = Arn(arn),
-                      service = service,
-                      clientId = clientId,
-                      relationshipStatus = Some(RelationshipStatus.Active),
-                      startDate = LocalDateTime.now(ZoneId.of("UTC")),
-                      endDate = None,
-                      fromCesa = Some(true))
-                    mongoService.createRelationship(activeRelationship)
-                      .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
-                      .map(newResult => {
-                        auditData.set("agentReferenceNumber", arn)
-                        auditData.set("regime", "afi")
-                        auditService.sendCreateRelationshipFromExisting(auditData)
-                        Ok(toJson(newResult))
-                      })
-                      .recover {
-                        case ex =>
-                          Logger.error("Relationship creation failed", ex)
-                          Ok(toJson(result))
+            mongoService.findAnyRelationships(arn, service, clientId) flatMap { previousRelationships =>
+              if (previousRelationships.nonEmpty) {
+                Future successful NotFound
+              } else {
+                if (checkCesaRelationships) {
+                  checkCesaService.lookupCesaForOldRelationship(Arn(arn), Nino(clientId)).flatMap { saAgentRefs =>
+                    if (saAgentRefs.isEmpty) {
+                      Future successful NotFound
+                    } else {
+                      if (copyCesaRelationships) {
+                        val activeRelationship = Relationship(
+                          arn = Arn(arn),
+                          service = service,
+                          clientId = clientId,
+                          relationshipStatus = Some(RelationshipStatus.Active),
+                          startDate = LocalDateTime.now(ZoneId.of("UTC")),
+                          endDate = None,
+                          fromCesa = Some(true))
+                        mongoService.createRelationship(activeRelationship)
+                          .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
+                          .map(newResult => {
+                            auditData.set("agentReferenceNumber", arn)
+                            auditData.set("regime", "afi")
+                            auditService.sendCreateRelationshipFromExisting(auditData)
+                            Ok(toJson(newResult))
+                          })
+                          .recover {
+                            case ex =>
+                              Logger.error("Relationship creation failed", ex)
+                              Ok(toJson(result))
+                          }
+                      } else {
+                        Future successful Ok(toJson(result))
                       }
-                  } else {
-                    Future successful Ok(toJson(result))
+                    }
                   }
+                } else {
+                  Future.successful(NotFound)
                 }
               }
-            } else {
-              Future.successful(NotFound)
             }
           }
         }
@@ -100,6 +104,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
   }
 
   case class Invitation(startDate: LocalDateTime)
+
   implicit val invitationFormat = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>
@@ -125,8 +130,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authConnector.authorisedForAfi {
-        implicit taxIdentifier =>
+      authConnector.authorisedForAfi { implicit taxIdentifier =>
           forThisUser(Arn(arn), Nino(clientId)) {
             val relationshipDeleted: Future[Boolean] = for {
               successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
@@ -140,15 +144,18 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
   }
 
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active) map { result =>
-      if (result.nonEmpty) Ok(toJson(result)) else NotFound
+    authConnector.authorisedForAfi { implicit taxIdentifier =>
+      if (Nino(clientId) != taxIdentifier) Future successful Forbidden
+      else {
+        mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active) map { result =>
+          if (result.nonEmpty) Ok(toJson(result)) else NotFound
+        }
+      }
     }
   }
 
-  def terminateClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authConnector.authorisedForAfi {
-        implicit taxIdentifier =>
+  def terminateClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
+      authConnector.authorisedForAfi { implicit taxIdentifier =>
           if (Nino(clientId) != taxIdentifier) Future successful Forbidden
           else {
             val relationshipsDeleted: Future[Boolean] = for {
