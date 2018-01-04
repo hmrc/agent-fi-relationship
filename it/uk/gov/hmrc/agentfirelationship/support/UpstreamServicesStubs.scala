@@ -51,7 +51,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |  "detail": ${Json.toJson(detail)}
            |}"""
       ))
-      .willReturn(aResponse().withStatus(200)))
+      .willReturn(aResponse().withStatus(204)))
   }
 
   def givenEndedAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
@@ -63,7 +63,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |  "detail": ${Json.toJson(detail)}
            |}"""
       ))
-      .willReturn(aResponse().withStatus(200)))
+      .willReturn(aResponse().withStatus(204)))
   }
 
   def givenCesaCopyAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
@@ -75,11 +75,11 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |  "detail": ${Json.toJson(detail)}
            |}"""
       ))
-      .willReturn(aResponse().withStatus(200)))
+      .willReturn(aResponse().withStatus(204)))
   }
 
   def givenImplicitAuditEvents() = {
-    stubFor(post(urlPathEqualTo("/write/audit/merged")).willReturn(aResponse().withStatus(200)))
+    stubFor(post(urlPathEqualTo("/write/audit/merged")).willReturn(aResponse().withStatus(204)))
   }
 
   def givenAuthReturnsUserDetails(): Unit = {
