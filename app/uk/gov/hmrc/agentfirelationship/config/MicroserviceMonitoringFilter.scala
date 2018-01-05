@@ -46,7 +46,7 @@ object RoutesConverter {
         val key = stripInitialAndTrailingSlash(r).split("/").map(
           p => if (p.startsWith("$")) {
             val name = p.substring(1)
-            if (variables.contains(name)) s"{$name}" else name
+            if (variables.contains(name)) s"{$name}" else ""
           } else p).mkString("-")
         val pattern = r.replace("$", ":")
         Logger.info(s"$key-$method -> $pattern")
