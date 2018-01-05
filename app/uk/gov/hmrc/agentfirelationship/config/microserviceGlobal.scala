@@ -16,23 +16,15 @@
 
 package uk.gov.hmrc.agentfirelationship.config
 
-import java.util.regex.{Matcher, Pattern}
 import javax.inject.{Inject, Singleton}
 
-import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
-import play.api.mvc.{EssentialFilter, Filter, RequestHeader, Result}
-import play.api.{Application, Configuration, Logger, Play}
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
+import play.api.mvc.EssentialFilter
+import play.api.{Application, Configuration, Play}
 import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
 import uk.gov.hmrc.play.microservice.bootstrap.DefaultMicroserviceGlobal
 import uk.gov.hmrc.play.microservice.filters.{AuditFilter, LoggingFilter, MicroserviceFilterSupport}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ControllerConfiguration @Inject()(configuration: Configuration) extends ControllerConfig {
@@ -68,84 +60,4 @@ object MicroserviceGlobal extends DefaultMicroserviceGlobal with RunMode {
   lazy val monitoringFilter: EssentialFilter = Play.current.injector.instanceOf[MicroserviceMonitoringFilter]
 
   override lazy val microserviceFilters: Seq[EssentialFilter] = defaultMicroserviceFilters ++ Seq(monitoringFilter)
-}
-
-@Singleton
-class MicroserviceMonitoringFilter @Inject()(metrics: Metrics)(implicit ec: ExecutionContext)
-  extends MonitoringFilter(Seq(
-    "relationships-{service}" -> "/relationships/agent/:arn/service/:service/client/:clientId",
-    "check-PIR" -> "/relationships/PERSONAL-INCOME-RECORD/agent/:arn/client/:clientId",
-    "check-AFI" -> "/relationships/afi/agent/:arn/client/:clientId",
-    "client-relationships-{service}" -> "/relationships/service/:service/clientId/:clientId"
-  ), metrics.defaultRegistry) with MicroserviceFilterSupport
-
-
-abstract class MonitoringFilter(val keyToPatternMapping: Seq[(String, String)], override val kenshooRegistry: MetricRegistry)
-                               (implicit ec: ExecutionContext)
-  extends Filter with HttpAPIMonitor with MonitoringKeyMatcher {
-
-  override def apply(nextFilter: (RequestHeader) => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
-
-    implicit val hc: HeaderCarrier = fromHeadersAndSession(requestHeader.headers)
-
-    findMatchingKey(requestHeader.uri) match {
-      case Some(key) =>
-        monitor(s"API-$key-${requestHeader.method}") {
-          nextFilter(requestHeader)
-        }
-      case None =>
-        Logger.debug(s"API-Not-Monitored: ${requestHeader.method}-${requestHeader.uri}")
-        nextFilter(requestHeader)
-    }
-  }
-}
-
-trait MonitoringKeyMatcher {
-
-  private val placeholderPattern = Pattern.compile("(:[^/]+)")
-
-  def keyToPatternMapping: Seq[(String, String)]
-
-  private lazy val patterns: Seq[(String, (Pattern, Seq[String]))] = keyToPatternMapping
-    .map { case (k, p) => (k, preparePatternAndVariables(p)) }
-    .map { case (k, (p, vs)) => (k, (Pattern.compile(p), vs)) }
-
-  def preparePatternAndVariables(p: String): (String, Seq[String]) = {
-    var pattern = p
-    val m = placeholderPattern.matcher(pattern)
-    var variables = Seq[String]()
-    while(m.find()){
-      val variable = m.group().substring(1)
-      if (variables.contains(variable)) {
-        throw new IllegalArgumentException(s"Duplicated variable name '$variable' in monitoring filter pattern '$p'")
-      }
-      variables = variables :+ variable
-    }
-    for (v <- variables) {
-      pattern = pattern.replace(":"+v, "([^/]+)")
-    }
-    ("^.*"+pattern+"$",variables.map("{"+_+"}"))
-  }
-
-  def findMatchingKey(value: String): Option[String] = {
-    patterns.collectFirst {
-      case (key, (pattern, variables)) if pattern.matcher(value).matches() =>
-        (key, variables, readValues(pattern.matcher(value)))
-    } map {
-      case (key, variables, values) => replaceVariables(key, variables, values)
-    }
-  }
-
-  private def readValues(result: Matcher): Seq[String] = {
-    result.matches()
-    (1 to result.groupCount()) map result.group
-  }
-
-  private def replaceVariables(key: String, variables: Seq[String], values: Seq[String]): String = {
-    if (values.isEmpty) key
-    else values.zip(variables).foldLeft(key) {
-      case (k, (value, variable)) => k.replace(variable, value.toLowerCase)
-    }
-  }
-
 }
