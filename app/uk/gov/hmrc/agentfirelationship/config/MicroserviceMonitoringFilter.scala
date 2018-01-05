@@ -32,15 +32,15 @@ import uk.gov.hmrc.play.microservice.filters.MicroserviceFilterSupport
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class MicroserviceMonitoringFilter @Inject()(metrics: Metrics, routes: Routes)
+class MicroserviceMonitoringFilter @Inject()(metrics: Metrics)
                                             (implicit ec: ExecutionContext)
-  extends MonitoringFilter(
-    RoutesConverter.keyToPatternMapping(routes, Set("service")),
-    metrics.defaultRegistry) with MicroserviceFilterSupport
+  extends MonitoringFilter(metrics.defaultRegistry) with MicroserviceFilterSupport {
+  override def keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(Set("service"))
+}
 
-object RoutesConverter {
-  def keyToPatternMapping(routes: Routes, variables: Set[String] = Set.empty): Seq[(String, String)] = {
-    routes.documentation.map {
+object KeyToPatternMappingFromRoutes {
+  def apply(variables: Set[String] = Set.empty): Seq[(String, String)] = {
+    Routes.documentation.map {
       case (method, route, _) => {
         val r = route.replace("<[^/]+>", "")
         val key = stripInitialAndTrailingSlash(r).split("/").map(
@@ -61,7 +61,7 @@ object RoutesConverter {
   }
 }
 
-abstract class MonitoringFilter(val keyToPatternMapping: Seq[(String, String)], override val kenshooRegistry: MetricRegistry)
+abstract class MonitoringFilter(override val kenshooRegistry: MetricRegistry)
                                (implicit ec: ExecutionContext)
   extends Filter with HttpAPIMonitor with MonitoringKeyMatcher {
 
@@ -125,7 +125,7 @@ trait MonitoringKeyMatcher {
   private def replaceVariables(key: String, variables: Seq[String], values: Seq[String]): String = {
     if (values.isEmpty) key
     else values.zip(variables).foldLeft(key) {
-      case (k, (value, variable)) => k.replace(variable, value.toLowerCase)
+      case (k, (value, variable)) => k.replace(variable, value)
     }
   }
 
