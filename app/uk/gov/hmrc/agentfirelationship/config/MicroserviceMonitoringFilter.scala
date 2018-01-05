@@ -41,7 +41,7 @@ class MicroserviceMonitoringFilter @Inject()(metrics: Metrics, routes: Routes)
 object RoutesConverter {
   def keyToPatternMapping(routes: Routes, variables: Set[String] = Set.empty): Seq[(String, String)] = {
     routes.documentation.map {
-      case (_, route, _) => {
+      case (method, route, _) => {
         val r = route.replace("<[^/]+>", "")
         val key = stripInitialAndTrailingSlash(r).split("/").map(
           p => if (p.startsWith("$")) {
@@ -49,6 +49,7 @@ object RoutesConverter {
             if (variables.contains(name)) s"{$name}" else name
           } else p).mkString("-")
         val pattern = r.replace("$", ":")
+        Logger.info(s"$key-$method -> $pattern")
         (key, pattern)
       }
     }
@@ -63,12 +64,6 @@ object RoutesConverter {
 abstract class MonitoringFilter(val keyToPatternMapping: Seq[(String, String)], override val kenshooRegistry: MetricRegistry)
                                (implicit ec: ExecutionContext)
   extends Filter with HttpAPIMonitor with MonitoringKeyMatcher {
-
-  {
-    val maxRouteLength = keyToPatternMapping.map { case (_, p) => p.length }.max
-    Logger.info(keyToPatternMapping.map { case (k, p) => s"${p.padTo(maxRouteLength, " ").mkString}\t->\t$k" }.mkString("\nMonitoring Filter rules:\n\t", "\n\t", "\n"))
-  }
-
 
   override def apply(nextFilter: (RequestHeader) => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
 
