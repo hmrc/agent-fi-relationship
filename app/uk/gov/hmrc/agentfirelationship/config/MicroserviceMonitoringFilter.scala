@@ -43,21 +43,16 @@ object KeyToPatternMappingFromRoutes {
     Routes.documentation.map {
       case (method, route, _) => {
         val r = route.replace("<[^/]+>", "")
-        val key = stripInitialAndTrailingSlash(r).split("/").map(
+        val key = r.split("/").map(
           p => if (p.startsWith("$")) {
             val name = p.substring(1)
-            if (variables.contains(name)) s"{$name}" else ""
-          } else p).mkString("-")
+            if (variables.contains(name)) s"{$name}" else ":"
+          } else p).mkString("|")
         val pattern = r.replace("$", ":")
         Logger.info(s"$key-$method -> $pattern")
         (key, pattern)
       }
     }
-  }
-
-  private def stripInitialAndTrailingSlash(key: String): String = {
-    val k = if (key.startsWith("/")) key.substring(1) else key
-    if (k.endsWith("/")) k.substring(0, k.length - 1) else k
   }
 }
 

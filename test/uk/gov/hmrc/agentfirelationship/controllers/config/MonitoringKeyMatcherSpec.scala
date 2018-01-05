@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers.config
 
-import uk.gov.hmrc.agentfirelationship.config.MonitoringKeyMatcher
+import uk.gov.hmrc.agentfirelationship.config.{KeyToPatternMappingFromRoutes, MonitoringKeyMatcher}
 import uk.gov.hmrc.play.test.UnitSpec
 
 class MonitoringKeyMatcherSpec extends UnitSpec {
@@ -73,6 +73,16 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("check-PIR")
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("check-AFI")
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some("client-relationships-PERSONAL-INCOME-RECORD")
+    }
+
+    "parse Routes and produce monitoring key-pattern pairs" in {
+      val tested = new MonitoringKeyMatcher {
+        override val keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(Set("service"))
+      }
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/agent/ARN123456/service/PERSONAL-INCOME-RECORD/client/GHZ8983HJ") shouldBe Some("|relationships|agent|:|service|PERSONAL-INCOME-RECORD|client|:")
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("|relationships|PERSONAL-INCOME-RECORD|agent|:|client|:")
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("|relationships|afi|agent|:|client|:")
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some("|relationships|service|PERSONAL-INCOME-RECORD|clientId|:")
     }
 
   }
