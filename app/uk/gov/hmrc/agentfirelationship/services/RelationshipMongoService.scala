@@ -83,7 +83,7 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
   }
 
   def terminateRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId))(false, ec)
+    updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId))(true, ec)
   }
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
