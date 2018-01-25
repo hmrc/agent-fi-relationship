@@ -7,7 +7,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
@@ -15,7 +15,6 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-
 import scala.concurrent.{Await, Future}
 
 @Singleton
@@ -61,6 +60,41 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       And("the relationship should be terminated")
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
       viewRelationshipResponse.status shouldBe NOT_FOUND
+    }
+
+    scenario("Agent terminates an existing relationship with client for a given service when the relationship is created for the second time") {
+
+      Given("a create-relationship request with basic string values for Agent ID, client ID and service")
+      givenCreatedAuditEventStub(auditDetails)
+
+      When("I call the create-relationship endpoint")
+      isLoggedInAndIsSubscribedAsAgent
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
+
+      Then("I will receive a 201 CREATED response")
+      createRelationshipResponse.status shouldBe CREATED
+
+      val agentRelationship: Relationship = Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds).head
+
+      And("Confirm the relationship contains the start date")
+      agentRelationship.relationshipStatus shouldBe Some(RelationshipStatus.Active)
+
+      And("I delete the relationship")
+
+      val deleteRelResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+      deleteRelResponse.status shouldBe 200
+
+      Await.result(repo.findAnyRelationships(agentId, service, clientId), 10 seconds).head.relationshipStatus shouldBe Some(RelationshipStatus.Terminated)
+
+      Then("I create the relationship for same parameters for second time")
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
+
+      And("I delete the newly created relationship")
+      val secondDeleteResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+      secondDeleteResponse.status shouldBe 200
+
+      Await.result(repo.findAnyRelationships(agentId, service, clientId), 10 seconds).size shouldBe 2
+      Await.result(repo.findAnyRelationships(agentId, service, clientId), 10 seconds).last.relationshipStatus shouldBe Some(RelationshipStatus.Terminated)
     }
 
     scenario("Agent fails to terminates the relation with client for an invalid service") {
