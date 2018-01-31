@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
       auditData.set("authProviderId", "0000001234567890")
-      auditData.set("regime", "afi")
-      auditData.set("regimeId", Nino("KS969148D").value)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", Nino("KS969148D").value)
+      auditData.set("clientIdType", "ni")
       await(service.sendCreateRelationshipEvent(auditData)(
         hc,
         FakeRequest("GET", "/path"))
@@ -66,8 +67,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("authProviderId") shouldBe "0000001234567890"
-        sentEvent.detail("regime") shouldBe  "afi"
-        sentEvent.detail("regimeId") shouldBe "KS969148D"
+        sentEvent.detail("service") shouldBe "personal-income-record"
+        sentEvent.detail("clientId") shouldBe "KS969148D"
+        sentEvent.detail("clientIdType") shouldBe "ni"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "agent fi create relationship"
@@ -89,8 +91,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
       auditData.set("authProviderId", "0000001234567890")
-      auditData.set("regime", "afi")
-      auditData.set("regimeId", Nino("KS969148D").value)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", Nino("KS969148D").value)
+      auditData.set("clientIdType", "ni")
       await(service.sendDeleteRelationshipEvent(auditData)(
         hc,
         FakeRequest("GET", "/path"))
@@ -105,8 +108,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("arn") shouldBe "1234"
         sentEvent.detail("authProviderId") shouldBe "0000001234567890"
-        sentEvent.detail("regime") shouldBe  "afi"
-        sentEvent.detail("regimeId") shouldBe "KS969148D"
+        sentEvent.detail("service") shouldBe  "personal-income-record"
+        sentEvent.detail("clientId") shouldBe "KS969148D"
+        sentEvent.detail("clientIdType") shouldBe "ni"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "agent fi delete relationship"
@@ -129,8 +133,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val auditData = new AuditData()
       auditData.set("agentReferenceNumber", Arn("1234").value)
       auditData.set("saAgentRef", "SA6012")
-      auditData.set("regime", "afi")
-      auditData.set("regimeId", Nino("KS969148D").value)
+      auditData.set("service", "afi")
+      auditData.set("clientId", Nino("KS969148D").value)
+      auditData.set("clientIdType", "ni")
       await(service.sendCreateRelationshipFromExisting(auditData)(
         hc,
         FakeRequest("GET", "/path"))
@@ -145,8 +150,9 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.auditSource shouldBe "agent-fi-relationship"
         sentEvent.detail("agentReferenceNumber") shouldBe "1234"
         sentEvent.detail("saAgentRef") shouldBe "SA6012"
-        sentEvent.detail("regime") shouldBe "afi"
-        sentEvent.detail("regimeId") shouldBe "KS969148D"
+        sentEvent.detail("service") shouldBe "afi"
+        sentEvent.detail("clientId") shouldBe "KS969148D"
+        sentEvent.detail("clientIdType") shouldBe "ni"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "Agent client relationship created from CESA"

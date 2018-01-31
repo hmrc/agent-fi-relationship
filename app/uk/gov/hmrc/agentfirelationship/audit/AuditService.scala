@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,22 +61,25 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
   val createRelationshipDetailsFields = Seq(
     "authProviderId",
     "arn",
-    "regime",
-    "regimeId"
+    "service",
+    "clientId",
+    "clientIdType"
   )
 
   val DeleteRelationshipFields = Seq(
     "authProviderId",
     "arn",
-    "regime",
-    "regimeId"
+    "service",
+    "clientId",
+    "clientIdType"
   )
 
   val createdFromExistingRelationship = Seq(
     "agentReferenceNumber",
     "saAgentRef",
-    "regime",
-    "regimeId"
+    "service",
+    "clientId",
+    "clientIdType"
   )
 
   def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {

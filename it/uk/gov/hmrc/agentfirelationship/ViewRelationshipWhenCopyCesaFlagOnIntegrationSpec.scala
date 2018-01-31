@@ -84,8 +84,9 @@ class ViewRelationshipWhenCopyCesaFlagOnIntegrationSpec extends IntegrationSpec 
       givenCesaCopyAuditEventStub(Map(
         "agentReferenceNumber" -> agentId,
         "saAgentRef" -> "foo",
-        "regime" -> "afi",
-        "regimeId" -> clientId
+        "service" -> "personal-income-record",
+        "cliendId" -> clientId,
+        "cliendIdType" -> "ni"
       ))
 
       When("I call the View Relationship endpoint")

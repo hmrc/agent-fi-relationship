@@ -82,8 +82,9 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
       givenCesaCopyAuditEventStub(Map(
         "agentReferenceNumber" -> agentId,
         "saAgentRef" -> "foo",
-        "regime" -> "afi",
-        "regimeId" -> clientId
+        "service" -> "personal-income-record",
+        "clientId" -> clientId,
+        "clientIdType" -> "ni"
       ))
 
       When("I call the View Relationship endpoint")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ package uk.gov.hmrc.agentfirelationship.controllers
 import java.time.{LocalDateTime, ZoneId}
 import javax.inject.{Inject, Named, Singleton}
 
-import org.joda.time.DateTime
 import play.api.Logger
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
@@ -76,7 +75,7 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
                       .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
                       .map(newResult => {
                         auditData.set("agentReferenceNumber", arn)
-                        auditData.set("regime", "afi")
+                        auditData.set("service", "personal-income-record")
                         auditService.sendCreateRelationshipFromExisting(auditData)
                         Ok(toJson(newResult))
                       })
@@ -170,8 +169,9 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
       val auditData = new AuditData()
       auditData.set("authProviderId", userDetails.authProviderId)
       auditData.set("arn", arn)
-      auditData.set("regime", "afi")
-      auditData.set("regimeId", clientId)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", clientId)
+      auditData.set("clientIdType", "ni")
       auditData
     }
   }
