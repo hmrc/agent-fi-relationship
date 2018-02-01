@@ -35,7 +35,7 @@ class CesaRelationshipCopyService @Inject()(des: DesConnector,
 
   def lookupCesaForOldRelationship(arn: Arn, nino: Nino)
                                   (implicit ec: ExecutionContext, hc: HeaderCarrier, request: Request[Any], auditData: AuditData): Future[Set[SaAgentReference]] = {
-    auditData.set("regimeId", nino)
+    auditData.set("clientId", nino)
     for {
       references <- des.getClientSaAgentSaReferences(nino)
       matching <- intersection(references) {

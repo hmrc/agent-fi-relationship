@@ -20,9 +20,8 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
+import play.api.mvc.Result
 import play.api.mvc.Results._
-import play.api.mvc.{AnyContent, Request, Result}
-import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.controllers._

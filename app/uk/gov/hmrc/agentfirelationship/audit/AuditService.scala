@@ -61,22 +61,25 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
   val createRelationshipDetailsFields = Seq(
     "authProviderId",
     "arn",
-    "regime",
-    "regimeId"
+    "service",
+    "clientId",
+    "clientIdType"
   )
 
   val DeleteRelationshipFields = Seq(
     "authProviderId",
     "arn",
-    "regime",
-    "regimeId"
+    "service",
+    "clientId",
+    "clientIdType"
   )
 
   val createdFromExistingRelationship = Seq(
     "agentReferenceNumber",
     "saAgentRef",
-    "regime",
-    "regimeId"
+    "service",
+    "clientId",
+    "clientIdType"
   )
 
   def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
