@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.models
+package uk.gov.hmrc.agentfirelationship.wiring
 
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.{ affinityGroup, allEnrolments }
-import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
-import uk.gov.hmrc.auth.core.{ AffinityGroup, Enrolments }
+import javax.inject.{ Inject, Singleton }
 
-object Auth {
-  lazy val affinityGroupAllEnrolls: Retrieval[~[Option[AffinityGroup], Enrolments]] = affinityGroup and allEnrolments
-}
+import com.kenshoo.play.metrics.MetricsFilter
+import play.api.http.DefaultHttpFilters
+import uk.gov.hmrc.play.bootstrap.filters.{ AuditFilter, CacheControlFilter, LoggingFilter }
+
+@Singleton
+class MicroserviceFilters @Inject() (
+  metricsFilter: MetricsFilter,
+  auditFilter: AuditFilter,
+  loggingFilter: LoggingFilter,
+  cacheFilter: CacheControlFilter,
+  monitoringFilter: MicroserviceMonitoringFilter) extends DefaultHttpFilters(metricsFilter, monitoringFilter, auditFilter, loggingFilter, cacheFilter)

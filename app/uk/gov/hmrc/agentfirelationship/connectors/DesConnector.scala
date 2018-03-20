@@ -17,18 +17,18 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{ Inject, Named, Singleton }
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import play.api.libs.json._
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpReads}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost, HttpReads }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -43,12 +43,13 @@ object ClientRelationship {
 }
 
 @Singleton
-class DesConnector @Inject()(@Named("des-baseUrl") baseUrl: URL,
-                             @Named("des.authorizationToken") authorizationToken: String,
-                             @Named("des.environment") environment: String,
-                             httpGet: HttpGet,
-                             httpPost: HttpPost,
-                             metrics: Metrics)
+class DesConnector @Inject() (
+  @Named("des-baseUrl") baseUrl: URL,
+  @Named("des.authorizationToken") authorizationToken: String,
+  @Named("des.environment") environment: String,
+  httpGet: HttpGet,
+  httpPost: HttpPost,
+  metrics: Metrics)
   extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
@@ -58,7 +59,6 @@ class DesConnector @Inject()(@Named("des-baseUrl") baseUrl: URL,
       .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
       .flatMap(_.agentId))
   }
-
 
   private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(

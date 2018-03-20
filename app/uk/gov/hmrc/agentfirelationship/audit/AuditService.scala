@@ -52,7 +52,7 @@ class AuditData {
 }
 
 @Singleton
-class AuditService @Inject()(val auditConnector: AuditConnector) {
+class AuditService @Inject() (val auditConnector: AuditConnector) {
 
   private def collectDetails(data: Map[String, Any], fields: Seq[String]): Seq[(String, Any)] = fields.map { f =>
     (f, data.getOrElse(f, ""))
@@ -63,28 +63,25 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     "arn",
     "service",
     "clientId",
-    "clientIdType"
-  )
+    "clientIdType")
 
   val DeleteRelationshipFields = Seq(
     "authProviderId",
     "arn",
     "service",
     "clientId",
-    "clientIdType"
-  )
+    "clientIdType")
 
   val createdFromExistingRelationship = Seq(
     "agentReferenceNumber",
     "saAgentRef",
     "service",
     "clientId",
-    "clientIdType"
-  )
+    "clientIdType")
 
   def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
-      auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "agent fi create relationship",
-        collectDetails(auditData.getDetails, createRelationshipDetailsFields))
+    auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "agent fi create relationship",
+      collectDetails(auditData.getDetails, createRelationshipDetailsFields))
   }
 
   def sendDeleteRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
@@ -97,13 +94,11 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
       collectDetails(auditData.getDetails, createdFromExistingRelationship))
   }
 
-  private def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)
-                        (implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
+  private def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     send(createEvent(event, transactionName, details: _*))
   }
 
-  private def createEvent(event: AgentClientRelationshipEvent, transactionName: String, details: (String, Any)*)
-                         (implicit hc: HeaderCarrier, request: Request[Any]): DataEvent = {
+  private def createEvent(event: AgentClientRelationshipEvent, transactionName: String, details: (String, Any)*)(implicit hc: HeaderCarrier, request: Request[Any]): DataEvent = {
 
     def toString(x: Any): String = x match {
       case t: TaxIdentifier => t.value
@@ -112,11 +107,11 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
 
     val detail = hc.toAuditDetails(details.map(pair => pair._1 -> toString(pair._2)): _*)
     val tags = hc.toAuditTags(transactionName, request.path)
-    DataEvent(auditSource = "agent-fi-relationship",
+    DataEvent(
+      auditSource = "agent-fi-relationship",
       auditType = event.toString,
       tags = tags,
-      detail = detail
-    )
+      detail = detail)
   }
 
   private def send(events: DataEvent*)(implicit hc: HeaderCarrier): Future[Unit] = {

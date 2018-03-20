@@ -16,17 +16,23 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers.connectors
 
+import java.net.URL
+
+import com.kenshoo.play.metrics.Metrics
+import javax.inject.{ Inject, Named }
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito.{ reset, when }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
+import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
 import uk.gov.hmrc.agentfirelationship.controllers._
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
+import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
+import uk.gov.hmrc.auth.core.{ AffinityGroup, Enrolments, PlayAuthConnector }
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -35,11 +41,12 @@ import scala.concurrent.Future
 class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
-  val mockAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector {
+  val mockMicroserviceAuthConnector: MicroserviceAuthConnector = mock[MicroserviceAuthConnector]
+  val mockAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
     override def authConnector: PlayAuthConnector = mockPlayAuthConnector
   }
 
-  private type AfiAction =  TaxIdentifier => Future[Result]
+  private type AfiAction = TaxIdentifier => Future[Result]
 
   val agentAction: AfiAction = { implicit arn => Future successful Ok }
   val clientAction: AfiAction = { implicit nino => Future successful Ok }

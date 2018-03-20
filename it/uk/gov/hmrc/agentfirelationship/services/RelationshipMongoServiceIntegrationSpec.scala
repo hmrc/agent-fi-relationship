@@ -7,8 +7,8 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
-import uk.gov.hmrc.agentfirelationship.{agentId, clientId, service}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
+import uk.gov.hmrc.agentfirelationship.{ agentId, clientId, service }
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.test.UnitSpec
@@ -37,8 +37,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> false,
-        "features.check-cesa-relationships" -> false
-      )
+        "features.check-cesa-relationships" -> false)
 
   "Update AFI relationships which do not have relationshipStatus to have relationshipStatus: ACTIVE" should {
     "all relationships without status, now have status ACTIVE" in {
@@ -78,7 +77,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
 
       await(repo.findAll()).size shouldBe 3
 
-      val result = await(repo.findRelationships(arn,service, nino, Active))
+      val result = await(repo.findRelationships(arn, service, nino, Active))
 
       result should not be empty
       result.head shouldBe validTestRelationship
@@ -86,7 +85,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
 
     "return empty results if no active relationships found" in {
       await(repo.createRelationship(invalidTestRelationship))
-      val result = await(repo.findRelationships(arn,service, nino, Active))
+      val result = await(repo.findRelationships(arn, service, nino, Active))
 
       result shouldBe empty
     }
@@ -98,7 +97,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
 
       await(repo.findAll()).size shouldBe 3
 
-      val result = await(repo.findRelationships(arn,service, nino, Terminated))
+      val result = await(repo.findRelationships(arn, service, nino, Terminated))
 
       result should not be empty
       result.head shouldBe invalidTestRelationship
@@ -106,7 +105,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
 
     "return empty results if no TERMINATED relationships found" in {
       await(repo.createRelationship(validTestRelationship))
-      val result = await(repo.findRelationships(arn,service, nino, Terminated))
+      val result = await(repo.findRelationships(arn, service, nino, Terminated))
 
       result shouldBe empty
     }

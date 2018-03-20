@@ -16,10 +16,30 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers.config
 
-import uk.gov.hmrc.agentfirelationship.config.{KeyToPatternMappingFromRoutes, MonitoringKeyMatcher}
+import uk.gov.hmrc.agentfirelationship.wiring.{ KeyToPatternMappingFromRoutes, MonitoringKeyMatcher }
 import uk.gov.hmrc.play.test.UnitSpec
+import app.Routes
+import com.kenshoo.play.metrics.Metrics
+import org.scalatest.mockito.MockitoSugar
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost }
 
-class MonitoringKeyMatcherSpec extends UnitSpec {
+import scala.concurrent.ExecutionContext
+
+class MonitoringKeyMatcherSpec extends UnitSpec with MockitoSugar {
+
+  implicit lazy val app: Application = appBuilder
+    .build()
+
+  protected def appBuilder: GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+
+  private implicit val hc = HeaderCarrier()
+  private implicit val ec = ExecutionContext.global
+
+  val routes = app.injector.instanceOf[Routes]
 
   "MonitoringKeyMatcher" should {
 
@@ -27,10 +47,10 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
       val tested = new MonitoringKeyMatcher {
         override val keyToPatternMapping: Seq[(String, String)] = Seq()
       }
-      tested.preparePatternAndVariables("""/some/test/:service/:clientId/:test1""") shouldBe ("^.*/some/test/([^/]+)/([^/]+)/([^/]+)$",Seq("{service}", "{clientId}", "{test1}"))
-      tested.preparePatternAndVariables("""/some/test/:service/:clientId/:test1/""") shouldBe ("^.*/some/test/([^/]+)/([^/]+)/([^/]+)/$",Seq("{service}", "{clientId}", "{test1}"))
-      tested.preparePatternAndVariables("""/some/test/:service/::clientId/:test1/""") shouldBe ("^.*/some/test/([^/]+)/([^/]+)/([^/]+)/$",Seq("{service}", "{:clientId}", "{test1}"))
-      tested.preparePatternAndVariables("""/some/test/:service/clientId/:test1/""") shouldBe ("^.*/some/test/([^/]+)/clientId/([^/]+)/$",Seq("{service}", "{test1}"))
+      tested.preparePatternAndVariables("""/some/test/:service/:clientId/:test1""") shouldBe ("^.*/some/test/([^/]+)/([^/]+)/([^/]+)$", Seq("{service}", "{clientId}", "{test1}"))
+      tested.preparePatternAndVariables("""/some/test/:service/:clientId/:test1/""") shouldBe ("^.*/some/test/([^/]+)/([^/]+)/([^/]+)/$", Seq("{service}", "{clientId}", "{test1}"))
+      tested.preparePatternAndVariables("""/some/test/:service/::clientId/:test1/""") shouldBe ("^.*/some/test/([^/]+)/([^/]+)/([^/]+)/$", Seq("{service}", "{:clientId}", "{test1}"))
+      tested.preparePatternAndVariables("""/some/test/:service/clientId/:test1/""") shouldBe ("^.*/some/test/([^/]+)/clientId/([^/]+)/$", Seq("{service}", "{test1}"))
     }
 
     "throw exception if duplicate variable name in pattern" in {
@@ -49,8 +69,7 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
           "B-{service}" -> """/test/:service/bar/some""",
           "C-{service}" -> """/test/:service/bar""",
           "D-{service}" -> """/test/:service/""",
-          "E-{clientId}-{service}" -> """/test/:service/:clientId"""
-        )
+          "E-{clientId}-{service}" -> """/test/:service/:clientId""")
       }
       tested.findMatchingKey("http://www.tax.service.hmrc.gov.uk/test/ME/bar") shouldBe Some("C-ME")
       tested.findMatchingKey("http://www.tax.service.hmrc.gov.uk/test/ME/bar/some") shouldBe Some("B-ME")
@@ -66,8 +85,7 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
           "relationships-{service}" -> "/relationships/agent/:arn/service/:service/client/:clientId",
           "check-PIR" -> "/relationships/PERSONAL-INCOME-RECORD/agent/:arn/client/:clientId",
           "check-AFI" -> "/relationships/afi/agent/:arn/client/:clientId",
-          "client-relationships-{service}" -> "/relationships/service/:service/clientId/:clientId"
-        )
+          "client-relationships-{service}" -> "/relationships/service/:service/clientId/:clientId")
       }
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/agent/ARN123456/service/PERSONAL-INCOME-RECORD/client/GHZ8983HJ") shouldBe Some("relationships-PERSONAL-INCOME-RECORD")
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("check-PIR")
@@ -77,13 +95,12 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
 
     "parse Routes and produce monitoring key-pattern pairs" in {
       val tested = new MonitoringKeyMatcher {
-        override val keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(Set("service"))
+        override val keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(routes, Set("service"))
       }
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/agent/ARN123456/service/PERSONAL-INCOME-RECORD/client/GHZ8983HJ") shouldBe Some("|relationships|agent|:|service|PERSONAL-INCOME-RECORD|client|:")
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("|relationships|PERSONAL-INCOME-RECORD|agent|:|client|:")
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some("|relationships|afi|agent|:|client|:")
       tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some("|relationships|service|PERSONAL-INCOME-RECORD|clientId|:")
     }
-
   }
 }

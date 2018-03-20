@@ -2,7 +2,7 @@ package uk.gov.hmrc.agentfirelationship
 
 import javax.inject.Inject
 
-import com.google.inject.{AbstractModule, Singleton}
+import com.google.inject.{ AbstractModule, Singleton }
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -13,14 +13,14 @@ import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 @Singleton
-class TestRelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
+class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent)
   extends RelationshipMongoService(mongoComponent) {
 
   override def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
@@ -50,8 +50,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
         "microservice.services.agent-mapping.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> true,
-        "features.check-cesa-relationships" -> true
-      )
+        "features.check-cesa-relationships" -> true)
       .overrides(new AbstractModule {
         override def configure(): Unit = {
           bind(classOf[RelationshipMongoService]).to(classOf[TestRelationshipMongoService])
@@ -84,8 +83,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
         "saAgentRef" -> "foo",
         "service" -> "personal-income-record",
         "clientId" -> clientId,
-        "clientIdType" -> "ni"
-      ))
+        "clientIdType" -> "ni"))
 
       When("I call the View Relationship endpoint")
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)

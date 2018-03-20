@@ -16,21 +16,21 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers.services
 
-import org.mockito.ArgumentMatchers.{eq => eqs}
+import org.mockito.ArgumentMatchers.{ eq => eqs }
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import play.api.test.FakeRequest
-import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
+import uk.gov.hmrc.agentfirelationship.audit.{ AuditData, AuditService }
+import uk.gov.hmrc.agentfirelationship.connectors.{ DesConnector, MappingConnector }
 import uk.gov.hmrc.agentfirelationship.controllers.support.ResettingMockitoSugar
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, MtdItId}
-import uk.gov.hmrc.domain.{AgentCode, Generator, Nino, SaAgentReference}
+import uk.gov.hmrc.agentmtdidentifiers.model.{ Arn, MtdItId }
+import uk.gov.hmrc.domain.{ AgentCode, Generator, Nino, SaAgentReference }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class CesaRelationshipCopyServiceSpec extends UnitSpec
   with BeforeAndAfterEach with ResettingMockitoSugar {
@@ -55,7 +55,6 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec
   "CesaRelationshipCopyService" should {
 
     val service = new CesaRelationshipCopyService(des, mapping, auditService)
-
 
     "return an existing relationship in Cesa and Agent Mapping if it exists" in {
       val request = FakeRequest()
@@ -88,7 +87,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec
       val agentRefs: Set[SaAgentReference] = await(service.lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
-     }
+    }
 
     "return empty for an non-existing relationship in Cesa and Agent Mapping with non-matching agentRefs" in {
       val request = FakeRequest()
@@ -99,7 +98,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec
       val agentRefs: Set[SaAgentReference] = await(service.lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
-     }
+    }
 
     "return empty for an non-existing relationship in Agent Mapping" in {
       val request = FakeRequest()
@@ -110,7 +109,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec
       val agentRefs: Set[SaAgentReference] = await(service.lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
-     }
+    }
 
     "return empty for an non-existing relationship in Cesa" in {
       val request = FakeRequest()

@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.models
+package uk.gov.hmrc.agentfirelationship.connectors
 
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.{ affinityGroup, allEnrolments }
-import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
-import uk.gov.hmrc.auth.core.{ AffinityGroup, Enrolments }
+import java.net.URL
+import javax.inject.{ Inject, Named, Singleton }
 
-object Auth {
-  lazy val affinityGroupAllEnrolls: Retrieval[~[Option[AffinityGroup], Enrolments]] = affinityGroup and allEnrolments
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.HttpPost
+import uk.gov.hmrc.play.http.ws.WSPost
+
+@Singleton
+class MicroserviceAuthConnector @Inject() (@Named("auth-baseUrl") baseUrl: URL)
+  extends PlayAuthConnector {
+
+  override val serviceUrl = baseUrl.toString
+
+  override def http = new HttpPost with WSPost {
+    override val hooks = NoneRequired
+  }
 }

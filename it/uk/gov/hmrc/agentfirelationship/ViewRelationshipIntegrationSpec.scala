@@ -30,8 +30,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> false,
-        "features.check-cesa-relationships" -> false
-      )
+        "features.check-cesa-relationships" -> false)
 
   feature("View relationships for a client individual") {
 
@@ -61,7 +60,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
     scenario("Agent views a non-existent relationship") {
 
       Given("no relationship exists for a combination of agent, client and service")
-      Await.result(repo.findRelationships(agentId,service,clientId), 10 seconds) shouldBe empty
+      Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
 
       When("I call the View Relationship endpoint")
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)

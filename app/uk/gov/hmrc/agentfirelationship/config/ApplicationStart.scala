@@ -16,20 +16,20 @@
 
 package uk.gov.hmrc.agentfirelationship.config
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 
 import play.api.Logger
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 
-import scala.concurrent.{ExecutionContext, Future}
-
+import scala.concurrent.{ ExecutionContext, Future }
 
 //[APB-1829] Remove after released once. So it can go and fix up the existing records in DB
 @Singleton
-class ApplicationStart @Inject()(lifecycle: ApplicationLifecycle,
-                                 mongoService: RelationshipMongoService,
-                                 implicit val ec: ExecutionContext) {
+class ApplicationStart @Inject() (
+  lifecycle: ApplicationLifecycle,
+  mongoService: RelationshipMongoService,
+  implicit val ec: ExecutionContext) {
   def start(): Future[Unit] = {
     Logger.info("Updating AFI relationships to have relationshipStatus set Active," +
       " remove this after records have been successfully updated")

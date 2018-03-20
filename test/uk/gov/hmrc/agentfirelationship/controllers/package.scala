@@ -18,11 +18,11 @@ package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{ JsObject, Json }
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
@@ -38,8 +38,8 @@ package object controllers {
   val fakeRequest = FakeRequest("GET", "")
 
   val fakeCreateRequest: FakeRequest[JsObject] = FakeRequest("PUT", "/")
-        .withHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
-        .withBody(Json.obj("startDate" -> testResponseDate))
+    .withHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
+    .withBody(Json.obj("startDate" -> testResponseDate))
 
   val saAgentRef = SaAgentReference("T1113T")
   val saAgentRef2 = SaAgentReference("T1123T")
@@ -54,12 +54,10 @@ package object controllers {
 
   val agentEnrolment = Set(
     Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),
-      state = "", delegatedAuthRule = None)
-  )
+      state = "", delegatedAuthRule = None))
 
   val clientEnrolment = Set(
-    Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None)
-  )
+    Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
 
   val clientAffinityAndEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
     Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Individual), Enrolments(clientEnrolment))
