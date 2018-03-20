@@ -70,8 +70,8 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
     }
 
     "return empty seq when all client's relationships with agents ceased" in {
-      givenAllClientRelationshipsWithAgentsCeasedInCESA(nino, Seq("001", "002", "003", "004", "005", "005", "007"))
       givenAuditConnector()
+      givenAllClientRelationshipsWithAgentsCeasedInCESA(nino, Seq("001", "002", "003", "004", "005", "005", "007"))
       await(desConnector.getClientSaAgentSaReferences(nino)) shouldBe empty
     }
 

@@ -51,8 +51,8 @@ class MappingConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSup
     }
 
     "fail when arn is unknown in " in {
-      givenArnIsUnknownFor(arn)
       givenAuditConnector()
+      givenArnIsUnknownFor(arn)
       an[Exception] should be thrownBy await(mappingConnector.getSaAgentReferencesFor(arn))
     }
 

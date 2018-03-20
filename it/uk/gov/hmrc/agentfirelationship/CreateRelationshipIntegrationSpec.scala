@@ -67,12 +67,13 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     scenario("A relationship which is the same already exists") {
 
+      isLoggedInAndIsSubscribedAsAgent
+
       Given("agent has a relationship")
       givenCreatedAuditEventStub(auditDetails)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      isLoggedInAndIsSubscribedAsAgent
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")
@@ -126,11 +127,12 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     scenario("Create a new relationship with simple values") {
 
+      isLoggedInAsClient
+
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
 
       When("I call the create-relationship endpoint")
-      isLoggedInAsClient
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 CREATED response")
@@ -143,12 +145,13 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     scenario("A relationship which is the same already exists") {
 
+      isLoggedInAsClient
+
       Given("agent has a relationship")
       givenCreatedAuditEventStub(auditDetails)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      isLoggedInAsClient
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")

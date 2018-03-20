@@ -132,7 +132,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
     }
 
     scenario("Client terminates all of client's agents, setting status to terminated for all") {
-      givenEndedAuditEventStub(auditDetails)
+
       isLoggedInAsClient
 
       Given("there exists a relationship or more for particular clientId")
@@ -140,6 +140,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
       When("I call the terminate relationship endpoint")
+      givenEndedAuditEventStub(auditDetails)
       val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
