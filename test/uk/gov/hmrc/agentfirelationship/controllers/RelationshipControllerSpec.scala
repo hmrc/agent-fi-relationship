@@ -33,7 +33,8 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class RelationshipControllerSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
   val mockAuditService: AuditService = mock[AuditService]
   val mockAuthAuditConnector: AuthAuditConnector = mock[AuthAuditConnector]

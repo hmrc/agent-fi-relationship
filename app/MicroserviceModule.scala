@@ -21,7 +21,6 @@ import com.google.inject.name.{ Named, Names }
 import javax.inject.{ Inject, Provider, Singleton }
 import org.slf4j.MDC
 import play.api.{ Configuration, Environment, Logger }
-import uk.gov.hmrc.agentfirelationship.config.MongoDbProvider
 import uk.gov.hmrc.agentfirelationship.connectors.MicroserviceAuthConnector
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http._
@@ -49,15 +48,14 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bind(classOf[HttpPost]).to(classOf[HttpVerbs])
     bind(classOf[AuthConnector]).to(classOf[MicroserviceAuthConnector])
 
-    bind(classOf[reactivemongo.api.DB]).toProvider(classOf[MongoDbProvider])
     bindBaseUrl("agent-mapping")
     bindBaseUrl("des")
+    bindBaseUrl("auth")
+
     bindBooleanProperty("features.copy-cesa-relationships")
     bindBooleanProperty("features.check-cesa-relationships")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
-
-    bindBaseUrl("auth")
   }
 
   private def bindBaseUrl(serviceName: String) =

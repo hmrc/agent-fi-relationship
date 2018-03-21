@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost }
 
 import scala.concurrent.ExecutionContext
 
-class MonitoringKeyMatcherSpec extends UnitSpec with MockitoSugar {
+class MonitoringKeyMatcherSpec extends UnitSpec {
 
   implicit lazy val app: Application = appBuilder
     .build()
