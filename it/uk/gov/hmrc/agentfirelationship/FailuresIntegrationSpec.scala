@@ -3,7 +3,7 @@ package uk.gov.hmrc.agentfirelationship
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.agentfirelationship.support.{IntegrationSpec, RelationshipActions, UpstreamServicesStubs}
+import uk.gov.hmrc.agentfirelationship.support.{ IntegrationSpec, RelationshipActions, UpstreamServicesStubs }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -24,8 +24,7 @@ class FailuresIntegrationSpec extends IntegrationSpec
       .configure(
         "microservice.services.auth.port" -> wireMockPort,
         "mongodb.uri" -> "mongodb://nowhere:27017/none",
-        "features.run-mongodb-migration" -> false
-      )
+        "features.run-mongodb-migration" -> false)
 
   feature("Do not handle infrastructure failures, propagates errors downstream") {
 
@@ -54,6 +53,8 @@ class FailuresIntegrationSpec extends IntegrationSpec
     scenario("Mongodb not available when viewing relationship") {
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
+      isLoggedInAndIsSubscribedAsAgent
+
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the View Relationship endpoint")

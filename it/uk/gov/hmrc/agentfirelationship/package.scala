@@ -8,6 +8,6 @@ package object agentfirelationship {
   val agentId2 = "TARN0000002"
   val clientId = "AE123456C"
   val service = "afi"
-  val auditDetails = Map("authProviderId" -> fakeCredId, "arn" -> agentId, "regime" -> "afi", "regimeId" -> clientId)
+  val auditDetails = Map("authProviderId" -> fakeCredId, "arn" -> agentId, "service" -> "personal-income-record", "clientId" -> clientId)
   val testResponseDate = LocalDateTime.now
 }

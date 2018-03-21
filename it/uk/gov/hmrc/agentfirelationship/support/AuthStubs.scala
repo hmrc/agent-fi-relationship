@@ -38,8 +38,7 @@ trait ClientUserAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |    }
          |  ]
          |}
-       """.stripMargin
-    )))
+       """.stripMargin)))
 
     this
   }
@@ -93,8 +92,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |    }
          |  ]
          |}
-       """.stripMargin
-    )))
+       """.stripMargin)))
     this
   }
 
@@ -126,8 +124,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |    }
          |  ]
          |}
-       """.stripMargin
-    )))
+       """.stripMargin)))
     this
   }
 
@@ -148,8 +145,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |    }
          |  ]
          |}
-       """.stripMargin
-    )))
+       """.stripMargin)))
 
     this
   }
@@ -172,8 +168,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |    }
          |  ]
          |}
-       """.stripMargin
-    )))
+       """.stripMargin)))
 
     this
   }

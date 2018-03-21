@@ -14,40 +14,39 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.config
+package uk.gov.hmrc.agentfirelationship.wiring
 
-import java.util.regex.{Matcher, Pattern}
-import javax.inject.{Inject, Singleton}
+import java.util.regex.{ Matcher, Pattern }
 
+import javax.inject.{ Inject, Singleton }
 import app.Routes
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
-import play.api.Logger
-import play.api.mvc.{Filter, RequestHeader, Result}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, Upstream4xxResponse, Upstream5xxResponse}
+import play.api.{ Application, Logger }
+import play.api.mvc.{ Filter, RequestHeader, Result }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpException, Upstream4xxResponse, Upstream5xxResponse }
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.microservice.filters.MicroserviceFilterSupport
 
 import scala.concurrent.duration.NANOSECONDS
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 
 @Singleton
-class MicroserviceMonitoringFilter @Inject()(metrics: Metrics)
-                                            (implicit ec: ExecutionContext)
+class MicroserviceMonitoringFilter @Inject() (metrics: Metrics, routes: Routes)(implicit ec: ExecutionContext)
   extends MonitoringFilter(metrics.defaultRegistry) with MicroserviceFilterSupport {
-  override def keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(Set("service"))
+  override def keyToPatternMapping: Seq[(String, String)] = KeyToPatternMappingFromRoutes(routes, Set("service"))
 }
 
 object KeyToPatternMappingFromRoutes {
-  def apply(variables: Set[String] = Set.empty): Seq[(String, String)] = {
-    Routes.documentation.map {
+  def apply(routes: Routes, placeholders: Set[String] = Set.empty): Seq[(String, String)] = {
+    routes.documentation.map {
       case (method, route, _) => {
         val r = route.replace("<[^/]+>", "")
         val key = r.split("/").map(
           p => if (p.startsWith("$")) {
             val name = p.substring(1)
-            if (variables.contains(name)) s"{$name}" else ":"
+            if (placeholders.contains(name)) s"{$name}" else ":"
           } else p).mkString("|")
         val pattern = r.replace("$", ":")
         Logger.info(s"$key-$method -> $pattern")

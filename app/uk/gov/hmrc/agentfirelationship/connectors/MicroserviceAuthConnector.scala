@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.config
+package uk.gov.hmrc.agentfirelationship.connectors
 
-import javax.inject._
+import java.net.URL
+import javax.inject.{ Inject, Named, Singleton }
 
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.DefaultDB
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.HttpPost
+import uk.gov.hmrc.play.http.ws.WSPost
 
-class MongoDbProvider @Inject()(reactiveMongoComponent: ReactiveMongoComponent) extends Provider[reactivemongo.api.DB] {
-  def get: DefaultDB = reactiveMongoComponent.mongoConnector.db()
+@Singleton
+class MicroserviceAuthConnector @Inject() (@Named("auth-baseUrl") baseUrl: URL)
+  extends PlayAuthConnector {
+
+  override val serviceUrl = baseUrl.toString
+
+  override def http = new HttpPost with WSPost {
+    override val hooks = NoneRequired
+  }
 }

@@ -17,16 +17,16 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
-import javax.inject.{Inject, Named}
+import javax.inject.{ Inject, Named }
 
 import com.google.inject.Singleton
-import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
+import play.api.libs.json.{ Format, JsValue, Json }
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class AuthAuditConnector @Inject()(@Named("auth-baseUrl") baseUrl: URL, httpGet: HttpGet) {
+class AuthAuditConnector @Inject() (@Named("auth-baseUrl") baseUrl: URL, httpGet: HttpGet) {
   val authorityUrl = new URL(baseUrl, "/auth/authority")
 
   def userDetails(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[UserDetails] = {

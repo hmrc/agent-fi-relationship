@@ -7,15 +7,15 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
+import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 @Singleton
 class TerminateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
@@ -38,8 +38,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> false,
-        "features.check-cesa-relationships" -> false
-      )
+        "features.check-cesa-relationships" -> false)
 
   feature("Terminate a relationship between an agent and a client") {
 
@@ -66,6 +65,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
+      givenEndedAuditEventStub(auditDetails)
 
       When("I call the create-relationship endpoint")
       isLoggedInAndIsSubscribedAsAgent
@@ -131,8 +131,8 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("Client terminates all of client's agents, setting status to terminated for all"){
-      givenEndedAuditEventStub(auditDetails)
+    scenario("Client terminates all of client's agents, setting status to terminated for all") {
+
       isLoggedInAsClient
 
       Given("there exists a relationship or more for particular clientId")
@@ -140,6 +140,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
 
       When("I call the terminate relationship endpoint")
+      givenEndedAuditEventStub(auditDetails)
       val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, service), 10 seconds)
 
       Then("I should get a 200 OK response")
@@ -150,7 +151,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Await.result(agentRelationships, 10 seconds).length shouldBe 2
     }
 
-    scenario("Client fails to terminate all of client's agents for an invalid service"){
+    scenario("Client fails to terminate all of client's agents for an invalid service") {
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAsClient
 
@@ -169,7 +170,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Await.result(agentRelationships, 10 seconds).length shouldBe 2
     }
 
-    scenario("Client fails to terminate all of client's agents for an invalid client id"){
+    scenario("Client fails to terminate all of client's agents for an invalid client id") {
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAsClient
 

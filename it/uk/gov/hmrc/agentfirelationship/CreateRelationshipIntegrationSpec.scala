@@ -2,20 +2,19 @@ package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
 import javax.inject.Singleton
-
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-
 import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 @Singleton
 class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
@@ -38,8 +37,7 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> false,
-        "features.check-cesa-relationships" -> false
-      )
+        "features.check-cesa-relationships" -> false)
 
   feature("Create a relationship between an agent and an individual as an agent") {
 
@@ -69,12 +67,13 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     scenario("A relationship which is the same already exists") {
 
+      isLoggedInAndIsSubscribedAsAgent
+
       Given("agent has a relationship")
       givenCreatedAuditEventStub(auditDetails)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      isLoggedInAndIsSubscribedAsAgent
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")
@@ -128,11 +127,12 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     scenario("Create a new relationship with simple values") {
 
+      isLoggedInAsClient
+
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
 
       When("I call the create-relationship endpoint")
-      isLoggedInAsClient
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 CREATED response")
@@ -145,12 +145,13 @@ class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamSer
 
     scenario("A relationship which is the same already exists") {
 
+      isLoggedInAsClient
+
       Given("agent has a relationship")
       givenCreatedAuditEventStub(auditDetails)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the create-relationship endpoint")
-      isLoggedInAsClient
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")

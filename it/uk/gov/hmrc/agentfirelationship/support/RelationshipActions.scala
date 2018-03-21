@@ -6,7 +6,7 @@ import org.scalatest.Suite
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.ServerProvider
 import play.api.libs.json.Json
-import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.libs.ws.{ WSClient, WSResponse }
 
 import scala.concurrent.Future
 
@@ -21,7 +21,7 @@ trait RelationshipActions extends ScalaFutures {
   def createRelationship(agentId: String, clientId: String, service: String, startDate: LocalDateTime): Future[WSResponse] =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
-      .put(Json.obj("startDate"-> startDate))
+      .put(Json.obj("startDate" -> startDate))
 
   def getRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
     wsClient

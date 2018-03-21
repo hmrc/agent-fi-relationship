@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import java.time.{LocalDateTime, ZoneId}
-import javax.inject.{Inject, Named, Singleton}
+import java.time.{ LocalDateTime, ZoneId }
 
+import javax.inject.{ Inject, Named, Singleton }
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
-import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, AuthAuditConnector}
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.audit.{ AuditData, AuditService }
+import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, AuthAuditConnector, MicroserviceAuthConnector }
+import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
+import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.domain.{ Nino, TaxIdentifier }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -36,13 +36,14 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import scala.concurrent.Future
 
 @Singleton
-class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
-                                       auditService: AuditService,
-                                       mongoService: RelationshipMongoService,
-                                       authConnector: AgentClientAuthConnector,
-                                       checkCesaService: CesaRelationshipCopyService,
-                                       @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
-                                       @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
+class RelationshipController @Inject() (
+  authAuditConnector: AuthAuditConnector,
+  auditService: AuditService,
+  mongoService: RelationshipMongoService,
+  authConnector: AgentClientAuthConnector,
+  checkCesaService: CesaRelationshipCopyService,
+  @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
+  @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
   extends BaseController {
 
   def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] = findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
@@ -178,8 +179,8 @@ class RelationshipController @Inject()(authAuditConnector: AuthAuditConnector,
 
   private def forThisUser(requestedArn: Arn, requestedNino: Nino)(block: => Future[Result])(implicit taxIdentifier: TaxIdentifier) = {
     taxIdentifier match {
-      case arn@Arn(_) if requestedArn != arn => Future.successful(Forbidden)
-      case nino@Nino(_) if requestedNino != nino => Future.successful(Forbidden)
+      case arn @ Arn(_) if requestedArn != arn => Future.successful(Forbidden)
+      case nino @ Nino(_) if requestedNino != nino => Future.successful(Forbidden)
       case _ => block
     }
   }

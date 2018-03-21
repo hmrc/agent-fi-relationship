@@ -11,8 +11,7 @@ trait MappingStubs {
       get(urlEqualTo(s"/agent-mapping/mappings/${arn.value}"))
         .willReturn(aResponse()
           .withStatus(200)
-          .withBody(s"""{"mappings":[{"arn":"${arn.value}","saAgentReference":"${saAgentReference.value}"}]}"""))
-    )
+          .withBody(s"""{"mappings":[{"arn":"${arn.value}","saAgentReference":"${saAgentReference.value}"}]}""")))
   }
 
   def givenArnIsKnownFor(arn: Arn, refs: Seq[SaAgentReference]) = {
@@ -20,30 +19,26 @@ trait MappingStubs {
       get(urlEqualTo(s"/agent-mapping/mappings/${arn.value}"))
         .willReturn(aResponse()
           .withStatus(200)
-          .withBody(s"""{"mappings":[${refs.map(ref => s"""{"arn":"${arn.value}","saAgentReference":"${ref.value}"}""").mkString(",")}]}"""))
-    )
+          .withBody(s"""{"mappings":[${refs.map(ref => s"""{"arn":"${arn.value}","saAgentReference":"${ref.value}"}""").mkString(",")}]}""")))
   }
 
   def givenArnIsUnknownFor(arn: Arn) = {
     stubFor(
       get(urlEqualTo(s"/agent-mapping/mappings/${arn.value}"))
         .willReturn(aResponse()
-          .withStatus(404))
-    )
+          .withStatus(404)))
   }
 
   def givenServiceReturnsServerError() = {
     stubFor(
       get(urlMatching(s"/agent-mapping/.*"))
-        .willReturn(aResponse().withStatus(500))
-    )
+        .willReturn(aResponse().withStatus(500)))
   }
 
   def givenServiceReturnsServiceUnavailable() = {
     stubFor(
       get(urlMatching(s"/agent-mapping/.*"))
-        .willReturn(aResponse().withStatus(503))
-    )
+        .willReturn(aResponse().withStatus(503)))
   }
 
 }

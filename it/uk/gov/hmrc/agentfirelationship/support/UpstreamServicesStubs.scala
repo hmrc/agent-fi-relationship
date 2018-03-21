@@ -6,10 +6,10 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import org.scalatest.concurrent.Eventually
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, Suite }
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
-import uk.gov.hmrc.agentfirelationship.stubs.{DesStubs, MappingStubs}
+import uk.gov.hmrc.agentfirelationship.stubs.{ DesStubs, MappingStubs }
 import uk.gov.hmrc.play.it.Port
 
 trait UpstreamServicesStubs extends BeforeAndAfterAll
@@ -49,8 +49,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |  "auditSource": "agent-fi-relationship",
            |  "auditType": "$AgentClientRelationshipCreated",
            |  "detail": ${Json.toJson(detail)}
-           |}"""
-      ))
+           |}"""))
       .willReturn(aResponse().withStatus(204)))
   }
 
@@ -61,8 +60,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |  "auditSource": "agent-fi-relationship",
            |  "auditType": "$AgentClientRelationshipEnded",
            |  "detail": ${Json.toJson(detail)}
-           |}"""
-      ))
+           |}"""))
       .willReturn(aResponse().withStatus(204)))
   }
 
@@ -73,8 +71,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
            |  "auditSource": "agent-fi-relationship",
            |  "auditType": "$AgentClientRelationshipCreatedFromExisting",
            |  "detail": ${Json.toJson(detail)}
-           |}"""
-      ))
+           |}"""))
       .willReturn(aResponse().withStatus(204)))
   }
 
@@ -100,5 +97,4 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
 
   private def similarToJson(value: String) = equalToJson(value.stripMargin, true, true)
 }
-
 

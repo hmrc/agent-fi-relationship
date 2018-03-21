@@ -16,29 +16,30 @@
 
 package uk.gov.hmrc.agentfirelationship.connectors
 
-import javax.inject.{Inject, Singleton}
+import java.net.URL
 
+import javax.inject.{ Inject, Named, Singleton }
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
-import uk.gov.hmrc.agentfirelationship.config.MicroserviceAuthConnector
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
+import uk.gov.hmrc.domain.{ Nino, TaxIdentifier }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
+class AgentClientAuthConnector @Inject() (microserviceAuthConnector: MicroserviceAuthConnector) extends AuthorisedFunctions {
   implicit def hc(implicit rh: RequestHeader) = fromHeadersAndSession(rh.headers)
 
-  override def authConnector: AuthConnector = MicroserviceAuthConnector
+  override def authConnector: AuthConnector = microserviceAuthConnector
 
   private type AfiAction = TaxIdentifier => Future[Result]
 
@@ -72,4 +73,5 @@ class AgentClientAuthConnector @Inject() extends AuthorisedFunctions {
   private def extractNino(enrolls: Set[Enrolment]): Option[Nino] = {
     enrolls.find(_.key == "HMRC-NI").flatMap(_.getIdentifier("NINO")).map(x => Nino(x.value))
   }
+
 }
