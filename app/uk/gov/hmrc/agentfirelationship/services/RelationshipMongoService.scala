@@ -52,17 +52,6 @@ class RelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent
       }
   }
 
-  //APB-1871 - This should also be removed once data migration has occurred
-  def migrateFromAfi()(implicit ec: ExecutionContext): Future[Boolean] = {
-    collection.update(
-      BSONDocument("service" -> "afi"),
-      BSONDocument("$set" -> BSONDocument("service" -> "PERSONAL-INCOME-RECORD")),
-      multi = true).map { result =>
-        result.writeErrors.foreach(error => Logger.warn(s"Migrating relationships from afi to PERSONAL-INCOME-RECORD failed, error: $error"))
-        if (result.nModified > 0) true else false
-      }
-  }
-
   def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
     find(
       "arn" -> arn,

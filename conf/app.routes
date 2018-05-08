@@ -10,4 +10,3 @@ GET           /relationships/PERSONAL-INCOME-RECORD/agent/:arn/client/:clientId 
 GET           /relationships/afi/agent/:arn/client/:clientId                                          @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findAfiRelationship(arn: String, clientId: String)
 
 GET           /relationships/service/:service/clientId/:clientId                                      @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findClientRelationships(service: String, clientId: String)
-DELETE        /relationships/service/:service/clientId/:clientId                                      @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.terminateClientRelationships(service: String,clientId: String)
