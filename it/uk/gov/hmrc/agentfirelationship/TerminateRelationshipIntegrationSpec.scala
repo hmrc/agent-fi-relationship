@@ -131,60 +131,6 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("Client terminates all of client's agents, setting status to terminated for all") {
-
-      isLoggedInAsClient
-
-      Given("there exists a relationship or more for particular clientId")
-      Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
-      Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
-
-      When("I call the terminate relationship endpoint")
-      givenEndedAuditEventStub(auditDetails)
-      val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, service), 10 seconds)
-
-      Then("I should get a 200 OK response")
-      terminateRelationshipResponse.status shouldBe OK
-
-      And("the relationship should be terminated")
-      val agentRelationships: Future[List[Relationship]] = repo.findClientRelationships(service, clientId, Terminated)
-      Await.result(agentRelationships, 10 seconds).length shouldBe 2
-    }
-
-    scenario("Client fails to terminate all of client's agents for an invalid service") {
-      givenEndedAuditEventStub(auditDetails)
-      isLoggedInAsClient
-
-      Given("there exists a relationship or more for particular clientId")
-      Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
-      Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
-
-      When("I call the terminate relationship endpoint")
-      val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships(clientId, "INVALID"), 10 seconds)
-
-      Then("I should get a 500 response")
-      terminateRelationshipResponse.status shouldBe INTERNAL_SERVER_ERROR
-
-      And("the relationship should be terminated")
-      val agentRelationships: Future[List[Relationship]] = repo.findClientRelationships(service, clientId, Active)
-      Await.result(agentRelationships, 10 seconds).length shouldBe 2
-    }
-
-    scenario("Client fails to terminate all of client's agents for an invalid client id") {
-      givenEndedAuditEventStub(auditDetails)
-      isLoggedInAsClient
-
-      Given("there exists a relationship or more for particular clientId")
-      Await.result(repo.createRelationship(validTestRelationship), 10 seconds)
-      Await.result(repo.createRelationship(validTestRelationship.copy(arn = Arn(agentId2))), 10 seconds)
-
-      When("I call the terminate relationship endpoint")
-      val terminateRelationshipResponse: WSResponse = Await.result(terminateClientRelationships("AE123456A", service), 10 seconds)
-
-      Then("I should get a 403 Forbidden response")
-      terminateRelationshipResponse.status shouldBe FORBIDDEN
-    }
-
     scenario("The user is not logged in with GG credentials") {
       isNotLoggedIn
       When("I call the create-relationship endpoint")

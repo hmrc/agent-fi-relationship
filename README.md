@@ -2,6 +2,11 @@
 
 [![Build Status](https://travis-ci.org/hmrc/agent-fi-relationship.svg)](https://travis-ci.org/hmrc/agent-fi-relationship) [ ![Download](https://api.bintray.com/packages/hmrc/releases/agent-fi-relationship/images/download.svg) ](https://bintray.com/hmrc/releases/agent-fi-relationship/_latestVersion)
 
+This is a backend microservice for managing relationships between agent and client for the PERSONAL-INCOME-RECORD service.
+It allows you to retrieve information about agent-client relationships, create and delete. This service has an isolated relationship store from other
+supported services (ITSA and VAT), which it uses to manage relationships rather than calling a DES API. 
+
+
 ## Run the application locally
 
 To run the application execute
@@ -41,6 +46,7 @@ Result
     "arn": "AARN123",
     "service": "service123",
     "clientId": "clientId123",
+    "relationshipStatus": "Active"
   }
 ]
 ```
@@ -61,9 +67,9 @@ Result
 ```
 [
   {
-    "arn": "AARN123",
     "service": "service123",
     "clientId": "clientId123",
+    "relationshipStatus": "Active"
   },
   {...}
 ]
@@ -110,6 +116,7 @@ Result
     "arn": "AAABBB111222",
     "service": "afi",
     "clientId": "123456",
+    "relationshipStatus": "Active"
   }
 ]
 ```
