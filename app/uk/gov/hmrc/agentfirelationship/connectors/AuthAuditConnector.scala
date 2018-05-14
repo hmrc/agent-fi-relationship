@@ -41,4 +41,4 @@ object UserDetails {
   implicit val format: Format[UserDetails] = Json.format[UserDetails]
 }
 
-case class UserDetails(authProviderId: String)
+case class UserDetails(authProviderId: String, authProviderIdType: String)

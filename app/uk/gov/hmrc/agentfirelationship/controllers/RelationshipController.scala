@@ -169,6 +169,7 @@ class RelationshipController @Inject() (
     authAuditConnector.userDetails.map { userDetails =>
       val auditData = new AuditData()
       auditData.set("authProviderId", userDetails.authProviderId)
+      auditData.set("authProviderIdType", userDetails.authProviderIdType)
       auditData.set("agentReferenceNumber", arn)
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", clientId)

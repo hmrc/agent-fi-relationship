@@ -23,6 +23,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
   lazy val wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort))
 
   val fakeCredId = "fakeCredId"
+  val fakeCredIdType = "GovernmentGateway"
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -92,7 +93,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
     stubFor(get(urlPathEqualTo(s"/user-details/id/$oid"))
       .willReturn(aResponse()
         .withStatus(200)
-        .withBody(s"""{"authProviderId": "$fakeCredId"}""".stripMargin)))
+        .withBody(s"""{"authProviderId": "$fakeCredId", "authProviderIdType":"$fakeCredIdType"}""".stripMargin)))
   }
 
   private def similarToJson(value: String) = equalToJson(value.stripMargin, true, true)

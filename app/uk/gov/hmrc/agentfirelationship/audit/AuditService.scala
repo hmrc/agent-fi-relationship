@@ -67,6 +67,7 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
 
   val DeleteRelationshipFields = Seq(
     "authProviderId",
+    "authProviderIdType",
     "agentReferenceNumber",
     "service",
     "clientId",
