@@ -89,7 +89,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("agentReferenceNumber", Arn("1234").value)
       auditData.set("authProviderId", "0000001234567890")
       auditData.set("service", "personal-income-record")
-      auditData.set("clientID", Nino("KS969148D").value)
+      auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
       await(service.sendDeleteRelationshipEvent(auditData)(
         hc,
@@ -105,7 +105,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("agentReferenceNumber") shouldBe "1234"
         sentEvent.detail("authProviderId") shouldBe "0000001234567890"
         sentEvent.detail("service") shouldBe "personal-income-record"
-        sentEvent.detail("clientID") shouldBe "KS969148D"
+        sentEvent.detail("clientId") shouldBe "KS969148D"
         sentEvent.detail("clientIdType") shouldBe "ni"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"

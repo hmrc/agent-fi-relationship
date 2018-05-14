@@ -69,7 +69,7 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
     "authProviderId",
     "agentReferenceNumber",
     "service",
-    "clientID",
+    "clientId",
     "clientIdType")
 
   val createdFromExistingRelationship = Seq(

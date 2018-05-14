@@ -171,7 +171,7 @@ class RelationshipController @Inject() (
       auditData.set("authProviderId", userDetails.authProviderId)
       auditData.set("agentReferenceNumber", arn)
       auditData.set("service", "personal-income-record")
-      auditData.set("clientID", clientId)
+      auditData.set("clientId", clientId)
       auditData.set("clientIdType", "ni")
       auditData
     }
