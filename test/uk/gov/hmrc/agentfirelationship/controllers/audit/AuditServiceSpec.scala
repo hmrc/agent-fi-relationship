@@ -86,7 +86,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         requestId = Some(RequestId("dummy request id")))
 
       val auditData = new AuditData()
-      auditData.set("arn", Arn("1234").value)
+      auditData.set("agentReferenceNumber", Arn("1234").value)
       auditData.set("authProviderId", "0000001234567890")
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
@@ -100,16 +100,16 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         verify(mockConnector).sendEvent(captor.capture())(any(), any())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
-        sentEvent.auditType shouldBe "AgentClientRelationshipEnded"
+        sentEvent.auditType shouldBe "ClientRemovedAgentServiceAuthorisation"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
-        sentEvent.detail("arn") shouldBe "1234"
+        sentEvent.detail("agentReferenceNumber") shouldBe "1234"
         sentEvent.detail("authProviderId") shouldBe "0000001234567890"
         sentEvent.detail("service") shouldBe "personal-income-record"
         sentEvent.detail("clientId") shouldBe "KS969148D"
         sentEvent.detail("clientIdType") shouldBe "ni"
         sentEvent.tags.contains("Authorization") shouldBe false
         sentEvent.detail("Authorization") shouldBe "dummy bearer token"
-        sentEvent.tags("transactionName") shouldBe "agent fi delete relationship"
+        sentEvent.tags("transactionName") shouldBe "client removed agent:service authorisation"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
         sentEvent.tags("X-Request-ID") shouldBe "dummy request id"

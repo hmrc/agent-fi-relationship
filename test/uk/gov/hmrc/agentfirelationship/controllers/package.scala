@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 import play.api.libs.json.{ JsObject, Json }
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
+import uk.gov.hmrc.agentfirelationship.connectors.UserDetails
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -48,6 +49,8 @@ package object controllers {
   val testCredId = "q213"
   val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
+
+  val userDetails: UserDetails = UserDetails(testCredId, "GovernmentGateway")
 
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
   val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
