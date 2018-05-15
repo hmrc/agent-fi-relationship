@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, Au
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
-import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
+import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
 import uk.gov.hmrc.auth.core.{ AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector }
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -56,8 +56,9 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
   }
 
-  private def authStub(returnValue: Future[~[Option[AffinityGroup], Enrolments]]) =
-    when(mockPlayAuthConnector.authorise(any(), any[Retrieval[~[Option[AffinityGroup], Enrolments]]]())(any(), any())).thenReturn(returnValue)
+  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
+    when(mockPlayAuthConnector.authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
+      .thenReturn(returnValue)
 
   "RelationshipController" should {
     "return Status: OK when successfully finding a relationship" in {
@@ -115,7 +116,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "send an audit event if the relationship is successfully created" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
@@ -143,7 +144,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record, as an agent" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
@@ -169,7 +170,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: CREATED when additional relationships are created as an agent" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
         .thenReturn(Future successful List(validTestRelationship))
@@ -182,7 +183,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when creating relationship" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
 
       val response = controller.createRelationship("TARN0000001", testService, validTestNINO)(fakeCreateRequest)
 
@@ -215,7 +216,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: OK for deleting a record as an agent" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
@@ -228,7 +229,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "send an audit event if the relationship is successfully deleting" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
@@ -253,7 +254,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: NOT_FOUND for failing to delete a record as an agent" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
@@ -266,7 +267,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when deleting relationship" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
 
       val response = controller.terminateRelationship("TARN0000001", testService, validTestNINO)(fakeRequest)
 

@@ -19,10 +19,10 @@ package uk.gov.hmrc.agentfirelationship.controllers.connectors
 import java.net.URL
 
 import com.kenshoo.play.metrics.Metrics
-import javax.inject.{Inject, Named}
+import javax.inject.{ Inject, Named }
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito.{ reset, when }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.Application
@@ -30,10 +30,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
 import uk.gov.hmrc.agentfirelationship.controllers._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
+import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
+import uk.gov.hmrc.auth.core.{ AffinityGroup, Enrolments, PlayAuthConnector }
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.play.test.UnitSpec
 
