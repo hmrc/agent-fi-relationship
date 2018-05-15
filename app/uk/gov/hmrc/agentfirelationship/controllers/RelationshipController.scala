@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{ AuditData, AuditService }
-import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, AuthAuditConnector, MicroserviceAuthConnector }
+import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
 import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -38,7 +38,6 @@ import scala.concurrent.Future
 
 @Singleton
 class RelationshipController @Inject() (
-  authAuditConnector: AuthAuditConnector,
   auditService: AuditService,
   mongoService: RelationshipMongoService,
   authConnector: AgentClientAuthConnector,
@@ -146,16 +145,14 @@ class RelationshipController @Inject() (
   }
 
   private def setAuditData(arn: String, clientId: String, creds: Credentials)(implicit hc: HeaderCarrier): Future[AuditData] = {
-    authAuditConnector.userDetails.map { userDetails =>
-      val auditData = new AuditData()
-      auditData.set("authProviderId", creds.providerId)
-      auditData.set("authProviderIdType", creds.providerType)
-      auditData.set("agentReferenceNumber", arn)
-      auditData.set("service", "personal-income-record")
-      auditData.set("clientId", clientId)
-      auditData.set("clientIdType", "ni")
-      auditData
-    }
+    val auditData = new AuditData()
+    auditData.set("authProviderId", creds.providerId)
+    auditData.set("authProviderIdType", creds.providerType)
+    auditData.set("agentReferenceNumber", arn)
+    auditData.set("service", "personal-income-record")
+    auditData.set("clientId", clientId)
+    auditData.set("clientIdType", "ni")
+    Future successful auditData
   }
 
   private def forThisUser(requestedArn: Arn, requestedNino: Nino)(block: => Future[Result])(implicit taxIdentifier: TaxIdentifier) = {
