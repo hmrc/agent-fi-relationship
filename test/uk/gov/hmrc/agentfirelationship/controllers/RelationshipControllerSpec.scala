@@ -99,7 +99,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: CREATED for creating new record as an agent" in {
-      authStub(agentAffinityAndEnrolments)
+      authStub(agentAffinityAndEnrolmentsCreds)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
       when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
@@ -206,7 +206,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
       val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
@@ -219,7 +219,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
       val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
@@ -232,11 +232,11 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
       val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
       await(response)
-      verify(mockAuditService, times(1)).sendDeleteRelationshipEvent(any())(any(), any())
+      verify(mockAuditService, times(1)).sendTerminatedRelationshipEvent(any())(any(), any())
     }
 
     "return Status: NOT_FOUND for failing to delete a record as a client" in {
@@ -244,7 +244,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
       val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
@@ -257,7 +257,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
       when(mockAuthAuditConnector.userDetails(any(), any())).thenReturn(Future successful userDetails)
-      when(mockAuditService.sendDeleteRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
 
       val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 

@@ -18,15 +18,15 @@ package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.{ JsObject, Json }
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
 import uk.gov.hmrc.agentfirelationship.connectors.UserDetails
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -50,6 +50,7 @@ package object controllers {
   val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
 
+  val credentials = Credentials("someId", "idType")
   val userDetails: UserDetails = UserDetails(testCredId, "GovernmentGateway")
 
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
@@ -65,8 +66,9 @@ package object controllers {
   val clientAffinityAndEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
     Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Individual), Enrolments(clientEnrolment))
 
-  val agentAffinityAndEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
-    Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Agent), Enrolments(agentEnrolment))
+  val agentAffinityAndEnrolmentsCreds: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)),credentials)
+  //new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Agent), Enrolments(agentEnrolment))
 
   val clientNoEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
     Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Individual), Enrolments(Set.empty[Enrolment]))

@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.time.{ LocalDateTime, ZoneId }
-
 import javax.inject.{ Inject, Named, Singleton }
+
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
@@ -28,6 +28,7 @@ import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, Au
 import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
 import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.{ Nino, TaxIdentifier }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
@@ -103,7 +104,7 @@ class RelationshipController @Inject() (
   implicit val invitationFormat = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>
-    authConnector.authorisedForAfi { implicit taxIdentifier =>
+    authConnector.authorisedForAfi { implicit taxIdentifier => implicit credentials =>
       withJsonBody[Invitation] { invitation =>
         forThisUser(Arn(arn), Nino(clientId)) {
           mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
@@ -111,7 +112,7 @@ class RelationshipController @Inject() (
               Logger.info("Creating a relationship")
               for {
                 _ <- mongoService.createRelationship(Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None))
-                auditData <- setAuditData(arn, clientId)
+                auditData <- setAuditData(arn, clientId, credentials)
                 _ <- auditService.sendCreateRelationshipEvent(auditData)
               } yield Created
             case _ =>
@@ -125,17 +126,16 @@ class RelationshipController @Inject() (
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authConnector.authorisedForAfi {
-        implicit taxIdentifier =>
-          forThisUser(Arn(arn), Nino(clientId)) {
-            val relationshipDeleted: Future[Boolean] = for {
-              successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
-              auditData <- setAuditData(arn, clientId)
-              _ <- auditService.sendDeleteRelationshipEvent(auditData)
-            } yield successOrFail
-            relationshipDeleted.map(if (_) Ok else NotFound)
+      authConnector.authorisedForAfi { implicit taxIdentifier => implicit credentials =>
+        forThisUser(Arn(arn), Nino(clientId)) {
+          val relationshipDeleted: Future[Boolean] = for {
+            successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
+            auditData <- setAuditData(arn, clientId, credentials)
+            _ <- auditService.sendTerminatedRelationshipEvent(auditData)
+          } yield successOrFail
+          relationshipDeleted.map(if (_) Ok else NotFound)
 
-          }
+        }
       }
   }
 
@@ -145,11 +145,11 @@ class RelationshipController @Inject() (
     }
   }
 
-  private def setAuditData(arn: String, clientId: String)(implicit hc: HeaderCarrier): Future[AuditData] = {
+  private def setAuditData(arn: String, clientId: String, creds: Credentials)(implicit hc: HeaderCarrier): Future[AuditData] = {
     authAuditConnector.userDetails.map { userDetails =>
       val auditData = new AuditData()
-      auditData.set("authProviderId", userDetails.authProviderId)
-      auditData.set("authProviderIdType", userDetails.authProviderIdType)
+      auditData.set("authProviderId", creds.providerId)
+      auditData.set("authProviderIdType", creds.providerType)
       auditData.set("agentReferenceNumber", arn)
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", clientId)

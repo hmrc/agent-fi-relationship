@@ -91,7 +91,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendDeleteRelationshipEvent(auditData)(
+      await(service.sendTerminatedRelationshipEvent(auditData)(
         hc,
         FakeRequest("GET", "/path")))
 
