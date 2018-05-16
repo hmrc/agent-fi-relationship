@@ -21,12 +21,11 @@ import java.time.LocalDateTime
 import play.api.libs.json.{ JsObject, Json }
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
-import uk.gov.hmrc.agentfirelationship.connectors.UserDetails
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -50,7 +49,7 @@ package object controllers {
   val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
 
-  val userDetails: UserDetails = UserDetails(testCredId, "GovernmentGateway")
+  val credentials = Credentials("someId", "idType")
 
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
   val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
@@ -62,21 +61,21 @@ package object controllers {
   val clientEnrolment = Set(
     Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
 
-  val clientAffinityAndEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
-    Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Individual), Enrolments(clientEnrolment))
+  val clientAffinityAndEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), credentials)
 
-  val agentAffinityAndEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
-    Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Agent), Enrolments(agentEnrolment))
+  val agentAffinityAndEnrolmentsCreds: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)), credentials)
 
-  val clientNoEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
-    Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Individual), Enrolments(Set.empty[Enrolment]))
+  val clientNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(Set.empty)), credentials)
 
-  val agentNoEnrolments: Future[~[Option[AffinityGroup], Enrolments]] =
-    Future successful new ~[Option[AffinityGroup], Enrolments](Some(AffinityGroup.Agent), Enrolments(Set.empty[Enrolment]))
+  val agentNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(Set.empty)), credentials)
 
-  val neitherHaveAffinityOrEnrolment: Future[~[Option[AffinityGroup], Enrolments]] =
-    Future successful new ~[Option[AffinityGroup], Enrolments](None, Enrolments(Set.empty[Enrolment]))
+  val neitherHaveAffinityOrEnrolment: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(None, Enrolments(Set.empty)), credentials)
 
-  val failedAuthStub: Future[~[Option[AffinityGroup], Enrolments]] =
+  val failedAuthStub: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
     Future failed new InsufficientEnrolments
 }

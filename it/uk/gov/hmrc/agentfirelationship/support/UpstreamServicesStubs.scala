@@ -59,7 +59,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
       .withRequestBody(similarToJson(
         s"""{
            |  "auditSource": "agent-fi-relationship",
-           |  "auditType": "$ClientRemovedAgentServiceAuthorisation",
+           |  "auditType": "$ClientTerminatedAgentServiceAuthorisation",
            |  "detail": ${Json.toJson(detail)}
            |}"""))
       .willReturn(aResponse().withStatus(204)))

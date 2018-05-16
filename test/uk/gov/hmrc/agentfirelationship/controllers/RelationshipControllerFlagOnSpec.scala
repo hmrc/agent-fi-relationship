@@ -20,10 +20,9 @@ import org.mockito.ArgumentMatchers.{ any, eq => eqs }
 import org.mockito.Mockito.{ reset, times, verify, when }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
-import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, AuthAuditConnector, MicroserviceAuthConnector }
+import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -38,7 +37,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
   val mockMongoService: RelationshipMongoService = mock[RelationshipMongoService]
   val mockAuditService: AuditService = mock[AuditService]
-  val mockAuthAuditConnector: AuthAuditConnector = mock[AuthAuditConnector]
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
   val mockCesaRelationship: CesaRelationshipCopyService = mock[CesaRelationshipCopyService]
   val mockMicroserviceAuthConnector: MicroserviceAuthConnector = mock[MicroserviceAuthConnector]
@@ -56,7 +54,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   "RelationshipController (Both Flags On)" should {
 
     val controller = new RelationshipController(
-      mockAuthAuditConnector,
       mockAuditService,
       mockMongoService,
       mockAgentClientAuthConnector,

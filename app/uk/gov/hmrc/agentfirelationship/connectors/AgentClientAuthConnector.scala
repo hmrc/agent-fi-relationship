@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
+import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~, Credentials }
 import uk.gov.hmrc.domain.{ Nino, TaxIdentifier }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
@@ -41,17 +41,17 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
 
   override def authConnector: AuthConnector = microserviceAuthConnector
 
-  private type AfiAction = TaxIdentifier => Future[Result]
+  private type AfiAction = TaxIdentifier => Credentials => Future[Result]
 
   def authorisedForAfi(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] = {
-    authorised(AuthProviders(GovernmentGateway)).retrieve(affinityGroupAllEnrolls) {
-      case Some(AffinityGroup.Agent) ~ allEnrolments =>
+    authorised(AuthProviders(GovernmentGateway)).retrieve(affinityGroupAllEnrollsCreds) {
+      case Some(AffinityGroup.Agent) ~ allEnrolments ~ credentials =>
         extractArn(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { arn =>
-          action(arn)
+          action(arn)(credentials)
         }
-      case Some(_) ~ allEnrolments =>
+      case Some(_) ~ allEnrolments ~ credentials =>
         extractNino(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { nino =>
-          action(nino)
+          action(nino)(credentials)
         }
       case _ =>
         Logger.warn("Invalid affinity group or enrolments whilst trying to manipulate relationships")
