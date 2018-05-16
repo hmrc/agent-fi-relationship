@@ -65,7 +65,7 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
     "clientId",
     "clientIdType")
 
-  val DeleteRelationshipFields = Seq(
+  val TerminateRelationshipFields = Seq(
     "authProviderId",
     "authProviderIdType",
     "agentReferenceNumber",
@@ -87,7 +87,7 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
 
   def sendTerminatedRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     auditEvent(AgentClientRelationshipEvent.ClientTerminatedAgentServiceAuthorisation, "client terminated agent:service authorisation",
-      collectDetails(auditData.getDetails, DeleteRelationshipFields))
+      collectDetails(auditData.getDetails, TerminateRelationshipFields))
   }
 
   def sendCreateRelationshipFromExisting(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
