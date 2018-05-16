@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import org.mockito.ArgumentMatchers.{any, eq => eqs}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.ArgumentMatchers.{ any, eq => eqs }
+import org.mockito.Mockito.{ reset, times, verify, when }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
-import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~ }
+import uk.gov.hmrc.auth.core.{ AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector }
+import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
