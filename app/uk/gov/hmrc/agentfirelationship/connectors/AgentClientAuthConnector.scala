@@ -53,15 +53,15 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
             case Some(AffinityGroup.Agent) => extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
               action(Some(arn))(creds)
             }
-            case _ => extractNino(enrols.enrolments).fold(Future successful Forbidden ("")) { nino =>
+            case _ => extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
               action(Some(nino))(creds)
             }
           }
-          case "PrivilegeApplication" if hasRequiredStrideRole(enrols, strideRole) =>
+          case "PrivilegedApplication" if hasRequiredStrideRole(enrols, strideRole) =>
             action(None)(creds)
         }
       case _ =>
-        Logger.warn("Invalid affinity group or enrolments whilst trying to manipulate relationships")
+        Logger.warn("Invalid affinity group or enrolments or credentials whilst trying to manipulate relationships")
         Future.successful(Forbidden)
     }.recoverWith {
       case ex: NoActiveSession =>
@@ -72,18 +72,6 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
         Future.successful(Forbidden)
     }
   }
-
-  protected type RequestAndCurrentUser = Credentials => Future[Result]
-
-  def authorisedForStride(strideRole: String)(body: RequestAndCurrentUser)(implicit hc: HeaderCarrier): Future[Result] =
-    authorised().retrieve(credentials and allEnrolments) {
-      case creds ~ enrolments =>
-        creds.providerType match {
-          case "PrivilegedApplication" if hasRequiredStrideRole(enrolments, strideRole) =>
-            body(creds)
-          case _ => Future successful NoPermissionToPerformOperation
-        }
-    }
 
   case class CurrentUser(credentials: Credentials, affinityGroup: Option[AffinityGroup])
 

@@ -104,9 +104,9 @@ class RelationshipController @Inject() (
   implicit val invitationFormat = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>
-    authConnector.authorisedForAfi("") { implicit taxIdentifier => implicit credentials =>
+    authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
       withJsonBody[Invitation] { invitation =>
-        forThisUser(Arn(arn), Nino(clientId)) {
+        forThisUser(Arn(arn), Nino(clientId), strideRole) {
           mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
             case Nil =>
               Logger.info("Creating a relationship")
@@ -126,8 +126,8 @@ class RelationshipController @Inject() (
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authConnector.authorisedForAfi("") { implicit taxIdentifier => implicit credentials =>
-        forThisUser(Arn(arn), Nino(clientId)) {
+      authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+        forThisUser(Arn(arn), Nino(clientId), strideRole) {
           val relationshipDeleted: Future[Boolean] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData <- setAuditData(arn, clientId, credentials)
@@ -136,18 +136,6 @@ class RelationshipController @Inject() (
           relationshipDeleted.map(if (_) Ok else NotFound)
 
         }
-      }
-  }
-
-  def terminateRelationshipStride(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authConnector.authorisedForStride(strideRole) { implicit credentials =>
-        val relationshipDeleted: Future[Boolean] = for {
-          successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
-          auditData <- setAuditData(arn, clientId, credentials)
-          _ <- auditService.sendTerminatedRelationshipEvent(auditData)
-        } yield successOrFail
-        relationshipDeleted.map(if (_) Ok else NotFound)
       }
   }
 
@@ -168,11 +156,18 @@ class RelationshipController @Inject() (
     Future successful auditData
   }
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino)(block: => Future[Result])(implicit taxIdentifier: TaxIdentifier) = {
-    taxIdentifier match {
-      case arn @ Arn(_) if requestedArn != arn => Future.successful(Forbidden)
-      case nino @ Nino(_) if requestedNino != nino => Future.successful(Forbidden)
-      case _ => block
+  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(block: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
+    strideRole match {
+      case "CAAT" => block
+      case _ => taxIdentifier match {
+        case Some(t) => t match {
+          case arn @ Arn(_) if requestedArn != arn => Future.successful(Forbidden)
+          case nino @ Nino(_) if requestedNino != nino => Future.successful(Forbidden)
+          case _ => block
+        }
+        case _ => Future.successful(Forbidden)
+      }
+      case _ => Future.successful(Forbidden)
     }
   }
 }
