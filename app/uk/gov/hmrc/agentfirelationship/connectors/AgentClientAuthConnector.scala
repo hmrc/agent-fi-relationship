@@ -43,17 +43,22 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
 
   override def authConnector: AuthConnector = microserviceAuthConnector
 
-  private type AfiAction = TaxIdentifier => Credentials => Future[Result]
+  private type AfiAction = Option[TaxIdentifier] => Credentials => Future[Result]
 
-  def authorisedForAfi(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] = {
-    authorised(AuthProviders(GovernmentGateway)).retrieve(affinityGroupAllEnrollsCreds) {
-      case Some(AffinityGroup.Agent) ~ allEnrolments ~ credentials =>
-        extractArn(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { arn =>
-          action(arn)(credentials)
-        }
-      case Some(_) ~ allEnrolments ~ credentials =>
-        extractNino(allEnrolments.enrolments).fold(Future.successful(Forbidden(""))) { nino =>
-          action(nino)(credentials)
+  def authorisedForAfi(strideRole: String)(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] = {
+    authorised().retrieve(affinityGroupAllEnrollsCreds) {
+      case affinity ~ enrols ~ creds =>
+        creds.providerType match {
+          case "GovernmentGateWay" => affinity match {
+            case Some(AffinityGroup.Agent) => extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
+              action(Some(arn))(creds)
+            }
+            case _ => extractNino(enrols.enrolments).fold(Future successful Forbidden ("")) { nino =>
+              action(Some(nino))(creds)
+            }
+          }
+          case "PrivilegeApplication" if hasRequiredStrideRole(enrols, strideRole) =>
+            action(None)(creds)
         }
       case _ =>
         Logger.warn("Invalid affinity group or enrolments whilst trying to manipulate relationships")

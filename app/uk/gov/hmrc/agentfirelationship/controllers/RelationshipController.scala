@@ -104,7 +104,7 @@ class RelationshipController @Inject() (
   implicit val invitationFormat = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>
-    authConnector.authorisedForAfi { implicit taxIdentifier => implicit credentials =>
+    authConnector.authorisedForAfi("") { implicit taxIdentifier => implicit credentials =>
       withJsonBody[Invitation] { invitation =>
         forThisUser(Arn(arn), Nino(clientId)) {
           mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
@@ -126,7 +126,7 @@ class RelationshipController @Inject() (
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authConnector.authorisedForAfi { implicit taxIdentifier => implicit credentials =>
+      authConnector.authorisedForAfi("") { implicit taxIdentifier => implicit credentials =>
         forThisUser(Arn(arn), Nino(clientId)) {
           val relationshipDeleted: Future[Boolean] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
