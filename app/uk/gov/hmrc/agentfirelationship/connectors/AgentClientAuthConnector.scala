@@ -27,11 +27,13 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{ Retrieval, ~, Credentials }
+import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
 import uk.gov.hmrc.domain.{ Nino, TaxIdentifier }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.auth.core.retrieve.Retrievals.{ allEnrolments, credentials }
+import uk.gov.hmrc.agentfirelationship.controllers.ErrorResults._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -65,6 +67,23 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
         Future.successful(Forbidden)
     }
   }
+
+  protected type RequestAndCurrentUser = Credentials => Future[Result]
+
+  def authorisedForStride(strideRole: String)(body: RequestAndCurrentUser)(implicit hc: HeaderCarrier): Future[Result] =
+    authorised().retrieve(credentials and allEnrolments) {
+      case creds ~ enrolments =>
+        creds.providerType match {
+          case "PrivilegedApplication" if hasRequiredStrideRole(enrolments, strideRole) =>
+            body(creds)
+          case _ => Future successful NoPermissionToPerformOperation
+        }
+    }
+
+  case class CurrentUser(credentials: Credentials, affinityGroup: Option[AffinityGroup])
+
+  def hasRequiredStrideRole(enrolments: Enrolments, strideRole: String): Boolean =
+    enrolments.enrolments.exists(_.key == strideRole)
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =
     enrolls.find(_.key equals "HMRC-AS-AGENT")

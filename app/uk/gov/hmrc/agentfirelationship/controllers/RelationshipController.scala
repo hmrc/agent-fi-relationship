@@ -43,7 +43,8 @@ class RelationshipController @Inject() (
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
   @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
-  @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
+  @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean,
+  @Named("auth.stride.role") strideRole: String)
   extends BaseController {
 
   def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] = findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
@@ -135,6 +136,18 @@ class RelationshipController @Inject() (
           relationshipDeleted.map(if (_) Ok else NotFound)
 
         }
+      }
+  }
+
+  def terminateRelationshipStride(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authConnector.authorisedForStride(strideRole) { implicit credentials =>
+        val relationshipDeleted: Future[Boolean] = for {
+          successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
+          auditData <- setAuditData(arn, clientId, credentials)
+          _ <- auditService.sendTerminatedRelationshipEvent(auditData)
+        } yield successOrFail
+        relationshipDeleted.map(if (_) Ok else NotFound)
       }
   }
 

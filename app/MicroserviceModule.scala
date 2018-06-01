@@ -56,6 +56,7 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindBooleanProperty("features.check-cesa-relationships")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
+    bindProperty("auth.stride.role")
   }
 
   private def bindBaseUrl(serviceName: String) =

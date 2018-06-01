@@ -4,6 +4,7 @@
 GET           /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findRelationship(arn: String, service: String, clientId: String)
 PUT           /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.createRelationship(arn: String, service: String, clientId: String)
 DELETE        /relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.terminateRelationship(arn: String, service: String, clientId: String)
+DELETE        /relationships/stride/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.terminateRelationshipStride(arn: String, service: String, clientId: String)
 
 GET           /relationships/PERSONAL-INCOME-RECORD/agent/:arn/client/:clientId                       @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findAfiRelationship(arn: String, clientId: String)
 
