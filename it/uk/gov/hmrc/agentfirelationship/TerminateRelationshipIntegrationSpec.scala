@@ -133,7 +133,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
 
     scenario("The user is not logged in with GG credentials") {
       isNotLoggedIn
-      When("I call the create-relationship endpoint")
+      When("I call the terminates relationship endpoint")
       val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I will receive a 401 response ")
@@ -145,7 +145,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
 
-      When("I call the create-relationship endpoint")
+      When("I call the terminates relationship endpoint")
       isLoggedInWithoutAffinityGroup
       val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
 
@@ -158,12 +158,31 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
 
-      When("I call the create-relationship endpoint")
+      When("I call the terminates relationship endpoint")
       isLoggedInWithInvalidEnrolments
       val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
 
       Then("I will receive a 403 FORBIDDEN response")
       terminateRelationshipResponse.status shouldBe FORBIDDEN
+    }
+
+    scenario("Stride user terminates an existing relationship with client for a given service") {
+
+      Given("there exists a relationship between an agent and client for a given service")
+      givenCreatedAuditEventStub(auditDetails)
+      givenEndedAuditEventStub(auditDetails)
+      isLoggedInWithStride
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
+
+      When("I call the terminate relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I should get a 200 OK response")
+      terminateRelationshipResponse.status shouldBe OK
+
+      And("the relationship should be terminated")
+      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
+      viewRelationshipResponse.status shouldBe NOT_FOUND
     }
   }
 }

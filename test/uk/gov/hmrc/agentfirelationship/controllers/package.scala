@@ -49,7 +49,8 @@ package object controllers {
   val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
 
-  val credentials = Credentials("someId", "idType")
+  val GGcredentials = Credentials("someId", "GovernmentGateway")
+  val PAcredentials = Credentials("someId", "PrivilegedApplication")
 
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
   val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
@@ -61,20 +62,26 @@ package object controllers {
   val clientEnrolment = Set(
     Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
 
+  val strideEnrolment = Set(
+    Enrolment("CAAT"))
+
   val clientAffinityAndEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), credentials)
+    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), GGcredentials)
 
   val agentAffinityAndEnrolmentsCreds: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)), credentials)
+    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)), GGcredentials)
+
+  val strideEnrolmentsCred: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
+    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(strideEnrolment)), PAcredentials)
 
   val clientNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(Set.empty)), credentials)
+    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(Set.empty)), GGcredentials)
 
   val agentNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(Set.empty)), credentials)
+    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(Set.empty)), GGcredentials)
 
   val neitherHaveAffinityOrEnrolment: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
-    Future successful new ~(new ~(None, Enrolments(Set.empty)), credentials)
+    Future successful new ~(new ~(None, Enrolments(Set.empty)), GGcredentials)
 
   val failedAuthStub: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
     Future failed new InsufficientEnrolments

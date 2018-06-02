@@ -47,10 +47,10 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
 
   def authorisedForAfi(strideRole: String)(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(affinityGroupAllEnrollsCreds) {
-      case affinity ~ enrols ~ creds =>
+      case Some(affinity) ~ enrols ~ creds =>
         creds.providerType match {
-          case "GovernmentGateWay" => affinity match {
-            case Some(AffinityGroup.Agent) => extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
+          case "GovernmentGateway" => affinity match {
+            case AffinityGroup.Agent => extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
               action(Some(arn))(creds)
             }
             case _ => extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>

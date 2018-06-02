@@ -139,6 +139,7 @@ class RelationshipController @Inject() (
       }
   }
 
+  //Marianne: Why no tests for this? Deprecated?
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound
@@ -157,17 +158,24 @@ class RelationshipController @Inject() (
   }
 
   private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(block: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
-    strideRole match {
-      case "CAAT" => block
-      case _ => taxIdentifier match {
-        case Some(t) => t match {
-          case arn @ Arn(_) if requestedArn != arn => Future.successful(Forbidden)
-          case nino @ Nino(_) if requestedNino != nino => Future.successful(Forbidden)
-          case _ => block
+    taxIdentifier match {
+      case Some(t) => t match {
+        case arn @ Arn(_) if requestedArn != arn => {
+          Future.successful(Forbidden)
         }
-        case _ => Future.successful(Forbidden)
+        case nino @ Nino(_) if requestedNino != nino => {
+          Future.successful(Forbidden)
+        }
+        case _ => {
+          block
+        }
       }
-      case _ => Future.successful(Forbidden)
+      case _ => strideRole match {
+        case "CAAT" => block
+        //Marianne: will it ever reach this case? There is previously a if hasRequiredStrideRole(enrols, strideRole) bit in the auth connector
+        //checking the same thing
+        case _ => Future successful Forbidden
+      }
     }
   }
 }

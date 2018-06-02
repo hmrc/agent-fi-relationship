@@ -193,4 +193,24 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
     this
   }
 
+  def isLoggedInWithStride = {
+    stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
+      s"""
+         |{
+         |  "affinityGroup": "Individual",
+         |  "allEnrolments": [
+         |    {
+         |      "key": "CAAT"
+         |    }
+         |  ],
+         |  "credentials": {
+         |    "providerId": "12345-credId",
+         |    "providerType": "PrivilegedApplication"
+         |  }
+         |}
+       """.stripMargin)))
+
+    this
+  }
+
 }

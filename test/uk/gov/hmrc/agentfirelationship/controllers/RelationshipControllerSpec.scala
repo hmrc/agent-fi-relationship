@@ -42,12 +42,13 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
+  val strideRole = "CAAT"
 
   val controller = new RelationshipController(
     mockAuditService,
     mockMongoService,
     mockAgentClientAuthConnector,
-    mockCesaRelationship, false, false)
+    mockCesaRelationship, false, false, strideRole)
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
