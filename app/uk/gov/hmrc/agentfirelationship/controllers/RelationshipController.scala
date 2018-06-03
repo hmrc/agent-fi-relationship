@@ -131,9 +131,12 @@ class RelationshipController @Inject() (
           val relationshipDeleted: Future[Boolean] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData <- setAuditData(arn, clientId, credentials)
-            _ <- auditService.sendTerminatedRelationshipEvent(auditData)
+            _ <- sendAuditEventForThisUser(credentials, auditData)
           } yield successOrFail
-          relationshipDeleted.map(if (_) Ok else NotFound)
+          relationshipDeleted.map(if (_) Ok else {
+            Logger.warn("Relationship Not Found")
+            NotFound
+          })
 
         }
       }
@@ -148,22 +151,42 @@ class RelationshipController @Inject() (
 
   private def setAuditData(arn: String, clientId: String, creds: Credentials)(implicit hc: HeaderCarrier): Future[AuditData] = {
     val auditData = new AuditData()
-    auditData.set("authProviderId", creds.providerId)
-    auditData.set("authProviderIdType", creds.providerType)
-    auditData.set("agentReferenceNumber", arn)
-    auditData.set("service", "personal-income-record")
-    auditData.set("clientId", clientId)
-    auditData.set("clientIdType", "ni")
-    Future successful auditData
+    if (creds.providerType == "GovernmentGateway") {
+      auditData.set("authProviderId", creds.providerId)
+      auditData.set("authProviderIdType", creds.providerType)
+      auditData.set("agentReferenceNumber", arn)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", clientId)
+      auditData.set("clientIdType", "ni")
+      Future successful auditData
+    } else if (creds.providerType == "PrivilegedApplication") {
+      auditData.set("UserID", creds.providerId)
+      auditData.set("ProviderType", creds.providerType)
+      auditData.set("agentReferenceNumber", arn)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", clientId)
+      Future successful auditData
+    } else throw new IllegalArgumentException("No providerType found in Credentials")
+
+  }
+
+  private def sendAuditEventForThisUser(credentials: Credentials, auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
+    if (credentials.providerType == "GovernmentGateway")
+      auditService.sendTerminatedRelationshipEvent(auditData)
+    else if (credentials.providerType == "PrivilegedApplication")
+      auditService.sendTerminatedRelationshipEvent(auditData)
+    else throw new IllegalArgumentException("No providerType found in Credentials")
   }
 
   private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(block: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
     taxIdentifier match {
       case Some(t) => t match {
         case arn @ Arn(_) if requestedArn != arn => {
+          Logger.warn("Arn does not match")
           Future.successful(Forbidden)
         }
         case nino @ Nino(_) if requestedNino != nino => {
+          Logger.warn("Nino does not match")
           Future.successful(Forbidden)
         }
         case _ => {
@@ -174,7 +197,9 @@ class RelationshipController @Inject() (
         case "CAAT" => block
         //Marianne: will it ever reach this case? There is previously a if hasRequiredStrideRole(enrols, strideRole) bit in the auth connector
         //checking the same thing
-        case _ => Future successful Forbidden
+        case _ =>
+          Logger.warn("Unsupported ProviderType / Role")
+          Future successful Forbidden
       }
     }
   }
