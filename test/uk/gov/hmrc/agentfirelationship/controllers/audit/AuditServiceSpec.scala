@@ -155,5 +155,44 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.tags("X-Request-ID") shouldBe "dummy request id"
       }
     }
+
+    "sendHmrcLedDeleteRelationshipAuditEvent with correct fields" in {
+      val mockConnector = mock[AuditConnector]
+      val service = new AuditService(mockConnector)
+
+      val hc = HeaderCarrier(
+        authorization = Some(Authorization("dummy bearer token")),
+        sessionId = Some(SessionId("dummy session id")),
+        requestId = Some(RequestId("dummy request id")))
+
+      val auditData = new AuditData()
+      auditData.set("authProviderId", "0000001234567890")
+      auditData.set("authProviderIdType", "PrivilegedApplication")
+      auditData.set("agentReferenceNumber", Arn("1234"))
+      auditData.set("clientId", Nino("KS969148D").value)
+      auditData.set("service", "personal-income-record")
+
+      await(service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(hc, FakeRequest("GET", "/path")))
+
+      eventually {
+        val captor = ArgumentCaptor.forClass(classOf[DataEvent])
+        verify(mockConnector).sendEvent(captor.capture())(any(), any())
+        val sentEvent = captor.getValue.asInstanceOf[DataEvent]
+
+        sentEvent.auditType shouldBe "HmrcRemovedAgentServiceAuthorisation"
+        sentEvent.auditSource shouldBe "agent-fi-relationship"
+        sentEvent.detail("authProviderId") shouldBe "0000001234567890"
+        sentEvent.detail("authProviderIdType") shouldBe "PrivilegedApplication"
+        sentEvent.detail("agentReferenceNumber") shouldBe "1234"
+        sentEvent.detail("service") shouldBe "personal-income-record"
+        sentEvent.detail("clientId") shouldBe "KS969148D"
+        sentEvent.tags.contains("Authorization") shouldBe false
+        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
+        sentEvent.tags("transactionName") shouldBe "hmrc remove agent:service authorisation"
+        sentEvent.tags("path") shouldBe "/path"
+        sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
+        sentEvent.tags("X-Request-ID") shouldBe "dummy request id"
+      }
+    }
   }
 }

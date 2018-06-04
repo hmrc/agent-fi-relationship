@@ -29,12 +29,13 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.collection.JavaConversions
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+
 import scala.concurrent.Future
 import scala.util.Try
 import uk.gov.hmrc.http.HeaderCarrier
 
 object AgentClientRelationshipEvent extends Enumeration {
-  val AgentClientRelationshipCreated, ClientTerminatedAgentServiceAuthorisation, AgentClientRelationshipCreatedFromExisting = Value
+  val AgentClientRelationshipCreated, ClientTerminatedAgentServiceAuthorisation, AgentClientRelationshipCreatedFromExisting, HmrcRemovedAgentServiceAuthorisation = Value
   type AgentClientRelationshipEvent = Value
 }
 
@@ -80,6 +81,14 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
     "clientId",
     "clientIdType")
 
+  val hmrcDeleteRelationshipDetailsFields =
+    Seq(
+      "authProviderId",
+      "authProviderIdType",
+      "agentReferenceNumber",
+      "clientId",
+      "service")
+
   def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreated, "agent fi create relationship",
       collectDetails(auditData.getDetails, createRelationshipDetailsFields))
@@ -94,6 +103,15 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
     auditEvent(AgentClientRelationshipEvent.AgentClientRelationshipCreatedFromExisting, "Agent client relationship created from CESA",
       collectDetails(auditData.getDetails, createdFromExistingRelationship))
   }
+
+  def sendHmrcLedDeleteRelationshipAuditEvent(auditData: AuditData)(
+    implicit
+    headerCarrier: HeaderCarrier,
+    request: Request[Any]): Future[Unit] =
+    auditEvent(
+      AgentClientRelationshipEvent.HmrcRemovedAgentServiceAuthorisation,
+      "hmrc remove agent:service authorisation",
+      collectDetails(auditData.getDetails, hmrcDeleteRelationshipDetailsFields))
 
   private def auditEvent(event: AgentClientRelationshipEvent, transactionName: String, details: Seq[(String, Any)] = Seq.empty)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
     send(createEvent(event, transactionName, details: _*))

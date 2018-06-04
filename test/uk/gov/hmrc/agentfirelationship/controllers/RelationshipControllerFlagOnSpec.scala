@@ -43,6 +43,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
+  val strideRole = "CAAT"
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
@@ -57,7 +58,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       mockAuditService,
       mockMongoService,
       mockAgentClientAuthConnector,
-      mockCesaRelationship, true, true)
+      mockCesaRelationship, true, true, strideRole)
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any()))

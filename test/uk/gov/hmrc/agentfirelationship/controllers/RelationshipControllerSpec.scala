@@ -42,12 +42,13 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
+  val strideRole = "CAAT"
 
   val controller = new RelationshipController(
     mockAuditService,
     mockMongoService,
     mockAgentClientAuthConnector,
-    mockCesaRelationship, false, false)
+    mockCesaRelationship, false, false, strideRole)
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
@@ -225,6 +226,19 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
     }
 
+    "return Status: OK for deleting a record as hmrc" in {
+      authStub(strideEnrolmentsCred)
+      when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+        .thenReturn(Future successful true)
+
+      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any())).thenReturn(Future successful (()))
+
+      val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+
+      status(response) shouldBe OK
+      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+    }
+
     "send an audit event if the relationship is successfully deleting" in {
       authStub(agentAffinityAndEnrolmentsCreds)
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
@@ -256,6 +270,19 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         .thenReturn(Future successful false)
 
       when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any())).thenReturn(Future successful (()))
+
+      val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+
+      status(response) shouldBe NOT_FOUND
+      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+    }
+
+    "return Status: NOT_FOUND for failing to delete a record as hmrc" in {
+      authStub(strideEnrolmentsCred)
+      when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
+        .thenReturn(Future successful false)
+
+      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any())).thenReturn(Future successful (()))
 
       val response = controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 

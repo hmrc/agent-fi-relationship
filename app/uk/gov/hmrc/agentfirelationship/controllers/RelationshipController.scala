@@ -43,7 +43,8 @@ class RelationshipController @Inject() (
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
   @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
-  @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean)
+  @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean,
+  @Named("auth.stride.role") strideRole: String)
   extends BaseController {
 
   def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] = findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
@@ -103,9 +104,9 @@ class RelationshipController @Inject() (
   implicit val invitationFormat = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String) = Action.async(parse.json) { implicit request =>
-    authConnector.authorisedForAfi { implicit taxIdentifier => implicit credentials =>
+    authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
       withJsonBody[Invitation] { invitation =>
-        forThisUser(Arn(arn), Nino(clientId)) {
+        forThisUser(Arn(arn), Nino(clientId), strideRole) {
           mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
             case Nil =>
               Logger.info("Creating a relationship")
@@ -125,14 +126,17 @@ class RelationshipController @Inject() (
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authConnector.authorisedForAfi { implicit taxIdentifier => implicit credentials =>
-        forThisUser(Arn(arn), Nino(clientId)) {
+      authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+        forThisUser(Arn(arn), Nino(clientId), strideRole) {
           val relationshipDeleted: Future[Boolean] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData <- setAuditData(arn, clientId, credentials)
-            _ <- auditService.sendTerminatedRelationshipEvent(auditData)
+            _ <- sendAuditEventForThisUser(credentials, auditData)
           } yield successOrFail
-          relationshipDeleted.map(if (_) Ok else NotFound)
+          relationshipDeleted.map(if (_) Ok else {
+            Logger.warn("Relationship Not Found")
+            NotFound
+          })
 
         }
       }
@@ -146,20 +150,54 @@ class RelationshipController @Inject() (
 
   private def setAuditData(arn: String, clientId: String, creds: Credentials)(implicit hc: HeaderCarrier): Future[AuditData] = {
     val auditData = new AuditData()
-    auditData.set("authProviderId", creds.providerId)
-    auditData.set("authProviderIdType", creds.providerType)
-    auditData.set("agentReferenceNumber", arn)
-    auditData.set("service", "personal-income-record")
-    auditData.set("clientId", clientId)
-    auditData.set("clientIdType", "ni")
-    Future successful auditData
+    if (creds.providerType == "GovernmentGateway") {
+      auditData.set("authProviderId", creds.providerId)
+      auditData.set("authProviderIdType", creds.providerType)
+      auditData.set("agentReferenceNumber", arn)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", clientId)
+      auditData.set("clientIdType", "ni")
+      Future successful auditData
+    } else if (creds.providerType == "PrivilegedApplication") {
+      auditData.set("authProviderId", creds.providerId)
+      auditData.set("authProviderIdType", creds.providerType)
+      auditData.set("agentReferenceNumber", arn)
+      auditData.set("service", "personal-income-record")
+      auditData.set("clientId", clientId)
+      Future successful auditData
+    } else throw new IllegalArgumentException("No providerType found in Credentials")
+
   }
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino)(block: => Future[Result])(implicit taxIdentifier: TaxIdentifier) = {
+  private def sendAuditEventForThisUser(credentials: Credentials, auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
+    if (credentials.providerType == "GovernmentGateway")
+      auditService.sendTerminatedRelationshipEvent(auditData)
+    else if (credentials.providerType == "PrivilegedApplication")
+      auditService.sendHmrcLedDeleteRelationshipAuditEvent(auditData)
+    else throw new IllegalArgumentException("No providerType found in Credentials")
+  }
+
+  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(action: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
     taxIdentifier match {
-      case arn @ Arn(_) if requestedArn != arn => Future.successful(Forbidden)
-      case nino @ Nino(_) if requestedNino != nino => Future.successful(Forbidden)
-      case _ => block
+      case Some(t) => t match {
+        case arn @ Arn(_) if requestedArn != arn => {
+          Logger.warn("Arn does not match")
+          Future.successful(Forbidden)
+        }
+        case nino @ Nino(_) if requestedNino != nino => {
+          Logger.warn("Nino does not match")
+          Future.successful(Forbidden)
+        }
+        case _ => {
+          action
+        }
+      }
+      case _ => strideRole match {
+        case "CAAT" => action
+        case _ =>
+          Logger.warn("Unsupported ProviderType / Role")
+          Future successful Forbidden
+      }
     }
   }
 }
