@@ -181,6 +181,8 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
         sentEvent.auditType shouldBe "HmrcRemovedAgentServiceAuthorisation"
         sentEvent.auditSource shouldBe "agent-fi-relationship"
+        sentEvent.detail("authProviderId") shouldBe "0000001234567890"
+        sentEvent.detail("authProviderIdType") shouldBe "PrivilegedApplication"
         sentEvent.detail("agentReferenceNumber") shouldBe "1234"
         sentEvent.detail("service") shouldBe "personal-income-record"
         sentEvent.detail("clientId") shouldBe "KS969148D"

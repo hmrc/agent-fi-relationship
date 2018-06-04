@@ -159,8 +159,8 @@ class RelationshipController @Inject() (
       auditData.set("clientIdType", "ni")
       Future successful auditData
     } else if (creds.providerType == "PrivilegedApplication") {
-      auditData.set("UserID", creds.providerId)
-      auditData.set("ProviderType", creds.providerType)
+      auditData.set("authProviderId", creds.providerId)
+      auditData.set("authProviderIdType", creds.providerType)
       auditData.set("agentReferenceNumber", arn)
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", clientId)
