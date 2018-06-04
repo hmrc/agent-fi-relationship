@@ -142,7 +142,6 @@ class RelationshipController @Inject() (
       }
   }
 
-  //Marianne: Why no tests for this? Deprecated?
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
     mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active) map { result =>
       if (result.nonEmpty) Ok(toJson(result)) else NotFound
@@ -174,7 +173,7 @@ class RelationshipController @Inject() (
     if (credentials.providerType == "GovernmentGateway")
       auditService.sendTerminatedRelationshipEvent(auditData)
     else if (credentials.providerType == "PrivilegedApplication")
-      auditService.sendTerminatedRelationshipEvent(auditData)
+      auditService.sendHmrcLedDeleteRelationshipAuditEvent(auditData)
     else throw new IllegalArgumentException("No providerType found in Credentials")
   }
 
@@ -195,8 +194,6 @@ class RelationshipController @Inject() (
       }
       case _ => strideRole match {
         case "CAAT" => block
-        //Marianne: will it ever reach this case? There is previously a if hasRequiredStrideRole(enrols, strideRole) bit in the auth connector
-        //checking the same thing
         case _ =>
           Logger.warn("Unsupported ProviderType / Role")
           Future successful Forbidden

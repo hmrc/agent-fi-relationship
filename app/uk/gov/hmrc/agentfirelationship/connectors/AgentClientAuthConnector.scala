@@ -33,7 +33,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.{ allEnrolments, credentials }
-import uk.gov.hmrc.agentfirelationship.controllers.ErrorResults._
 
 import scala.concurrent.{ ExecutionContext, Future }
 

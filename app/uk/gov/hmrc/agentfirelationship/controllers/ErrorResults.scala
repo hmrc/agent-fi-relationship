@@ -27,9 +27,4 @@ object ErrorResults {
   implicit val errorBodyWrites = new Writes[ErrorBody] {
     override def writes(body: ErrorBody): JsValue = Json.obj("code" -> body.code, "message" -> body.message)
   }
-
-  val GenericUnauthorized = Unauthorized(
-    toJson(ErrorBody("UNAUTHENTICATED", "Bearer token is missing or not authorized.")))
-  val NoPermissionToPerformOperation = Forbidden(
-    toJson(ErrorBody("NO_PERMISSION", "The logged in user is not permitted to perform the operation.")))
 }

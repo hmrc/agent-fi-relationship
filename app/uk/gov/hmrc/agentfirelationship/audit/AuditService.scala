@@ -83,9 +83,10 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
 
   val hmrcDeleteRelationshipDetailsFields =
     Seq(
-      "UserID",
+      "authProviderId",
+      "authProviderIdType",
       "agentReferenceNumber",
-      "cliendID",
+      "clientId",
       "service")
 
   def sendCreateRelationshipEvent(auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] = {
@@ -103,11 +104,10 @@ class AuditService @Inject() (val auditConnector: AuditConnector) {
       collectDetails(auditData.getDetails, createdFromExistingRelationship))
   }
 
-  def sendHmrcLedDeleteRelationshipAuditEvent(
+  def sendHmrcLedDeleteRelationshipAuditEvent(auditData: AuditData)(
     implicit
     headerCarrier: HeaderCarrier,
-    request: Request[Any],
-    auditData: AuditData): Unit =
+    request: Request[Any]): Future[Unit] =
     auditEvent(
       AgentClientRelationshipEvent.HmrcRemovedAgentServiceAuthorisation,
       "hmrc remove agent:service authorisation",
