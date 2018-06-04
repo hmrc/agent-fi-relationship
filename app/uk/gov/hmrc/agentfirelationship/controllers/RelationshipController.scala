@@ -177,7 +177,7 @@ class RelationshipController @Inject() (
     else throw new IllegalArgumentException("No providerType found in Credentials")
   }
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(block: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
+  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(action: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
     taxIdentifier match {
       case Some(t) => t match {
         case arn @ Arn(_) if requestedArn != arn => {
@@ -189,11 +189,11 @@ class RelationshipController @Inject() (
           Future.successful(Forbidden)
         }
         case _ => {
-          block
+          action
         }
       }
       case _ => strideRole match {
-        case "CAAT" => block
+        case "CAAT" => action
         case _ =>
           Logger.warn("Unsupported ProviderType / Role")
           Future successful Forbidden
