@@ -46,18 +46,17 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
 
   def authorisedForAfi(strideRole: String)(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(affinityGroupAllEnrollsCreds) {
-      case Some(affinity) ~ enrols ~ creds =>
-        creds.providerType match {
-          case "GovernmentGateway" => affinity match {
-            case AffinityGroup.Agent => extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
-              action(Some(arn))(creds)
-            }
-            case _ => extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
-              action(Some(nino))(creds)
-            }
+      case affinity ~ enrols ~ creds =>
+        (affinity, creds.providerType) match {
+          case (Some(AffinityGroup.Agent), "GovernmentGateway") => extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
+            action(Some(arn))(creds)
           }
-          case "PrivilegedApplication" if hasRequiredStrideRole(enrols, strideRole) =>
+          case (Some(_), "GovernmentGateway") => extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
+            action(Some(nino))(creds)
+          }
+          case (_, "PrivilegedApplication") if hasRequiredStrideRole(enrols, strideRole) =>
             action(None)(creds)
+          case _ => Future successful Forbidden("Invalid affinity group and credentials found")
         }
       case _ =>
         Logger.warn("Invalid affinity group or enrolments or credentials whilst trying to manipulate relationships")
@@ -75,7 +74,7 @@ class AgentClientAuthConnector @Inject() (microserviceAuthConnector: Microservic
   case class CurrentUser(credentials: Credentials, affinityGroup: Option[AffinityGroup])
 
   def hasRequiredStrideRole(enrolments: Enrolments, strideRole: String): Boolean =
-    enrolments.enrolments.exists(_.key == strideRole)
+    enrolments.enrolments.exists(_.key.toUpperCase == strideRole)
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =
     enrolls.find(_.key equals "HMRC-AS-AGENT")
