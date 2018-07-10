@@ -39,36 +39,6 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
-  "Update AFI relationships which do not have relationshipStatus to have relationshipStatus: ACTIVE" should {
-    "all relationships without status, now have status ACTIVE" in {
-      val create = for {
-        _ <- repo.createRelationship(validTestRelationship)
-        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = None))
-        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = None))
-        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
-      } yield ()
-      await(create)
-      await(repo.addActiveRelationshipStatus())
-
-      await(repo.findRelationships(agentId, "afi", clientId, Active)).length shouldBe 3
-      await(repo.findRelationships(agentId, "afi", clientId, Terminated)).length shouldBe 1
-    }
-
-    "relationships with status are unaffected" in {
-      val create = for {
-        _ <- repo.createRelationship(validTestRelationship)
-        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
-        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
-        _ <- repo.createRelationship(validTestRelationship.copy(relationshipStatus = Some(Terminated)))
-      } yield ()
-      await(create)
-      await(repo.addActiveRelationshipStatus())
-
-      await(repo.findRelationships(agentId, "afi", clientId, Active)).length shouldBe 1
-      await(repo.findRelationships(agentId, "afi", clientId, Terminated)).length shouldBe 3
-    }
-  }
-
   "RelationshipMongoService" should {
     "return active relationships for findRelationships" in {
       await(repo.createRelationship(validTestRelationship))
