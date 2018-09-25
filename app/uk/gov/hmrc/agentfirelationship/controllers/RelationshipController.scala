@@ -151,7 +151,7 @@ class RelationshipController @Inject() (
   val findInActiveRelationshipsForAgent: Action[AnyContent] = Action.async { implicit request =>
     authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
       taxIdentifier match {
-        case Some(Arn(arn)) => mongoService.findInActiveAgentRelationships(arn).map { result =>
+        case Some(Arn(arn)) if Arn.isValid(arn) => mongoService.findInActiveAgentRelationships(arn).map { result =>
           if (result.nonEmpty) Ok(toJson(result)) else {
             Logger(getClass).warn("No Inactive Relationships Found")
             NotFound

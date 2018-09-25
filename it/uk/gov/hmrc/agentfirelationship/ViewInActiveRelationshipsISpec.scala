@@ -53,11 +53,12 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
 
       When("I call the terminates relationship endpoint")
       val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+      val terminateRelationshipResponse2: WSResponse = Await.result(terminateRelationship(agentId, clientId2, service), 10 seconds)
+
 
       Then("I should get a 200 OK response")
       terminateRelationshipResponse.status shouldBe OK
-
-//      Await.result(terminateRelationship(agentId, clientId2, service), 10 seconds)
+      terminateRelationshipResponse2.status shouldBe OK
 
       When("I call the View Inactive Relationship endpoint")
       val viewInactiveRelationshipResponse: WSResponse = Await.result(getInactiveRelationships, 10 seconds)
@@ -70,9 +71,11 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
       val actualAgentId = (jsonResponse(0) \ "arn").as[String]
       val actualClientId = (jsonResponse(0) \ "clientId").as[String]
       val actualService = (jsonResponse(0) \ "service").as[String]
+      val actualClientId2 = (jsonResponse(1) \ "clientId").as[String]
       actualAgentId shouldBe agentId
       actualClientId shouldBe clientId
       actualService shouldBe service
+      actualClientId2 shouldBe clientId2
     }
 
     scenario("Agent does not find any inactive relationships") {
