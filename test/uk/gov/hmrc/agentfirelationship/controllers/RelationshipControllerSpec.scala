@@ -16,18 +16,19 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import org.mockito.ArgumentMatchers.{ any, eq => eqs }
-import org.mockito.Mockito.{ reset, times, verify, when }
+import org.mockito.ArgumentMatchers.{any, eq => eqs}
+import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
+import play.api.mvc.Result
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
-import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
-import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
-import uk.gov.hmrc.auth.core.{ AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector }
+import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -328,6 +329,16 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+    }
+
+    "return Status: OK with json body of all invitaitons with TERMINIATED status" in {
+      when(mockMongoService.findInActiveAgentRelationships(eqs(validTestArn))(any()))
+        .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
+
+      val response = controller.findInActiveRelationshipsForAgent(fakeRequest)
+
+      status(response) shouldBe OK
+      verify(mockMongoService, times(1)).findInActiveAgentRelationships(any())(any())
     }
   }
 }

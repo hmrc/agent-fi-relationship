@@ -148,6 +148,23 @@ class RelationshipController @Inject() (
     }
   }
 
+  val findInActiveRelationshipsForAgent: Action[AnyContent] = Action.async { implicit request =>
+    authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+      taxIdentifier match {
+        case Some(Arn(arn)) => mongoService.findInActiveAgentRelationships(arn).map { result =>
+          if (result.nonEmpty) Ok(toJson(result)) else {
+            Logger(getClass).warn("No Inactive Relationships Found")
+            NotFound
+          }
+        }
+        case _ =>
+          Logger(getClass).error("Arn Not Found in Login")
+          Future successful NotFound
+      }
+    }
+
+  }
+
   private def setAuditData(arn: String, clientId: String, creds: Credentials)(implicit hc: HeaderCarrier): Future[AuditData] = {
     val auditData = new AuditData()
     if (creds.providerType == "GovernmentGateway") {

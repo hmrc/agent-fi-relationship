@@ -74,6 +74,12 @@ class RelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent
     updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId))(true, ec)
   }
 
+  def findInActiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    find(
+      "arn" -> arn,
+      "relationshipStatus" -> "TERMINATED")
+  }
+
   private def updateStatusToTerminated(selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] = {
     collection.update(
       selector,
