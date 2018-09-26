@@ -16,19 +16,21 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import org.mockito.ArgumentMatchers.{any, eq => eqs}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.ArgumentMatchers.{ any, eq => eqs }
+import org.mockito.Mockito.{ reset, times, verify, when }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.Result
+import play.api.mvc.Results._
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
+import uk.gov.hmrc.agentfirelationship.services.{ CesaRelationshipCopyService, RelationshipMongoService }
+import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
+import uk.gov.hmrc.auth.core.{ AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector }
+import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -54,6 +56,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
   }
+
+  private type AfiAction = Option[TaxIdentifier] => Credentials => Future[Result]
 
   private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
     when(mockPlayAuthConnector.authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
@@ -184,7 +188,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when creating relationship" in {
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      val response = controller.createRelationship("TARN0000001", testService, validTestNINO)(fakeCreateRequest)
+      val response = controller.createRelationship("JARN0000001", testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe FORBIDDEN
       verify(mockMongoService, times(0)).createRelationship(any())(any())
@@ -294,7 +298,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when deleting relationship" in {
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      val response = controller.terminateRelationship("TARN0000001", testService, validTestNINO)(fakeRequest)
+      val response = controller.terminateRelationship("JARN0000001", testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe FORBIDDEN
       verify(mockMongoService, times(0)).terminateRelationship(any(), any(), any())(any())
@@ -332,6 +336,11 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: OK with json body of all invitaitons with TERMINIATED status" in {
+
+      val agentAction: AfiAction = { implicit arn => implicit credentials => Future successful Ok }
+
+      authStub(agentAffinityAndEnrolmentsCreds)
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(agentAction)).thenReturn(Future successful Ok)
       when(mockMongoService.findInActiveAgentRelationships(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
 
