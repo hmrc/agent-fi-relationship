@@ -48,11 +48,13 @@ package object controllers {
   val testCredId = "q213"
   val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
+  val validTestNINO2 = "AB123456A"
 
   val GGcredentials = Credentials("someId", "GovernmentGateway")
   val PAcredentials = Credentials("someId", "PrivilegedApplication")
 
   val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
+  val validTestRelationshipTerminated: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), testResponseDate, None)
   val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
 
   val agentEnrolment = Set(

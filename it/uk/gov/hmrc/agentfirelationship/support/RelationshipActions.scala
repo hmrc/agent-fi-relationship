@@ -37,4 +37,9 @@ trait RelationshipActions extends ScalaFutures {
     wsClient
       .url(s"$url/service/$service/clientId/$clientId")
       .delete()
+
+  def getInactiveRelationships: Future[WSResponse] =
+    wsClient
+    .url(s"$url/inactive")
+    .get()
 }
