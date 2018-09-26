@@ -46,7 +46,6 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
       val createRelationshipResponse2: WSResponse = Await.result(createRelationship(agentId, clientId2, service, testResponseDate), 10 seconds)
 
-
       Then("I will receive a 201 CREATED response")
       createRelationshipResponse.status shouldBe CREATED
       createRelationshipResponse2.status shouldBe CREATED
@@ -54,7 +53,6 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
       When("I call the terminates relationship endpoint")
       val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
       val terminateRelationshipResponse2: WSResponse = Await.result(terminateRelationship(agentId, clientId2, service), 10 seconds)
-
 
       Then("I should get a 200 OK response")
       terminateRelationshipResponse.status shouldBe OK

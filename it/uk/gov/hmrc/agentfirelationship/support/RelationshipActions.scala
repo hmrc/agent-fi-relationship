@@ -40,6 +40,6 @@ trait RelationshipActions extends ScalaFutures {
 
   def getInactiveRelationships: Future[WSResponse] =
     wsClient
-    .url(s"$url/inactive")
-    .get()
+      .url(s"$url/inactive")
+      .get()
 }

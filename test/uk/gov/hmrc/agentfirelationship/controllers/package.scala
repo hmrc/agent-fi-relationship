@@ -44,7 +44,7 @@ package object controllers {
   val saAgentRef = SaAgentReference("T1113T")
   val saAgentRef2 = SaAgentReference("T1123T")
   val saAgentRef3 = SaAgentReference("T1133T")
-  val validTestArn = "AARN1234567"
+  val validTestArn = "TARN0000001"
   val testCredId = "q213"
   val testService = "PERSONAL-INCOME-RECORD"
   val validTestNINO = "AE123456C"
