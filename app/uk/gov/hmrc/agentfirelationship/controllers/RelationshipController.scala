@@ -197,11 +197,11 @@ class RelationshipController @Inject() (
   private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(action: => Future[Result])(implicit taxIdentifier: Option[TaxIdentifier]) = {
     taxIdentifier match {
       case Some(t) => t match {
-        case arn @ Arn(_) if requestedArn != arn => {
+        case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) => {
           Logger.warn("Arn does not match")
           Future.successful(Forbidden)
         }
-        case nino @ Nino(_) if requestedNino != nino => {
+        case nino @ Nino(_) if isDifferentIdentifier(requestedNino, nino) => {
           Logger.warn("Nino does not match")
           Future.successful(Forbidden)
         }
@@ -217,4 +217,10 @@ class RelationshipController @Inject() (
       }
     }
   }
+
+  private def isDifferentIdentifier(taxIdentifier1: TaxIdentifier, taxIdentifier2: TaxIdentifier): Boolean = {
+    taxIdentifier1.getClass != taxIdentifier2.getClass || normalized(taxIdentifier1.value) != normalized(taxIdentifier2.value)
+  }
+
+  private def normalized(value: String) = value.toLowerCase.replace(" ", "")
 }
