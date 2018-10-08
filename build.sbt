@@ -42,6 +42,7 @@ lazy val root = (project in file("."))
     name := "agent-fi-relationship",
     organization := "uk.gov.hmrc",
     scalaVersion := "2.11.11",
+    majorVersion := 0,
     PlayKeys.playDefaultPort := 9427,
     resolvers := Seq(
       Resolver.bintrayRepo("hmrc", "releases"),
@@ -52,7 +53,9 @@ lazy val root = (project in file("."))
     libraryDependencies ++= compileDeps ++ testDeps("test") ++ testDeps("it"),
     publishingSettings,
     scoverageSettings,
-    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources"
+    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
+    scalafmtOnCompile in Compile := true,
+    scalafmtOnCompile in Test := true
   )
   .configs(IntegrationTest)
   .settings(
@@ -60,10 +63,12 @@ lazy val root = (project in file("."))
     Defaults.itSettings,
     unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
     parallelExecution in IntegrationTest := false,
-    testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value)
+    testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
+    scalafmtOnCompile in IntegrationTest := true
   )
-  .settings(scalariformItSettings)
-  .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
+  .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin,SbtArtifactory)
+
+inConfig(IntegrationTest)(scalafmtCoreSettings)
 
 def oneForkedJvmPerTest(tests: Seq[TestDefinition]) = {
   tests.map { test =>

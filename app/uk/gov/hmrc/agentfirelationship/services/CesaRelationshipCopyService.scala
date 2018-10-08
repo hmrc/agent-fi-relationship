@@ -16,38 +16,40 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
-import javax.inject.{ Inject, Singleton }
+import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
 import play.api.mvc.Request
-import uk.gov.hmrc.agentfirelationship.audit.{ AuditData, AuditService }
-import uk.gov.hmrc.agentfirelationship.connectors.{ DesConnector, MappingConnector }
+import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
+import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CesaRelationshipCopyService @Inject() (
-  des: DesConnector,
-  mapping: MappingConnector,
-  auditService: AuditService) {
+class CesaRelationshipCopyService @Inject()(des: DesConnector, mapping: MappingConnector, auditService: AuditService) {
 
-  def lookupCesaForOldRelationship(arn: Arn, nino: Nino)(implicit ec: ExecutionContext, hc: HeaderCarrier, request: Request[Any], auditData: AuditData): Future[Set[SaAgentReference]] = {
+  def lookupCesaForOldRelationship(arn: Arn, nino: Nino)(
+    implicit ec: ExecutionContext,
+    hc: HeaderCarrier,
+    request: Request[Any],
+    auditData: AuditData): Future[Set[SaAgentReference]] = {
     auditData.set("clientId", nino)
     for {
       references <- des.getClientSaAgentSaReferences(nino)
       matching <- intersection(references) {
-        mapping.getSaAgentReferencesFor(arn)
-      }
+                   mapping.getSaAgentReferencesFor(arn)
+                 }
       _ = auditData.set("saAgentRef", matching.mkString(","))
     } yield {
       matching
     }
   }
 
-  private def intersection[A](cesaIds: Seq[A])(mappingServiceCall: => Future[Seq[A]])(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Set[A]] = {
+  private def intersection[A](cesaIds: Seq[A])(
+    mappingServiceCall: => Future[Seq[A]])(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Set[A]] = {
     val cesaIdSet = cesaIds.toSet
 
     if (cesaIdSet.isEmpty) {
@@ -56,7 +58,8 @@ class CesaRelationshipCopyService @Inject() (
     } else
       mappingServiceCall.map { mappingServiceIds =>
         val intersected = mappingServiceIds.toSet.intersect(cesaIdSet)
-        Logger.info(s"The sa references in mapping store are $mappingServiceIds. The intersected value between mapping store and DES is $intersected")
+        Logger.info(
+          s"The sa references in mapping store are $mappingServiceIds. The intersected value between mapping store and DES is $intersected")
         intersected
       }
   }

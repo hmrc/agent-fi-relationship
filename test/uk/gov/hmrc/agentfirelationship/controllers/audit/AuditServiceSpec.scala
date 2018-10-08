@@ -21,21 +21,19 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.verify
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.time.{ Millis, Span }
+import org.scalatest.time.{Millis, Span}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.agentfirelationship.audit.{ AuditData, AuditService }
+import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.{ Authorization, RequestId, SessionId }
+import uk.gov.hmrc.http.logging.{Authorization, RequestId, SessionId}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
-  implicit val testConfig = PatienceConfig(
-    timeout = scaled(Span(500, Millis)),
-    interval = scaled(Span(200, Millis)))
+  implicit val testConfig = PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(200, Millis)))
   "auditEvent" should {
     "send an Create Relationship Event event with the correct fields" in {
       val mockConnector = mock[AuditConnector]
@@ -52,9 +50,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendCreateRelationshipEvent(auditData)(
-        hc,
-        FakeRequest("GET", "/path")))
+      await(service.sendCreateRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -91,9 +87,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendTerminatedRelationshipEvent(auditData)(
-        hc,
-        FakeRequest("GET", "/path")))
+      await(service.sendTerminatedRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -131,9 +125,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "afi")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendCreateRelationshipFromExisting(auditData)(
-        hc,
-        FakeRequest("GET", "/path")))
+      await(service.sendCreateRelationshipFromExisting(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
