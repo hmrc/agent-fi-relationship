@@ -28,17 +28,17 @@ object RelationshipStatus {
 
   private implicit def statusWrites = new Writes[RelationshipStatus] {
     override def writes(status: RelationshipStatus): JsValue = status match {
-      case Active => JsString(Active.key)
+      case Active     => JsString(Active.key)
       case Terminated => JsString(Terminated.key)
-      case _ => throw new RuntimeException(s"Unable to parse the status to json: $status")
+      case _          => throw new RuntimeException(s"Unable to parse the status to json: $status")
     }
   }
 
   private implicit def statusReads = new Reads[RelationshipStatus] {
     override def reads(json: JsValue): JsResult[RelationshipStatus] = json match {
-      case JsString(Active.key) => JsSuccess(Active)
+      case JsString(Active.key)     => JsSuccess(Active)
       case JsString(Terminated.key) => JsSuccess(Terminated)
-      case _ => throw new RuntimeException(s"Unable to parse the json to status: $json")
+      case _                        => throw new RuntimeException(s"Unable to parse the json to status: $json")
     }
   }
 

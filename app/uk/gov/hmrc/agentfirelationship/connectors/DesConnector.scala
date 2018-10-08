@@ -17,18 +17,18 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
-import javax.inject.{ Inject, Named, Singleton }
+import javax.inject.{Inject, Named, Singleton}
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import play.api.libs.json._
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost, HttpReads }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpReads}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -38,29 +38,34 @@ object ClientRelationship {
   implicit val agentReads = Json.reads[Agent]
 
   implicit val readClientRelationship =
-    (JsPath \ "agents").readNullable[Seq[Agent]]
+    (JsPath \ "agents")
+      .readNullable[Seq[Agent]]
       .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 }
 
 @Singleton
-class DesConnector @Inject() (
+class DesConnector @Inject()(
   @Named("des-baseUrl") baseUrl: URL,
   @Named("des.authorizationToken") authorizationToken: String,
   @Named("des.environment") environment: String,
   httpGet: HttpGet,
   httpPost: HttpPost,
   metrics: Metrics)
-  extends HttpAPIMonitor {
+    extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getClientSaAgentSaReferences(nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+  def getClientSaAgentSaReferences(
+    nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val url = new URL(baseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
-    getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url).map(_.agents
-      .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
-      .flatMap(_.agentId))
+    getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url).map(
+      _.agents
+        .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
+        .flatMap(_.agentId))
   }
 
-  private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
+  private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
       authorization = Some(Authorization(s"Bearer $authorizationToken")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> environment)

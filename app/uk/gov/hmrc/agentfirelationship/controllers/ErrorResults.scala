@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentfirelationship.controllers
 
 import play.api.libs.json.Json.toJson
 import play.api.libs.json._
-import play.api.mvc.Results.{ Forbidden, Unauthorized }
+import play.api.mvc.Results.{Forbidden, Unauthorized}
 
 object ErrorResults {
 

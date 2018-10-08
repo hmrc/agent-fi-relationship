@@ -18,14 +18,14 @@ package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.{ JsObject, Json }
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -53,19 +53,30 @@ package object controllers {
   val GGcredentials = Credentials("someId", "GovernmentGateway")
   val PAcredentials = Credentials("someId", "PrivilegedApplication")
 
-  val validTestRelationship: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
-  val validTestRelationshipTerminated: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), testResponseDate, None)
-  val validTestRelationshipCesa: Relationship = Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
+  val validTestRelationship: Relationship =
+    Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
+  val validTestRelationshipTerminated: Relationship =
+    Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), testResponseDate, None)
+  val validTestRelationshipCesa: Relationship = Relationship(
+    Arn(validTestArn),
+    testService,
+    validTestNINO,
+    Some(Terminated),
+    testResponseDate,
+    None,
+    fromCesa = Some(true))
 
   val agentEnrolment = Set(
-    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),
-      state = "", delegatedAuthRule = None))
+    Enrolment(
+      "HMRC-AS-AGENT",
+      Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),
+      state = "",
+      delegatedAuthRule = None))
 
   val clientEnrolment = Set(
     Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
 
-  val strideEnrolment = Set(
-    Enrolment("CAAT"))
+  val strideEnrolment = Set(Enrolment("CAAT"))
 
   val clientAffinityAndEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
     Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), GGcredentials)

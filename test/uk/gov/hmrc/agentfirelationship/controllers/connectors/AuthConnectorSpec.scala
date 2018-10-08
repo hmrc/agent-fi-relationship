@@ -19,10 +19,10 @@ package uk.gov.hmrc.agentfirelationship.controllers.connectors
 import java.net.URL
 
 import com.kenshoo.play.metrics.Metrics
-import javax.inject.{ Inject, Named }
+import javax.inject.{Inject, Named}
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{ reset, when }
+import org.mockito.Mockito.{reset, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.Application
@@ -30,10 +30,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.{ AgentClientAuthConnector, MicroserviceAuthConnector }
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
 import uk.gov.hmrc.agentfirelationship.controllers._
-import uk.gov.hmrc.auth.core.retrieve.{ Credentials, Retrieval, ~ }
-import uk.gov.hmrc.auth.core.{ AffinityGroup, Enrolments, PlayAuthConnector }
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
+import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -49,15 +49,21 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
 
   private type AfiAction = Option[TaxIdentifier] => Credentials => Future[Result]
 
-  val agentAction: AfiAction = { implicit arn => implicit credentials => Future successful Ok }
-  val clientAction: AfiAction = { implicit nino => implicit credentials => Future successful Ok }
+  val agentAction: AfiAction = { implicit arn => implicit credentials =>
+    Future successful Ok
+  }
+  val clientAction: AfiAction = { implicit nino => implicit credentials =>
+    Future successful Ok
+  }
 
   val strideId = "CAAT"
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
   private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
-    when(mockPlayAuthConnector.authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
+    when(
+      mockPlayAuthConnector
+        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
       .thenReturn(returnValue)
 
   "authorisedForAfi" should {
