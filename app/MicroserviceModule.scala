@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import java.net.URL
+import java.net.{URL, URLDecoder}
 
 import com.google.inject.AbstractModule
 import com.google.inject.name.{Named, Names}
@@ -58,7 +58,8 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindBooleanProperty("features.check-cesa-relationships")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
-    bindProperty("auth.stride.role")
+    bindProperty("auth.stride.role", URLDecoder.decode(_, "utf-8"))
+
   }
 
   private def bindBaseUrl(serviceName: String) =
@@ -68,21 +69,24 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     override lazy val get = new URL(baseUrl(serviceName))
   }
 
-  private def bindProperty(propertyName: String) =
-    bind(classOf[String]).annotatedWith(Names.named(propertyName)).toProvider(new PropertyProvider(propertyName))
-
-  private class PropertyProvider(confKey: String) extends Provider[String] {
-    override lazy val get = configuration
-      .getString(confKey)
-      .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
-  }
-
   private def bindProperty(objectName: String, propertyName: String) =
     bind(classOf[String]).annotatedWith(Names.named(objectName)).toProvider(new PropertyProvider2param(propertyName))
 
   private class PropertyProvider2param(confKey: String) extends Provider[String] {
     override lazy val get =
       getConfString(confKey, throw new IllegalStateException(s"No value found for configuration property $confKey"))
+  }
+
+  private def bindProperty(propertyName: String, mapFx: String => String = identity) =
+    bind(classOf[String])
+      .annotatedWith(Names.named(propertyName))
+      .toProvider(new PropertyProvider(propertyName, mapFx))
+
+  private class PropertyProvider(confKey: String, mapFx: String => String) extends Provider[String] {
+    override lazy val get = configuration
+      .getString(confKey)
+      .map(mapFx)
+      .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
   }
 
   private def bindBooleanProperty(propertyName: String) =
