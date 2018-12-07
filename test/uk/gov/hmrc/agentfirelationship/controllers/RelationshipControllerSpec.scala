@@ -46,7 +46,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     mockMicroserviceAuthConnector) {
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
-  val strideRole = "CAAT"
+  val strideRole = "Maintain Agent client relationships"
 
   val controller = new RelationshipController(
     mockAuditService,

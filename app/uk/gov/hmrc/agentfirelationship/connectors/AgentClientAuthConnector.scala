@@ -16,25 +16,20 @@
 
 package uk.gov.hmrc.agentfirelationship.connectors
 
-import java.net.URL
-
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.{allEnrolments, credentials}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 @Singleton
 class AgentClientAuthConnector @Inject()(microserviceAuthConnector: MicroserviceAuthConnector)
@@ -78,7 +73,7 @@ class AgentClientAuthConnector @Inject()(microserviceAuthConnector: Microservice
   case class CurrentUser(credentials: Credentials, affinityGroup: Option[AffinityGroup])
 
   def hasRequiredStrideRole(enrolments: Enrolments, strideRole: String): Boolean =
-    enrolments.enrolments.exists(_.key.toUpperCase == strideRole)
+    enrolments.enrolments.exists(_.key.toUpperCase == strideRole.toUpperCase)
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =
     enrolls

@@ -44,7 +44,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     mockMicroserviceAuthConnector) {
     override def authConnector: AuthConnector = mockPlayAuthConnector
   }
-  val strideRole = "CAAT"
+  val strideRole = "Maintain Agent client relationships"
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)

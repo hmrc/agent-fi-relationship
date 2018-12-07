@@ -232,7 +232,7 @@ class RelationshipController @Inject()(
         }
       case _ =>
         strideRole match {
-          case "CAAT" => action
+          case "Maintain Agent client relationships" => action
           case _ =>
             Logger.warn("Unsupported ProviderType / Role")
             Future successful Forbidden
