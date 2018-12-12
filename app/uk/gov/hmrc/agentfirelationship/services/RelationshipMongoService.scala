@@ -42,26 +42,27 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
 
   def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(
     implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn, "service" -> service, "clientId" -> clientId, "relationshipStatus" -> status)
+    find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
 
   def findAnyRelationships(arn: String, service: String, clientId: String)(
     implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn, "service" -> service, "clientId" -> clientId)
+    find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""))
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] =
-    insert(relationship).map(_ => ())
+    insert(relationship.copy(clientId = relationship.clientId.replaceAll(" ", ""))).map(_ => ())
 
   def terminateRelationship(arn: String, service: String, clientId: String)(
     implicit ec: ExecutionContext): Future[Boolean] =
-    updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId))(true, ec)
+    updateStatusToTerminated(
+      BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(
     implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("service" -> service, "clientId" -> clientId, "relationshipStatus" -> status)
+    find("service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(
     implicit ec: ExecutionContext): Future[Boolean] =
-    updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId))(true, ec)
+    updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
   def findInActiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("arn" -> arn, "relationshipStatus" -> "TERMINATED")
