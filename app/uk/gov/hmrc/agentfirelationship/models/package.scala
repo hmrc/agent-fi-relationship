@@ -19,5 +19,6 @@ package uk.gov.hmrc.agentfirelationship
 import play.api.libs.json._
 
 package object models {
-  implicit val relationshipFormatter: Format[Relationship] = Json.format[Relationship]
+  implicit val relationshipFormatter: Format[Relationship] =
+    Json.format[Relationship]
 }
