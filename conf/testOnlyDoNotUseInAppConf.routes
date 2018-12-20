@@ -12,6 +12,7 @@
 # Add all the application routes to the prod.routes file
 
 PUT           /agent-fi-relationship/test-only/relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.testOnly.TestOnlyController.createRelationship(arn: String, service: String, clientId: String)
+DELETE        /agent-fi-relationship/test-only/relationships/agent/:arn/service/:service/client/:clientId                             @uk.gov.hmrc.agentfirelationship.controllers.testOnly.TestOnlyController.terminateRelationship(arn: String, service: String, clientId: String)
 
 
 ->         /                          prod.Routes
