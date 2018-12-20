@@ -30,7 +30,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{
+  AgentClientAuthConnector,
+  MicroserviceAuthConnector
+}
 import uk.gov.hmrc.agentfirelationship.controllers._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
@@ -39,15 +42,21 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+class AuthConnectorSpec
+    extends UnitSpec
+    with MockitoSugar
+    with BeforeAndAfterEach {
 
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
-  val mockMicroserviceAuthConnector: MicroserviceAuthConnector = mock[MicroserviceAuthConnector]
-  val mockAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
-    override def authConnector: PlayAuthConnector = mockPlayAuthConnector
-  }
+  val mockMicroserviceAuthConnector: MicroserviceAuthConnector =
+    mock[MicroserviceAuthConnector]
+  val mockAuthConnector: AgentClientAuthConnector =
+    new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
+      override def authConnector: PlayAuthConnector = mockPlayAuthConnector
+    }
 
-  private type AfiAction = Option[TaxIdentifier] => Credentials => Future[Result]
+  private type AfiAction =
+    Option[TaxIdentifier] => Credentials => Future[Result]
 
   val agentAction: AfiAction = { implicit arn => implicit credentials =>
     Future successful Ok
@@ -60,17 +69,23 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
-  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
-    when(
-      mockPlayAuthConnector
-        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
+  private def authStub(
+      returnValue: Future[
+        ~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
+    when(mockPlayAuthConnector
+      .authorise(
+        any(),
+        any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(
+        any(),
+        any()))
       .thenReturn(returnValue)
 
   "authorisedForAfi" should {
     "return OK for an Agent with HMRC-AS-AGENT enrolment" in {
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
 
       status(response) shouldBe OK
     }
@@ -78,7 +93,8 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return OK for a Client with HMRC-NI enrolment" in {
       authStub(clientAffinityAndEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(clientAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(clientAction))
 
       status(response) shouldBe OK
     }
@@ -86,7 +102,8 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return OK for a stride authenticated user" in {
       authStub(strideEnrolmentsCred)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
 
       status(response) shouldBe OK
     }
@@ -94,7 +111,8 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN for an Agent with no enrolment" in {
       authStub(agentNoEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -102,7 +120,8 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN for a Client with no enrolment" in {
       authStub(clientNoEnrolments)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(clientAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(clientAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -110,7 +129,8 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN when auth fails to return retrieve enrolments and affinity group" in {
       authStub(neitherHaveAffinityOrEnrolment)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -118,7 +138,8 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return FORBIDDEN when auth throws an error" in {
       authStub(failedAuthStub)
 
-      val response: Result = await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }

@@ -21,10 +21,11 @@ import java.time.LocalDateTime
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -62,6 +63,23 @@ class TestOnlyController @Inject()(mongoService: RelationshipMongoService)
         }
       }
 
+    }
+
+  def terminateRelationship(arn: String,
+                            service: String,
+                            clientId: String): Action[AnyContent] =
+    Action.async { implicit request =>
+      val relationshipDeleted: Future[Boolean] = for {
+        successOrFail <- mongoService.terminateRelationship(arn,
+                                                            service,
+                                                            clientId)
+      } yield successOrFail
+      relationshipDeleted.map(
+        if (_) Ok
+        else {
+          Logger.warn("Relationship Not Found")
+          NotFound
+        })
     }
 
 }
