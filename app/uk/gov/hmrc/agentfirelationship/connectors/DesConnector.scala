@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class ClientRelationship(agents: Seq[Agent])
 
-case class Agent(hasAgent: Boolean,
-                 agentId: Option[SaAgentReference],
-                 agentCeasedDate: Option[String])
+case class Agent(hasAgent: Boolean, agentId: Option[SaAgentReference], agentCeasedDate: Option[String])
 
 object ClientRelationship {
   implicit val agentReads = Json.reads[Agent]
@@ -42,27 +40,23 @@ object ClientRelationship {
   implicit val readClientRelationship =
     (JsPath \ "agents")
       .readNullable[Seq[Agent]]
-      .map(optionalAgents =>
-        ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
+      .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 }
 
 @Singleton
 class DesConnector @Inject()(
-    @Named("des-baseUrl") baseUrl: URL,
-    @Named("des.authorizationToken") authorizationToken: String,
-    @Named("des.environment") environment: String,
-    httpGet: HttpGet,
-    httpPost: HttpPost,
-    metrics: Metrics)
+  @Named("des-baseUrl") baseUrl: URL,
+  @Named("des.authorizationToken") authorizationToken: String,
+  @Named("des.environment") environment: String,
+  httpGet: HttpGet,
+  httpPost: HttpPost,
+  metrics: Metrics)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getClientSaAgentSaReferences(nino: Nino)(
-      implicit hc: HeaderCarrier,
-      ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
-    val url = new URL(
-      baseUrl,
-      s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
+  def getClientSaAgentSaReferences(
+    nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+    val url = new URL(baseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
     getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url)
       .map(
         _.agents
@@ -71,15 +65,13 @@ class DesConnector @Inject()(
   }
 
   private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(
-      implicit hc: HeaderCarrier,
-      ec: ExecutionContext): Future[A] = {
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
       authorization = Some(Authorization(s"Bearer $authorizationToken")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> environment)
     monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      httpGet.GET[A](url.toString)(implicitly[HttpReads[A]],
-                                   desHeaderCarrier,
-                                   ec)
+      httpGet.GET[A](url.toString)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
     }
   }
 

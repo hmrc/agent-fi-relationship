@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.mvc.Request
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{
-  DesConnector,
-  MappingConnector
-}
+import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -32,21 +29,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CesaRelationshipCopyService @Inject()(des: DesConnector,
-                                            mapping: MappingConnector,
-                                            auditService: AuditService) {
+class CesaRelationshipCopyService @Inject()(des: DesConnector, mapping: MappingConnector, auditService: AuditService) {
 
   def lookupCesaForOldRelationship(arn: Arn, nino: Nino)(
-      implicit ec: ExecutionContext,
-      hc: HeaderCarrier,
-      request: Request[Any],
-      auditData: AuditData): Future[Set[SaAgentReference]] = {
+    implicit ec: ExecutionContext,
+    hc: HeaderCarrier,
+    request: Request[Any],
+    auditData: AuditData): Future[Set[SaAgentReference]] = {
     auditData.set("clientId", nino)
     for {
       references <- des.getClientSaAgentSaReferences(nino)
       matching <- intersection(references) {
-        mapping.getSaAgentReferencesFor(arn)
-      }
+                   mapping.getSaAgentReferencesFor(arn)
+                 }
       _ = auditData.set("saAgentRef", matching.mkString(","))
     } yield {
       matching
@@ -54,9 +49,7 @@ class CesaRelationshipCopyService @Inject()(des: DesConnector,
   }
 
   private def intersection[A](cesaIds: Seq[A])(
-      mappingServiceCall: => Future[Seq[A]])(
-      implicit ec: ExecutionContext,
-      hc: HeaderCarrier): Future[Set[A]] = {
+    mappingServiceCall: => Future[Seq[A]])(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Set[A]] = {
     val cesaIdSet = cesaIds.toSet
 
     if (cesaIdSet.isEmpty) {

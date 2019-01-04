@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 object AgentClientRelationshipEvent extends Enumeration {
   val AgentClientRelationshipCreated, ClientTerminatedAgentServiceAuthorisation,
-  AgentClientRelationshipCreatedFromExisting,
-  HmrcRemovedAgentServiceAuthorisation = Value
+  AgentClientRelationshipCreatedFromExisting, HmrcRemovedAgentServiceAuthorisation = Value
   type AgentClientRelationshipEvent = Value
 }
 
@@ -55,8 +54,7 @@ class AuditData {
 @Singleton
 class AuditService @Inject()(val auditConnector: AuditConnector) {
 
-  private def collectDetails(data: Map[String, Any],
-                             fields: Seq[String]): Seq[(String, Any)] =
+  private def collectDetails(data: Map[String, Any], fields: Seq[String]): Seq[(String, Any)] =
     fields.map { f =>
       (f, data.getOrElse(f, ""))
     }
@@ -65,47 +63,31 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     Seq("authProviderId", "arn", "service", "clientId", "clientIdType")
 
   val TerminateRelationshipFields =
-    Seq("authProviderId",
-        "authProviderIdType",
-        "agentReferenceNumber",
-        "service",
-        "clientId",
-        "clientIdType")
+    Seq("authProviderId", "authProviderIdType", "agentReferenceNumber", "service", "clientId", "clientIdType")
 
-  val createdFromExistingRelationship = Seq("agentReferenceNumber",
-                                            "saAgentRef",
-                                            "service",
-                                            "clientId",
-                                            "clientIdType")
+  val createdFromExistingRelationship = Seq("agentReferenceNumber", "saAgentRef", "service", "clientId", "clientIdType")
 
   val hmrcDeleteRelationshipDetailsFields =
-    Seq("authProviderId",
-        "authProviderIdType",
-        "agentReferenceNumber",
-        "clientId",
-        "service")
+    Seq("authProviderId", "authProviderIdType", "agentReferenceNumber", "clientId", "service")
 
-  def sendCreateRelationshipEvent(auditData: AuditData)(
-      implicit hc: HeaderCarrier,
-      request: Request[Any]): Future[Unit] =
+  def sendCreateRelationshipEvent(
+    auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     auditEvent(
       AgentClientRelationshipEvent.AgentClientRelationshipCreated,
       "agent fi create relationship",
       collectDetails(auditData.getDetails, createRelationshipDetailsFields)
     )
 
-  def sendTerminatedRelationshipEvent(auditData: AuditData)(
-      implicit hc: HeaderCarrier,
-      request: Request[Any]): Future[Unit] =
+  def sendTerminatedRelationshipEvent(
+    auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     auditEvent(
       AgentClientRelationshipEvent.ClientTerminatedAgentServiceAuthorisation,
       "client terminated agent:service authorisation",
       collectDetails(auditData.getDetails, TerminateRelationshipFields)
     )
 
-  def sendCreateRelationshipFromExisting(auditData: AuditData)(
-      implicit hc: HeaderCarrier,
-      request: Request[Any]): Future[Unit] =
+  def sendCreateRelationshipFromExisting(
+    auditData: AuditData)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     auditEvent(
       AgentClientRelationshipEvent.AgentClientRelationshipCreatedFromExisting,
       "Agent client relationship created from CESA",
@@ -113,27 +95,24 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     )
 
   def sendHmrcLedDeleteRelationshipAuditEvent(auditData: AuditData)(
-      implicit
-      headerCarrier: HeaderCarrier,
-      request: Request[Any]): Future[Unit] =
+    implicit
+    headerCarrier: HeaderCarrier,
+    request: Request[Any]): Future[Unit] =
     auditEvent(
       AgentClientRelationshipEvent.HmrcRemovedAgentServiceAuthorisation,
       "hmrc remove agent:service authorisation",
       collectDetails(auditData.getDetails, hmrcDeleteRelationshipDetailsFields)
     )
 
-  private def auditEvent(event: AgentClientRelationshipEvent,
-                         transactionName: String,
-                         details: Seq[(String, Any)] = Seq.empty)(
-      implicit hc: HeaderCarrier,
-      request: Request[Any]): Future[Unit] =
+  private def auditEvent(
+    event: AgentClientRelationshipEvent,
+    transactionName: String,
+    details: Seq[(String, Any)] = Seq.empty)(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     send(createEvent(event, transactionName, details: _*))
 
-  private def createEvent(event: AgentClientRelationshipEvent,
-                          transactionName: String,
-                          details: (String, Any)*)(
-      implicit hc: HeaderCarrier,
-      request: Request[Any]): DataEvent = {
+  private def createEvent(event: AgentClientRelationshipEvent, transactionName: String, details: (String, Any)*)(
+    implicit hc: HeaderCarrier,
+    request: Request[Any]): DataEvent = {
 
     def toString(x: Any): String = x match {
       case t: TaxIdentifier => t.value
@@ -143,14 +122,10 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
     val detail =
       hc.toAuditDetails(details.map(pair => pair._1 -> toString(pair._2)): _*)
     val tags = hc.toAuditTags(transactionName, request.path)
-    DataEvent(auditSource = "agent-fi-relationship",
-              auditType = event.toString,
-              tags = tags,
-              detail = detail)
+    DataEvent(auditSource = "agent-fi-relationship", auditType = event.toString, tags = tags, detail = detail)
   }
 
-  private def send(events: DataEvent*)(
-      implicit hc: HeaderCarrier): Future[Unit] =
+  private def send(events: DataEvent*)(implicit hc: HeaderCarrier): Future[Unit] =
     Future {
       events.foreach { event =>
         Try(auditConnector.sendEvent(event))

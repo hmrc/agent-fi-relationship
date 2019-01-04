@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,14 +40,11 @@ object Mappings {
 }
 
 @Singleton
-class MappingConnector @Inject()(@Named("agent-mapping-baseUrl") baseUrl: URL,
-                                 httpGet: HttpGet,
-                                 metrics: Metrics)
+class MappingConnector @Inject()(@Named("agent-mapping-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getSaAgentReferencesFor(arn: Arn)(
-      implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
+  def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val url = new URL(baseUrl, s"/agent-mapping/mappings/${arn.value}")
     monitor(s"ConsumedAPI-Digital-Mappings-GET") {
       httpGet.GET[Mappings](url.toString)
