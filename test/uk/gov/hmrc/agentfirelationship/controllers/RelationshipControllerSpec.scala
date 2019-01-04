@@ -394,7 +394,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
     }
 
-    "return Status: OK with json body of all agent invitations with TERMINIATED status" in {
+    "return Status: OK with json body of all agent invitations with TERMINATED status" in {
 
       val agentAction: AfiAction = { implicit arn => implicit credentials =>
         Future successful Ok
@@ -432,7 +432,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         .findActiveAgentRelationships(any())(any())
     }
 
-    "return Status: OK with json body of all client invitations with TERMINIATED status" in {
+    "return Status: OK with json body of all client invitations with TERMINATED status" in {
 
       val action: AfiAction = { implicit arn => implicit credentials =>
         Future successful Ok
