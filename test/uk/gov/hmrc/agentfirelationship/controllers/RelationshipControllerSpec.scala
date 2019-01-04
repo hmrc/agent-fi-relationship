@@ -394,7 +394,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
     }
 
-    "return Status: OK with json body of all invitaitons with TERMINIATED status" in {
+    "return Status: OK with json body of all agent invitations with TERMINIATED status" in {
 
       val agentAction: AfiAction = { implicit arn => implicit credentials =>
         Future successful Ok
@@ -403,14 +403,71 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       authStub(agentAffinityAndEnrolmentsCreds)
       when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(agentAction))
         .thenReturn(Future successful Ok)
-      when(mockMongoService.findInActiveAgentRelationships(eqs(validTestArn))(any()))
+      when(mockMongoService.findInactiveAgentRelationships(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
 
-      val response = controller.findInActiveRelationshipsForAgent(fakeRequest)
+      val response = controller.findInactiveRelationships(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
-        .findInActiveAgentRelationships(any())(any())
+        .findInactiveAgentRelationships(any())(any())
+    }
+
+    "return Status: OK with json body of all agent invitations with ACTIVE status" in {
+
+      val agentAction: AfiAction = { implicit arn => implicit credentials =>
+        Future successful Ok
+      }
+
+      authStub(agentAffinityAndEnrolmentsCreds)
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(agentAction))
+        .thenReturn(Future successful Ok)
+      when(mockMongoService.findActiveAgentRelationships(eqs(validTestArn))(any()))
+        .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
+
+      val response = controller.findActiveRelationships(fakeRequest)
+
+      status(response) shouldBe OK
+      verify(mockMongoService, times(1))
+        .findActiveAgentRelationships(any())(any())
+    }
+
+    "return Status: OK with json body of all client invitations with TERMINIATED status" in {
+
+      val action: AfiAction = { implicit arn => implicit credentials =>
+        Future successful Ok
+      }
+
+      authStub(clientAffinityAndEnrolments)
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(action))
+        .thenReturn(Future successful Ok)
+      when(mockMongoService.findInactiveClientRelationships(eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
+
+      val response = controller.findInactiveRelationships(fakeRequest)
+
+      status(response) shouldBe OK
+      verify(mockMongoService, times(1))
+        .findInactiveClientRelationships(any())(any())
+    }
+
+    "return Status: OK with json body of all client invitations with ACTIVE status" in {
+
+      val action: AfiAction = { implicit arn => implicit credentials =>
+        Future successful Ok
+      }
+
+      authStub(clientAffinityAndEnrolments)
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(action))
+        .thenReturn(Future successful Ok)
+      when(mockMongoService.findActiveClientRelationships(eqs(validTestNINO))(any()))
+        .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
+
+      val response = controller.findActiveRelationships(fakeRequest)
+
+      status(response) shouldBe OK
+      verify(mockMongoService, times(1))
+        .findActiveClientRelationships(any())(any())
     }
   }
 }

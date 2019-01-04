@@ -166,14 +166,22 @@ class RelationshipController @Inject()(
       }
     }
 
-  val findInActiveRelationshipsForAgent: Action[AnyContent] = Action.async { implicit request =>
+  val findInactiveRelationships: Action[AnyContent] = Action.async { implicit request =>
     authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
       taxIdentifier match {
         case Some(Arn(arn)) if Arn.isValid(arn) =>
-          mongoService.findInActiveAgentRelationships(arn).map { result =>
+          mongoService.findInactiveAgentRelationships(arn).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
-              Logger(getClass).warn("No Inactive Relationships Found")
+              Logger(getClass).warn("No Inactive Relationships Found For ARN")
+              NotFound
+            }
+          }
+        case Some(Nino(nino)) if Nino.isValid(nino) =>
+          mongoService.findInactiveClientRelationships(nino).map { result =>
+            if (result.nonEmpty) Ok(toJson(result))
+            else {
+              Logger(getClass).warn("No Inactive Relationships Found For NINO")
               NotFound
             }
           }
@@ -182,7 +190,32 @@ class RelationshipController @Inject()(
           Future successful NotFound
       }
     }
+  }
 
+  val findActiveRelationships: Action[AnyContent] = Action.async { implicit request =>
+    authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+      taxIdentifier match {
+        case Some(Arn(arn)) if Arn.isValid(arn) =>
+          mongoService.findActiveAgentRelationships(arn).map { result =>
+            if (result.nonEmpty) Ok(toJson(result))
+            else {
+              Logger(getClass).warn("No Active Relationships Found For ARN")
+              NotFound
+            }
+          }
+        case Some(Nino(nino)) if Nino.isValid(nino) =>
+          mongoService.findActiveClientRelationships(nino).map { result =>
+            if (result.nonEmpty) Ok(toJson(result))
+            else {
+              Logger(getClass).warn("No Active Relationships Found For NINO")
+              NotFound
+            }
+          }
+        case _ =>
+          Logger(getClass).error("Arn/Nino Not Found in Login")
+          Future successful NotFound
+      }
+    }
   }
 
   private def setAuditData(arn: String, clientId: String, creds: Credentials)(

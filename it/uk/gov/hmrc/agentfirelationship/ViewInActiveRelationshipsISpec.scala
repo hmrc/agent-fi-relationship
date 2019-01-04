@@ -79,7 +79,7 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
     scenario("Agent does not find any inactive relationships") {
 
       Given("no inactive relationship exists for an agent")
-      Await.result(repo.findInActiveAgentRelationships(agentId), 10 seconds) shouldBe empty
+      Await.result(repo.findInactiveAgentRelationships(agentId), 10 seconds) shouldBe empty
 
       When("I call the View Inactive Relationship endpoint")
       val viewInactiveRelationshipResponse: WSResponse = Await.result(getInactiveRelationships, 10 seconds)
