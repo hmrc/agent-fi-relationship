@@ -11,4 +11,5 @@ GET           /relationships/afi/agent/:arn/client/:clientId                    
 
 GET           /relationships/service/:service/clientId/:clientId                                      @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findClientRelationships(service: String, clientId: String)
 
-GET           /relationships/inactive                                                                 @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findInActiveRelationshipsForAgent
+GET           /relationships/inactive                                                                 @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findInactiveRelationships
+GET           /relationships/active                                                                   @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findActiveRelationships
