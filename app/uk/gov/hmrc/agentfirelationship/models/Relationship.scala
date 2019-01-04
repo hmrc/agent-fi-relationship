@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import java.time.LocalDateTime
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-case class Relationship(arn: Arn,
-                        service: String,
-                        clientId: String,
-                        relationshipStatus: Option[RelationshipStatus] = Some(
-                          RelationshipStatus.Active),
-                        startDate: LocalDateTime,
-                        endDate: Option[LocalDateTime],
-                        fromCesa: Option[Boolean] = Some(false))
+case class Relationship(
+  arn: Arn,
+  service: String,
+  clientId: String,
+  relationshipStatus: Option[RelationshipStatus] = Some(RelationshipStatus.Active),
+  startDate: LocalDateTime,
+  endDate: Option[LocalDateTime],
+  fromCesa: Option[Boolean] = Some(false))
 
 object Relationship {
   implicit val relationshipFormat = Json.format[Relationship]

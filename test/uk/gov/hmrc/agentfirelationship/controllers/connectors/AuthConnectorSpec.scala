@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.{
-  AgentClientAuthConnector,
-  MicroserviceAuthConnector
-}
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
 import uk.gov.hmrc.agentfirelationship.controllers._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
@@ -42,10 +39,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class AuthConnectorSpec
-    extends UnitSpec
-    with MockitoSugar
-    with BeforeAndAfterEach {
+class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
   val mockMicroserviceAuthConnector: MicroserviceAuthConnector =
@@ -69,15 +63,10 @@ class AuthConnectorSpec
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
-  private def authStub(
-      returnValue: Future[
-        ~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
-    when(mockPlayAuthConnector
-      .authorise(
-        any(),
-        any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(
-        any(),
-        any()))
+  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
+    when(
+      mockPlayAuthConnector
+        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
       .thenReturn(returnValue)
 
   "authorisedForAfi" should {

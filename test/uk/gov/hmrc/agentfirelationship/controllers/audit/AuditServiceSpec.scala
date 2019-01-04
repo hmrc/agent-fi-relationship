@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,16 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.test.UnitSpec
 
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
-  implicit val testConfig = PatienceConfig(timeout = scaled(Span(500, Millis)),
-                                           interval = scaled(Span(200, Millis)))
+  implicit val testConfig = PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(200, Millis)))
   "auditEvent" should {
     "send an Create Relationship Event event with the correct fields" in {
       val mockConnector = mock[AuditConnector]
       val service = new AuditService(mockConnector)
 
-      val hc = HeaderCarrier(authorization =
-                               Some(Authorization("dummy bearer token")),
-                             sessionId = Some(SessionId("dummy session id")),
-                             requestId = Some(RequestId("dummy request id")))
+      val hc = HeaderCarrier(
+        authorization = Some(Authorization("dummy bearer token")),
+        sessionId = Some(SessionId("dummy session id")),
+        requestId = Some(RequestId("dummy request id")))
 
       val auditData = new AuditData()
       auditData.set("arn", Arn("1234").value)
@@ -51,10 +50,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(
-        service.sendCreateRelationshipEvent(auditData)(hc,
-                                                       FakeRequest("GET",
-                                                                   "/path")))
+      await(service.sendCreateRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -80,10 +76,10 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val mockConnector = mock[AuditConnector]
       val service = new AuditService(mockConnector)
 
-      val hc = HeaderCarrier(authorization =
-                               Some(Authorization("dummy bearer token")),
-                             sessionId = Some(SessionId("dummy session id")),
-                             requestId = Some(RequestId("dummy request id")))
+      val hc = HeaderCarrier(
+        authorization = Some(Authorization("dummy bearer token")),
+        sessionId = Some(SessionId("dummy session id")),
+        requestId = Some(RequestId("dummy request id")))
 
       val auditData = new AuditData()
       auditData.set("agentReferenceNumber", Arn("1234").value)
@@ -91,10 +87,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(
-        service.sendTerminatedRelationshipEvent(auditData)(
-          hc,
-          FakeRequest("GET", "/path")))
+      await(service.sendTerminatedRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -121,10 +114,10 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val mockConnector = mock[AuditConnector]
       val service = new AuditService(mockConnector)
 
-      val hc = HeaderCarrier(authorization =
-                               Some(Authorization("dummy bearer token")),
-                             sessionId = Some(SessionId("dummy session id")),
-                             requestId = Some(RequestId("dummy request id")))
+      val hc = HeaderCarrier(
+        authorization = Some(Authorization("dummy bearer token")),
+        sessionId = Some(SessionId("dummy session id")),
+        requestId = Some(RequestId("dummy request id")))
 
       val auditData = new AuditData()
       auditData.set("agentReferenceNumber", Arn("1234").value)
@@ -132,10 +125,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "afi")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(
-        service.sendCreateRelationshipFromExisting(auditData)(
-          hc,
-          FakeRequest("GET", "/path")))
+      await(service.sendCreateRelationshipFromExisting(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -162,10 +152,10 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       val mockConnector = mock[AuditConnector]
       val service = new AuditService(mockConnector)
 
-      val hc = HeaderCarrier(authorization =
-                               Some(Authorization("dummy bearer token")),
-                             sessionId = Some(SessionId("dummy session id")),
-                             requestId = Some(RequestId("dummy request id")))
+      val hc = HeaderCarrier(
+        authorization = Some(Authorization("dummy bearer token")),
+        sessionId = Some(SessionId("dummy session id")),
+        requestId = Some(RequestId("dummy request id")))
 
       val auditData = new AuditData()
       auditData.set("authProviderId", "0000001234567890")
@@ -174,10 +164,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("service", "personal-income-record")
 
-      await(
-        service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(
-          hc,
-          FakeRequest("GET", "/path")))
+      await(service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(hc, FakeRequest("GET", "/path")))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,69 +40,48 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       Relationship.relationshipFormat,
       ReactiveMongoFormats.objectIdFormats) {
 
-  def findRelationships(arn: String,
-                        service: String,
-                        clientId: String,
-                        status: RelationshipStatus = Active)(
-      implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn,
-         "service" -> service,
-         "clientId" -> clientId.replaceAll(" ", ""),
-         "relationshipStatus" -> status)
+  def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(
+    implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
 
   def findAnyRelationships(arn: String, service: String, clientId: String)(
-      implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn,
-         "service" -> service,
-         "clientId" -> clientId.replaceAll(" ", ""))
+    implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""))
 
-  def createRelationship(relationship: Relationship)(
-      implicit ec: ExecutionContext): Future[Unit] =
-    insert(
-      relationship.copy(clientId = relationship.clientId.replaceAll(" ", "")))
+  def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] =
+    insert(relationship.copy(clientId = relationship.clientId.replaceAll(" ", "")))
       .map(_ => ())
 
   def terminateRelationship(arn: String, service: String, clientId: String)(
-      implicit ec: ExecutionContext): Future[Boolean] =
+    implicit ec: ExecutionContext): Future[Boolean] =
     updateStatusToTerminated(
-      BSONDocument("arn" -> arn,
-                   "service" -> service,
-                   "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
+      BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
-  def findClientRelationships(service: String,
-                              clientId: String,
-                              status: RelationshipStatus = Active)(
-      implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("service" -> service,
-         "clientId" -> clientId.replaceAll(" ", ""),
-         "relationshipStatus" -> status)
+  def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(
+    implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(
-      implicit ec: ExecutionContext): Future[Boolean] =
-    updateStatusToTerminated(
-      BSONDocument("service" -> service,
-                   "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
+    implicit ec: ExecutionContext): Future[Boolean] =
+    updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
-  def findInActiveAgentRelationships(arn: String)(
-      implicit ec: ExecutionContext): Future[List[Relationship]] =
+  def findInActiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("arn" -> arn, "relationshipStatus" -> "TERMINATED")
 
-  private def updateStatusToTerminated(selector: BSONDocument)(
-      implicit multi: Boolean = false,
-      ec: ExecutionContext): Future[Boolean] =
+  private def updateStatusToTerminated(
+    selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] =
     collection
       .update(
         selector,
         BSONDocument(
           "$set" -> BSONDocument(
             "relationshipStatus" -> RelationshipStatus.Terminated.key,
-            "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
+            "endDate"            -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
         multi = multi
       )
       .map { result =>
         result.writeErrors.foreach(error =>
-          Logger.warn(
-            s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
+          Logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
         if (result.nModified > 0) true else false
       }
 }

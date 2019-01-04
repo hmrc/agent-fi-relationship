@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.{
-  affinityGroup,
-  allEnrolments,
-  credentials
-}
+import uk.gov.hmrc.auth.core.retrieve.Retrievals.{affinityGroup, allEnrolments, credentials}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments}
 
 object Auth {
-  lazy val affinityGroupAllEnrollsCreds: Retrieval[~[
-    ~[Option[AffinityGroup], Enrolments],
-    Credentials]] = affinityGroup and allEnrolments and credentials
+  lazy val affinityGroupAllEnrollsCreds
+    : Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]] = affinityGroup and allEnrolments and credentials
 }
