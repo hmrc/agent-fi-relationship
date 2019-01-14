@@ -71,9 +71,9 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
       val actualService = (jsonResponse(0) \ "service").as[String]
       val actualClientId2 = (jsonResponse(1) \ "clientId").as[String]
       actualAgentId shouldBe agentId
-      actualClientId shouldBe clientId
       actualService shouldBe service
-      actualClientId2 shouldBe clientId2
+      actualClientId should equal(clientId).or(equal(clientId2))
+      actualClientId2 should equal(clientId).or(equal(clientId2))
     }
 
     scenario("Agent does not find any inactive relationships") {

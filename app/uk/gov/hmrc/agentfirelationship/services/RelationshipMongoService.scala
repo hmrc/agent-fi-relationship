@@ -17,19 +17,22 @@
 package uk.gov.hmrc.agentfirelationship.services
 
 import java.time.{LocalDateTime, ZoneId}
-import javax.inject.Inject
 
+import javax.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
+import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.repository.StrictlyEnsureIndexes
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
+import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -38,7 +41,37 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
       "fi-relationship",
       mongoComponent.mongoConnector.db,
       Relationship.relationshipFormat,
-      ReactiveMongoFormats.objectIdFormats) {
+      ReactiveMongoFormats.objectIdFormats)
+    with StrictlyEnsureIndexes[Relationship, BSONObjectID] {
+
+  override def indexes: Seq[Index] =
+    Seq(
+      Index(
+        Seq(
+          "arn"                -> IndexType.Ascending,
+          "service"            -> IndexType.Ascending,
+          "clientId"           -> IndexType.Ascending,
+          "relationshipStatus" -> IndexType.Ascending),
+        Some("Arn_Service_ClientId_RelationshipStatus")
+      ),
+      Index(
+        Seq("clientId" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
+        Some("ClientId_RelationshipStatus")),
+      Index(
+        Seq("arn" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
+        Some("Arn_RelationshipStatus")),
+      Index(
+        Seq(
+          "service"            -> IndexType.Ascending,
+          "clientId"           -> IndexType.Ascending,
+          "relationshipStatus" -> IndexType.Ascending),
+        Some("Service_ClientId_RelationshipStatus")
+      ),
+      Index(
+        Seq("arn" -> IndexType.Ascending, "service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending),
+        Some("Arn_Service")),
+      Index(Seq("service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending), Some("Service_ClientId"))
+    )
 
   def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(
     implicit ec: ExecutionContext): Future[List[Relationship]] =
