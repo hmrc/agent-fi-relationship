@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.time.{LocalDateTime, ZoneId}
-import javax.inject.{Inject, Named, Singleton}
 
+import javax.inject.{Inject, Named, Provider, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
@@ -31,10 +31,9 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 @Singleton
 class RelationshipController @Inject()(
@@ -42,10 +41,13 @@ class RelationshipController @Inject()(
   mongoService: RelationshipMongoService,
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
+  ecp: Provider[ExecutionContextExecutor],
   @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
   @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean,
   @Named("auth.stride.role") strideRole: String)
     extends BaseController {
+
+  implicit val ec: ExecutionContext = ecp.get
 
   def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] =
     findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)

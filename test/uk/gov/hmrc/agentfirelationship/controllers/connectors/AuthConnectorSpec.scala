@@ -16,17 +16,10 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers.connectors
 
-import java.net.URL
-
-import com.kenshoo.play.metrics.Metrics
-import javax.inject.{Inject, Named}
-
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
@@ -37,6 +30,7 @@ import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.play.test.UnitSpec
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {

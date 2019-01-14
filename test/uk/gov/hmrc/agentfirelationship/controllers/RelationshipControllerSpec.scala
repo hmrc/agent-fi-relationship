@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
+import javax.inject.Provider
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -33,7 +34,9 @@ import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuth
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.Future
+import concurrent.ExecutionContext.Implicits.global
+
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
@@ -50,12 +53,16 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       override def authConnector: AuthConnector = mockPlayAuthConnector
     }
   val strideRole = "Maintain Agent client relationships"
+  val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
+    override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
+  }
 
   val controller = new RelationshipController(
     mockAuditService,
     mockMongoService,
     mockAgentClientAuthConnector,
     mockCesaRelationship,
+    ecp,
     false,
     false,
     strideRole)
@@ -101,7 +108,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "return Status: CREATED for creating new record as a client" in {
       authStub(clientAffinityAndEnrolments)
 
-      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       when(mockMongoService.createRelationship(any())(any()))
@@ -121,7 +128,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "return Status: CREATED for creating new record as an agent" in {
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       when(mockMongoService.createRelationship(any())(any()))
@@ -141,7 +148,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "send an audit event if the relationship is successfully created" in {
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       when(mockMongoService.createRelationship(eqs(validTestRelationship))(any()))
@@ -154,7 +161,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
       await(response)
       verify(mockAuditService, times(1))
-        .sendCreateRelationshipEvent(any())(any(), any())
+        .sendCreateRelationshipEvent(any())(any(), any(), any())
       verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
     }
 
@@ -245,7 +252,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
@@ -260,7 +267,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
@@ -275,7 +282,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any()))
+      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
@@ -290,14 +297,14 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
       await(response)
       verify(mockAuditService, times(1))
-        .sendTerminatedRelationshipEvent(any())(any(), any())
+        .sendTerminatedRelationshipEvent(any())(any(), any(), any())
     }
 
     "return Status: NOT_FOUND for failing to delete a record as a client" in {
@@ -305,7 +312,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
@@ -320,7 +327,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any()))
+      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
@@ -335,7 +342,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
 
-      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any()))
+      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any(), any()))
         .thenReturn(Future successful (()))
 
       val response =
