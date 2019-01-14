@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
+import javax.inject.Provider
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -31,7 +32,9 @@ import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuth
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.Future
+import concurrent.ExecutionContext.Implicits.global
+
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
@@ -43,12 +46,15 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     mock[CesaRelationshipCopyService]
   val mockMicroserviceAuthConnector: MicroserviceAuthConnector =
     mock[MicroserviceAuthConnector]
+  val mockEc: ExecutionContext = mock[ExecutionContext]
   val mockAgentClientAuthConnector: AgentClientAuthConnector =
     new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
       override def authConnector: AuthConnector = mockPlayAuthConnector
     }
   val strideRole = "Maintain Agent client relationships"
-
+  val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
+    override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
+  }
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
   }
@@ -64,6 +70,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       mockMongoService,
       mockAgentClientAuthConnector,
       mockCesaRelationship,
+      ecp,
       true,
       true,
       strideRole)

@@ -25,14 +25,13 @@ import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestOnlyController @Inject()(mongoService: RelationshipMongoService) extends BaseController {
+class TestOnlyController @Inject()(mongoService: RelationshipMongoService)(implicit ec: ExecutionContext)
+    extends BaseController {
 
   case class Invitation(startDate: LocalDateTime)
 

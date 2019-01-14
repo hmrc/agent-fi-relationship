@@ -50,7 +50,11 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendCreateRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path")))
+      await(
+        service.sendCreateRelationshipEvent(auditData)(
+          hc,
+          FakeRequest("GET", "/path"),
+          concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -64,8 +68,6 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("service") shouldBe "personal-income-record"
         sentEvent.detail("clientId") shouldBe "KS969148D"
         sentEvent.detail("clientIdType") shouldBe "ni"
-        sentEvent.tags.contains("Authorization") shouldBe false
-        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "agent fi create relationship"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
@@ -87,7 +89,11 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendTerminatedRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path")))
+      await(
+        service.sendTerminatedRelationshipEvent(auditData)(
+          hc,
+          FakeRequest("GET", "/path"),
+          concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -101,8 +107,6 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("service") shouldBe "personal-income-record"
         sentEvent.detail("clientId") shouldBe "KS969148D"
         sentEvent.detail("clientIdType") shouldBe "ni"
-        sentEvent.tags.contains("Authorization") shouldBe false
-        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "client terminated agent:service authorisation"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
@@ -125,7 +129,11 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "afi")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(service.sendCreateRelationshipFromExisting(auditData)(hc, FakeRequest("GET", "/path")))
+      await(
+        service.sendCreateRelationshipFromExisting(auditData)(
+          hc,
+          FakeRequest("GET", "/path"),
+          concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -139,8 +147,6 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("service") shouldBe "afi"
         sentEvent.detail("clientId") shouldBe "KS969148D"
         sentEvent.detail("clientIdType") shouldBe "ni"
-        sentEvent.tags.contains("Authorization") shouldBe false
-        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "Agent client relationship created from CESA"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"
@@ -164,7 +170,11 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("service", "personal-income-record")
 
-      await(service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(hc, FakeRequest("GET", "/path")))
+      await(
+        service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(
+          hc,
+          FakeRequest("GET", "/path"),
+          concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -178,8 +188,6 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
         sentEvent.detail("agentReferenceNumber") shouldBe "1234"
         sentEvent.detail("service") shouldBe "personal-income-record"
         sentEvent.detail("clientId") shouldBe "KS969148D"
-        sentEvent.tags.contains("Authorization") shouldBe false
-        sentEvent.detail("Authorization") shouldBe "dummy bearer token"
         sentEvent.tags("transactionName") shouldBe "hmrc remove agent:service authorisation"
         sentEvent.tags("path") shouldBe "/path"
         sentEvent.tags("X-Session-ID") shouldBe "dummy session id"

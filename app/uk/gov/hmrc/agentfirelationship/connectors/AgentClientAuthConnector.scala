@@ -27,12 +27,12 @@ import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentClientAuthConnector @Inject()(microserviceAuthConnector: MicroserviceAuthConnector)
+class AgentClientAuthConnector @Inject()(microserviceAuthConnector: MicroserviceAuthConnector)(
+  implicit ec: ExecutionContext)
     extends AuthorisedFunctions {
   implicit def hc(implicit rh: RequestHeader) =
     fromHeadersAndSession(rh.headers)
