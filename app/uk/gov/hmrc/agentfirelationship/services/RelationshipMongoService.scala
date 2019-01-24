@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
+import java.net.URL
 import java.time.{LocalDateTime, ZoneId}
+import javax.inject.{Inject, Named}
 
-import javax.inject.Inject
 import com.google.inject.Singleton
+import org.joda.time.{DateTime, LocalDate}
 import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
@@ -33,10 +35,13 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.collection.Seq
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
+class RelationshipMongoService @Inject()(
+  @Named("features.inactive-relationships.show-last-days") showInactiveRelationshipsDuration: String,
+  mongoComponent: ReactiveMongoComponent)
     extends ReactiveRepository[Relationship, BSONObjectID](
       "fi-relationship",
       mongoComponent.mongoConnector.db,
@@ -98,8 +103,12 @@ class RelationshipMongoService @Inject()(mongoComponent: ReactiveMongoComponent)
     implicit ec: ExecutionContext): Future[Boolean] =
     updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
-  def findInactiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn, "relationshipStatus" -> "TERMINATED")
+  private val inactiveRelationshipDuration: Duration = Duration(showInactiveRelationshipsDuration.replace('_', ' '))
+
+  def findInactiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    val from = LocalDateTime.now().minusDays(inactiveRelationshipDuration.toDays.toInt)
+    find("arn" -> arn, "relationshipStatus" -> "TERMINATED").map(_.filter(_.startDate.isAfter(from)))
+  }
 
   def findActiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("arn" -> arn, "relationshipStatus" -> "ACTIVE")

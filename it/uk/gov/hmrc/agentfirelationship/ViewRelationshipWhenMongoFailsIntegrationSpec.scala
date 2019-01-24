@@ -21,7 +21,7 @@ import scala.concurrent.duration._
 
 @Singleton
 class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent)
-  extends RelationshipMongoService(mongoComponent) {
+  extends RelationshipMongoService("30 days", mongoComponent) {
 
   override def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
     Future failed new Exception("Test mongodb failure")
