@@ -40,7 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoService @Inject()(
-  @Named("features.inactive-relationships.show-last-days") showInactiveRelationshipsDuration: String,
+  @Named("inactive-relationships.show-last-days") showInactiveRelationshipsDuration: String,
   mongoComponent: ReactiveMongoComponent)
     extends ReactiveRepository[Relationship, BSONObjectID](
       "fi-relationship",

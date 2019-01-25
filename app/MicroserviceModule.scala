@@ -62,8 +62,7 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
     bindProperty("auth.stride.role", URLDecoder.decode(_, "utf-8"))
-    bindProperty("features.inactive-relationships.show-last-days")
-
+    bindProperty("inactive-relationships.show-last-days")
   }
 
   private def bindBaseUrl(serviceName: String) =
