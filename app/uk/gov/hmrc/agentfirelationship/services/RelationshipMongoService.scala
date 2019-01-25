@@ -40,7 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoService @Inject()(
-  @Named("inactive-relationships.show-last-days") showInactiveRelationshipsDuration: String,
+  @Named("inactive-relationships.show-last-days") showInactiveRelationshipsDuration: Duration,
   mongoComponent: ReactiveMongoComponent)
     extends ReactiveRepository[Relationship, BSONObjectID](
       "fi-relationship",
@@ -103,10 +103,8 @@ class RelationshipMongoService @Inject()(
     implicit ec: ExecutionContext): Future[Boolean] =
     updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
-  private val inactiveRelationshipDuration: Duration = Duration(showInactiveRelationshipsDuration.replace('_', ' '))
-
   def findInactiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    val from = LocalDateTime.now().minusDays(inactiveRelationshipDuration.toDays.toInt)
+    val from = LocalDateTime.now().minusDays(showInactiveRelationshipsDuration.toDays.toInt)
     find("arn" -> arn, "relationshipStatus" -> "TERMINATED").map(_.filter(_.startDate.isAfter(from)))
   }
 
