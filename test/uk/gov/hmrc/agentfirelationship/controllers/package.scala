@@ -57,8 +57,6 @@ package object controllers {
     Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
   val validTestRelationshipTerminated: Relationship =
     Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), testResponseDate, None)
-  val validTestRelationshipTerminatedLongAgo: Relationship =
-    Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), LocalDateTime.now().minusDays(100), None)
   val validTestRelationshipCesa: Relationship = Relationship(
     Arn(validTestArn),
     testService,
