@@ -34,7 +34,8 @@ import uk.gov.hmrc.play.http.ws.WSHttp
 
 import scala.concurrent.duration.Duration
 
-class MicroserviceModule(val environment: Environment, val configuration: Configuration)
+class MicroserviceModule(val environment: Environment,
+                         val configuration: Configuration)
     extends AbstractModule
     with ServicesConfig {
 
@@ -46,7 +47,8 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
 
     val loggerDateFormat: Option[String] =
       configuration.getString("logger.json.dateformat")
-    Logger.info(s"Starting microservice : $appName : in mode : ${environment.mode}")
+    Logger.info(
+      s"Starting microservice : $appName : in mode : ${environment.mode}")
     MDC.put("appName", appName)
     loggerDateFormat.foreach(str => MDC.put("logger.json.dateformat", str))
 
@@ -82,21 +84,27 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
       .annotatedWith(Names.named(objectName))
       .toProvider(new PropertyProvider2param(propertyName))
 
-  private class PropertyProvider2param(confKey: String) extends Provider[String] {
+  private class PropertyProvider2param(confKey: String)
+      extends Provider[String] {
     override lazy val get =
-      getConfString(confKey, throw new IllegalStateException(s"No value found for configuration property $confKey"))
+      getConfString(confKey,
+                    throw new IllegalStateException(
+                      s"No value found for configuration property $confKey"))
   }
 
-  private def bindProperty(propertyName: String, mapFx: String => String = identity) =
+  private def bindProperty(propertyName: String,
+                           mapFx: String => String = identity) =
     bind(classOf[String])
       .annotatedWith(Names.named(propertyName))
       .toProvider(new PropertyProvider(propertyName, mapFx))
 
-  private class PropertyProvider(confKey: String, mapFx: String => String) extends Provider[String] {
+  private class PropertyProvider(confKey: String, mapFx: String => String)
+      extends Provider[String] {
     override lazy val get = configuration
       .getString(confKey)
       .map(mapFx)
-      .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
+      .getOrElse(throw new IllegalStateException(
+        s"No value found for configuration property $confKey"))
   }
 
   private def bindBooleanProperty(propertyName: String) =
@@ -104,10 +112,13 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
       .annotatedWith(Names.named(propertyName))
       .toProvider(new BooleanPropertyProvider(propertyName))
 
-  private class BooleanPropertyProvider(confKey: String) extends Provider[Boolean] {
+  private class BooleanPropertyProvider(confKey: String)
+      extends Provider[Boolean] {
     override lazy val get: Boolean = configuration
       .getBoolean(confKey)
-      .getOrElse(throw new IllegalStateException(s"No value found for configuration property $confKey"))
+      .getOrElse(
+        throw new IllegalStateException(
+          s"No value found for configuration property $confKey"))
   }
 
   import com.google.inject.binder.ScopedBindingBuilder
@@ -115,39 +126,55 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
 
   import scala.reflect.ClassTag
 
-  private def bindServiceConfigProperty[A](
-    propertyName: String)(implicit classTag: ClassTag[A], ct: ServiceConfigPropertyType[A]): ScopedBindingBuilder =
-    ct.bindServiceConfigProperty(classTag.runtimeClass.asInstanceOf[Class[A]])(propertyName)
+  private def bindServiceConfigProperty[A](propertyName: String)(
+      implicit classTag: ClassTag[A],
+      ct: ServiceConfigPropertyType[A]): ScopedBindingBuilder =
+    ct.bindServiceConfigProperty(classTag.runtimeClass.asInstanceOf[Class[A]])(
+      propertyName)
 
   sealed trait ServiceConfigPropertyType[A] {
-    def bindServiceConfigProperty(clazz: Class[A])(propertyName: String): ScopedBindingBuilder
+    def bindServiceConfigProperty(clazz: Class[A])(
+        propertyName: String): ScopedBindingBuilder
   }
 
   object ServiceConfigPropertyType {
 
-    implicit val durationServiceConfigProperty: ServiceConfigPropertyType[Duration] =
+    implicit val durationServiceConfigProperty
+      : ServiceConfigPropertyType[Duration] =
       new ServiceConfigPropertyType[Duration] {
-        def bindServiceConfigProperty(clazz: Class[Duration])(propertyName: String): ScopedBindingBuilder =
+        def bindServiceConfigProperty(clazz: Class[Duration])(
+            propertyName: String): ScopedBindingBuilder =
           bind(clazz)
             .annotatedWith(named(s"$propertyName"))
             .toProvider(new DurationServiceConfigPropertyProvider(propertyName))
 
-        private class DurationServiceConfigPropertyProvider(propertyName: String) extends Provider[Duration] {
+        private class DurationServiceConfigPropertyProvider(
+            propertyName: String)
+            extends Provider[Duration] {
           override lazy val get = getConfDuration(
             propertyName,
-            throw new RuntimeException(s"No service configuration value found for $propertyName"))
+            throw new RuntimeException(
+              s"No service configuration value found for $propertyName"))
         }
+
+        def getConfDurationCustom(confKey: String, defDur: => Duration) =
+          runModeConfiguration
+            .getString(s"$rootServices.$confKey")
+            .orElse(runModeConfiguration.getString(s"$services.$confKey"))
+            .orElse(runModeConfiguration.getString(s"$playServices.$confKey")) match {
+            case Some(s) => Duration.create(s.replace("_", " "))
+            case None    => defDur
+          }
       }
   }
 
 }
 
 @Singleton
-class HttpVerbs @Inject()(
-  val auditConnector: AuditConnector,
-  @Named("appName") val appName: String,
-  val config: Configuration,
-  val actorSystem: ActorSystem)
+class HttpVerbs @Inject()(val auditConnector: AuditConnector,
+                          @Named("appName") val appName: String,
+                          val config: Configuration,
+                          val actorSystem: ActorSystem)
     extends HttpGet
     with HttpPost
     with HttpPut

@@ -21,7 +21,10 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import play.api.test.FakeRequest
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{
+  DesConnector,
+  MappingConnector
+}
 import uk.gov.hmrc.agentfirelationship.controllers.support.ResettingMockitoSugar
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, MtdItId}
@@ -32,7 +35,10 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach with ResettingMockitoSugar {
+class CesaRelationshipCopyServiceSpec
+    extends UnitSpec
+    with BeforeAndAfterEach
+    with ResettingMockitoSugar {
 
   val testDataGenerator = new Generator()
   val arn = Arn("AARN0000002")
@@ -62,9 +68,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       commonMultipleRelationshipExists()
 
       val agentRefs: Set[SaAgentReference] =
-        await(
-          service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
+        await(service
+          .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set(saAgentRef)
     }
@@ -76,9 +81,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       commonMultipleRelationshipExists()
 
       val agentRefs: Set[SaAgentReference] =
-        await(
-          service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
+        await(service
+          .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set(saAgentRef)
     }
@@ -90,9 +94,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       cesaAndMappingReturnEmptyRelationshipSets()
 
       val agentRefs: Set[SaAgentReference] =
-        await(
-          service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
+        await(service
+          .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
     }
@@ -104,9 +107,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       commonRelationshipDoesNotExistInBothCesaAndMapping()
 
       val agentRefs: Set[SaAgentReference] =
-        await(
-          service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
+        await(service
+          .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
     }
@@ -118,9 +120,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       commonRelationshipDoesNotExistInMapping()
 
       val agentRefs: Set[SaAgentReference] =
-        await(
-          service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
+        await(service
+          .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
     }
@@ -132,9 +133,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       commonRelationshipDoesNotExistInCesa()
 
       val agentRefs: Set[SaAgentReference] =
-        await(
-          service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
+        await(service
+          .lookupCesaForOldRelationship(arn, nino)(ec, hc, request, auditData))
 
       agentRefs shouldBe Set.empty
     }

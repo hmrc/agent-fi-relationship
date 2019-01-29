@@ -39,12 +39,15 @@ object Mappings {
 }
 
 @Singleton
-class MappingConnector @Inject()(@Named("agent-mapping-baseUrl") baseUrl: URL, httpGet: HttpGet, metrics: Metrics)(
-  implicit ec: ExecutionContext)
+class MappingConnector @Inject()(
+    @Named("agent-mapping-baseUrl") baseUrl: URL,
+    httpGet: HttpGet,
+    metrics: Metrics)(implicit ec: ExecutionContext)
     extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
+  def getSaAgentReferencesFor(arn: Arn)(
+      implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val url = new URL(baseUrl, s"/agent-mapping/mappings/${arn.value}")
     monitor(s"ConsumedAPI-Digital-Mappings-GET") {
       httpGet.GET[Mappings](url.toString)

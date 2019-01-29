@@ -31,7 +31,8 @@ object RelationshipStatus {
       case Active     => JsString(Active.key)
       case Terminated => JsString(Terminated.key)
       case _ =>
-        throw new RuntimeException(s"Unable to parse the status to json: $status")
+        throw new RuntimeException(
+          s"Unable to parse the status to json: $status")
     }
   }
 
@@ -41,7 +42,8 @@ object RelationshipStatus {
         case JsString(Active.key)     => JsSuccess(Active)
         case JsString(Terminated.key) => JsSuccess(Terminated)
         case _ =>
-          throw new RuntimeException(s"Unable to parse the json to status: $json")
+          throw new RuntimeException(
+            s"Unable to parse the json to status: $json")
       }
   }
 

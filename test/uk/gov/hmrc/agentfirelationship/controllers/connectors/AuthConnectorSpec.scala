@@ -23,7 +23,10 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.{
+  AgentClientAuthConnector,
+  MicroserviceAuthConnector
+}
 import uk.gov.hmrc.agentfirelationship.controllers._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
@@ -33,7 +36,10 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+class AuthConnectorSpec
+    extends UnitSpec
+    with MockitoSugar
+    with BeforeAndAfterEach {
 
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
   val mockMicroserviceAuthConnector: MicroserviceAuthConnector =
@@ -57,10 +63,15 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
-  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
-    when(
-      mockPlayAuthConnector
-        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
+  private def authStub(
+      returnValue: Future[
+        ~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
+    when(mockPlayAuthConnector
+      .authorise(
+        any(),
+        any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(
+        any(),
+        any()))
       .thenReturn(returnValue)
 
   "authorisedForAfi" should {

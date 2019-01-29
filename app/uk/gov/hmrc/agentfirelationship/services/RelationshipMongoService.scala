@@ -40,8 +40,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoService @Inject()(
-  @Named("inactive-relationships.show-last-days") showInactiveRelationshipsDuration: Duration,
-  mongoComponent: ReactiveMongoComponent)
+    @Named("inactive-relationships.show-last-days") showInactiveRelationshipsDuration: Duration,
+    mongoComponent: ReactiveMongoComponent)
     extends ReactiveRepository[Relationship, BSONObjectID](
       "fi-relationship",
       mongoComponent.mongoConnector.db,
@@ -52,85 +52,115 @@ class RelationshipMongoService @Inject()(
   override def indexes: Seq[Index] =
     Seq(
       Index(
-        Seq(
-          "arn"                -> IndexType.Ascending,
-          "service"            -> IndexType.Ascending,
-          "clientId"           -> IndexType.Ascending,
-          "relationshipStatus" -> IndexType.Ascending),
+        Seq("arn" -> IndexType.Ascending,
+            "service" -> IndexType.Ascending,
+            "clientId" -> IndexType.Ascending,
+            "relationshipStatus" -> IndexType.Ascending),
         Some("Arn_Service_ClientId_RelationshipStatus")
       ),
+      Index(Seq("clientId" -> IndexType.Ascending,
+                "relationshipStatus" -> IndexType.Ascending),
+            Some("ClientId_RelationshipStatus")),
+      Index(Seq("arn" -> IndexType.Ascending,
+                "relationshipStatus" -> IndexType.Ascending),
+            Some("Arn_RelationshipStatus")),
       Index(
-        Seq("clientId" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
-        Some("ClientId_RelationshipStatus")),
-      Index(
-        Seq("arn" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
-        Some("Arn_RelationshipStatus")),
-      Index(
-        Seq(
-          "service"            -> IndexType.Ascending,
-          "clientId"           -> IndexType.Ascending,
-          "relationshipStatus" -> IndexType.Ascending),
+        Seq("service" -> IndexType.Ascending,
+            "clientId" -> IndexType.Ascending,
+            "relationshipStatus" -> IndexType.Ascending),
         Some("Service_ClientId_RelationshipStatus")
       ),
-      Index(
-        Seq("arn" -> IndexType.Ascending, "service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending),
-        Some("Arn_Service")),
-      Index(Seq("service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending), Some("Service_ClientId"))
+      Index(Seq("arn" -> IndexType.Ascending,
+                "service" -> IndexType.Ascending,
+                "clientId" -> IndexType.Ascending),
+            Some("Arn_Service")),
+      Index(Seq("service" -> IndexType.Ascending,
+                "clientId" -> IndexType.Ascending),
+            Some("Service_ClientId"))
     )
 
-  def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active)(
-    implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
+  def findRelationships(arn: String,
+                        service: String,
+                        clientId: String,
+                        status: RelationshipStatus = Active)(
+      implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("arn" -> arn,
+         "service" -> service,
+         "clientId" -> clientId.replaceAll(" ", ""),
+         "relationshipStatus" -> status)
 
   def findAnyRelationships(arn: String, service: String, clientId: String)(
-    implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""))
+      implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("arn" -> arn,
+         "service" -> service,
+         "clientId" -> clientId.replaceAll(" ", ""))
 
-  def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] =
-    insert(relationship.copy(clientId = relationship.clientId.replaceAll(" ", "")))
+  def createRelationship(relationship: Relationship)(
+      implicit ec: ExecutionContext): Future[Unit] =
+    insert(
+      relationship.copy(clientId = relationship.clientId.replaceAll(" ", "")))
       .map(_ => ())
 
   def terminateRelationship(arn: String, service: String, clientId: String)(
-    implicit ec: ExecutionContext): Future[Boolean] =
+      implicit ec: ExecutionContext): Future[Boolean] =
     updateStatusToTerminated(
-      BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
+      BSONDocument("arn" -> arn,
+                   "service" -> service,
+                   "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
-  def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(
-    implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
+  def findClientRelationships(service: String,
+                              clientId: String,
+                              status: RelationshipStatus = Active)(
+      implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("service" -> service,
+         "clientId" -> clientId.replaceAll(" ", ""),
+         "relationshipStatus" -> status)
 
   def deleteAllClientIdRelationships(service: String, clientId: String)(
-    implicit ec: ExecutionContext): Future[Boolean] =
-    updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
+      implicit ec: ExecutionContext): Future[Boolean] =
+    updateStatusToTerminated(
+      BSONDocument("service" -> service,
+                   "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
-  def findInactiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    val from = LocalDateTime.now().minusDays(showInactiveRelationshipsDuration.toDays.toInt)
-    find("arn" -> arn, "relationshipStatus" -> "TERMINATED").map(_.filter(_.startDate.isAfter(from)))
+  def findInactiveAgentRelationships(arn: String)(
+      implicit ec: ExecutionContext): Future[List[Relationship]] = {
+    val from = LocalDateTime
+      .now()
+      .minusDays(showInactiveRelationshipsDuration.toDays.toInt)
+    find("arn" -> arn, "relationshipStatus" -> "TERMINATED")
+      .map(_.filter(_.startDate.isAfter(from)))
   }
 
-  def findActiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
+  def findActiveAgentRelationships(arn: String)(
+      implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("arn" -> arn, "relationshipStatus" -> "ACTIVE")
 
-  def findInactiveClientRelationships(clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> "TERMINATED")
+  def findInactiveClientRelationships(clientId: String)(
+      implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("clientId" -> clientId.replaceAll(" ", ""),
+         "relationshipStatus" -> "TERMINATED")
 
-  def findActiveClientRelationships(clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
-    find("clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> "ACTIVE")
+  def findActiveClientRelationships(clientId: String)(
+      implicit ec: ExecutionContext): Future[List[Relationship]] =
+    find("clientId" -> clientId.replaceAll(" ", ""),
+         "relationshipStatus" -> "ACTIVE")
 
-  private def updateStatusToTerminated(
-    selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] =
+  private def updateStatusToTerminated(selector: BSONDocument)(
+      implicit multi: Boolean = false,
+      ec: ExecutionContext): Future[Boolean] =
     collection
       .update(
         selector,
         BSONDocument(
           "$set" -> BSONDocument(
             "relationshipStatus" -> RelationshipStatus.Terminated.key,
-            "endDate"            -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
+            "endDate" -> LocalDateTime.now(ZoneId.of("UTC")).toString)),
         multi = multi
       )
       .map { result =>
         result.writeErrors.foreach(error =>
-          Logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
+          Logger.warn(
+            s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
         if (result.nModified > 0) true else false
       }
 }

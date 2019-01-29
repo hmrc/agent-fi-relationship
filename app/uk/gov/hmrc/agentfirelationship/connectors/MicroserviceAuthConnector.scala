@@ -27,10 +27,9 @@ import uk.gov.hmrc.http.HttpPost
 import uk.gov.hmrc.play.http.ws.WSPost
 
 @Singleton
-class MicroserviceAuthConnector @Inject()(
-  @Named("auth-baseUrl") baseUrl: URL,
-  val config: Configuration,
-  val actSystem: ActorSystem)
+class MicroserviceAuthConnector @Inject()(@Named("auth-baseUrl") baseUrl: URL,
+                                          val config: Configuration,
+                                          val actSystem: ActorSystem)
     extends PlayAuthConnector {
 
   override val serviceUrl = baseUrl.toString

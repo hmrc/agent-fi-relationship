@@ -30,7 +30,8 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestOnlyController @Inject()(mongoService: RelationshipMongoService)(implicit ec: ExecutionContext)
+class TestOnlyController @Inject()(mongoService: RelationshipMongoService)(
+    implicit ec: ExecutionContext)
     extends BaseController {
 
   case class Invitation(startDate: LocalDateTime)
@@ -40,18 +41,20 @@ class TestOnlyController @Inject()(mongoService: RelationshipMongoService)(impli
   def createRelationship(arn: String, service: String, clientId: String) =
     Action.async(parse.json) { implicit request =>
       withJsonBody[Invitation] { invitation =>
-        mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
+        mongoService.findRelationships(arn,
+                                       service,
+                                       clientId,
+                                       RelationshipStatus.Active) flatMap {
           case Nil =>
             Logger.info("Creating a relationship")
             for {
               _ <- mongoService.createRelationship(
-                    Relationship(
-                      Arn(arn),
-                      service,
-                      clientId,
-                      Some(RelationshipStatus.Active),
-                      invitation.startDate,
-                      None))
+                Relationship(Arn(arn),
+                             service,
+                             clientId,
+                             Some(RelationshipStatus.Active),
+                             invitation.startDate,
+                             None))
             } yield Created
           case _ =>
             Logger.info("Relationship already exists")
@@ -61,10 +64,14 @@ class TestOnlyController @Inject()(mongoService: RelationshipMongoService)(impli
 
     }
 
-  def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] =
+  def terminateRelationship(arn: String,
+                            service: String,
+                            clientId: String): Action[AnyContent] =
     Action.async { implicit request =>
       val relationshipDeleted: Future[Boolean] = for {
-        successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
+        successOrFail <- mongoService.terminateRelationship(arn,
+                                                            service,
+                                                            clientId)
       } yield successOrFail
       relationshipDeleted.map(
         if (_) Ok
