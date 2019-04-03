@@ -53,7 +53,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     Future successful Ok
   }
 
-  val strideId = "Maintain Agent client relationships"
+  val strideId = "maintain agent relationships"
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
