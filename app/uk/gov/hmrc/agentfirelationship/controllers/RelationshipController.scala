@@ -253,7 +253,7 @@ class RelationshipController @Inject()(
     else
       throw new IllegalArgumentException("No providerType found in Credentials")
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(action: => Future[Result])(
+  private def forThisUser(requestedArn: Arn, requestedNino: Nino, givenStrideRole: String)(action: => Future[Result])(
     implicit taxIdentifier: Option[TaxIdentifier]) =
     taxIdentifier match {
       case Some(t) =>
@@ -271,8 +271,8 @@ class RelationshipController @Inject()(
           }
         }
       case _ =>
-        strideRole match {
-          case "maintain agent relationships" => action
+        givenStrideRole match {
+          case `strideRole` => action
           case _ =>
             Logger.warn("Unsupported ProviderType / Role")
             Future successful Forbidden
