@@ -76,7 +76,7 @@ package object controllers {
   val clientEnrolment = Set(
     Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
 
-  val strideEnrolment = Set(Enrolment("Maintain Agent client relationships"))
+  val strideEnrolment = Set(Enrolment("maintain agent relationships"))
 
   val clientAffinityAndEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]] =
     Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), GGcredentials)

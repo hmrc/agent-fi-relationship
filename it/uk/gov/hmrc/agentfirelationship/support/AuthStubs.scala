@@ -200,7 +200,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |  "affinityGroup": "Individual",
          |  "allEnrolments": [
          |    {
-         |      "key": "Maintain Agent client relationships"
+         |      "key": "maintain agent relationships"
          |    }
          |  ],
          |  "credentials": {

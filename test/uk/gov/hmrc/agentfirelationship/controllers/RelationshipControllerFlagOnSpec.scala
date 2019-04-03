@@ -51,7 +51,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
       override def authConnector: AuthConnector = mockPlayAuthConnector
     }
-  val strideRole = "Maintain Agent client relationships"
+  val strideRole = "maintain agent relationships"
   val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
     override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
   }
