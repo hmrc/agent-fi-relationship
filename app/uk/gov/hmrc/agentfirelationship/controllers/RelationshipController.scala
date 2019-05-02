@@ -275,7 +275,7 @@ class RelationshipController @Inject()(
         }
       case _ =>
         strideRoles match {
-          case Seq("maintain agent relationships", "maintain_agent_relationships") => action
+          case roles if roles.contains(oldStrideRole) || roles.contains(newStrideRole) => action
           case _ =>
             Logger.warn("Unsupported ProviderType / Role")
             Future successful Forbidden
