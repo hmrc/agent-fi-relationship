@@ -44,8 +44,11 @@ class RelationshipController @Inject()(
   ecp: Provider[ExecutionContextExecutor],
   @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
   @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean,
-  @Named("auth.stride.role") strideRole: String)
+  @Named("old.auth.stride.role") oldStrideRole: String,
+  @Named("new.auth.stride.role") newStrideRole: String)
     extends BaseController {
+
+  val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
 
   implicit val ec: ExecutionContext = ecp.get
 
@@ -114,9 +117,9 @@ class RelationshipController @Inject()(
 
   def createRelationship(arn: String, service: String, clientId: String) =
     Action.async(parse.json) { implicit request =>
-      authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+      authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
         withJsonBody[Invitation] { invitation =>
-          forThisUser(Arn(arn), Nino(clientId), strideRole) {
+          forThisUser(Arn(arn), Nino(clientId), strideRoles) {
             mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
               case Nil =>
                 Logger.info("Creating a relationship")
@@ -143,8 +146,8 @@ class RelationshipController @Inject()(
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] =
     Action.async { implicit request =>
-      authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
-        forThisUser(Arn(arn), Nino(clientId), strideRole) {
+      authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
+        forThisUser(Arn(arn), Nino(clientId), strideRoles) {
           val relationshipDeleted: Future[Boolean] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData     <- setAuditData(arn, clientId, credentials)
@@ -169,7 +172,7 @@ class RelationshipController @Inject()(
     }
 
   val findInactiveRelationships: Action[AnyContent] = Action.async { implicit request =>
-    authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+    authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
       taxIdentifier match {
         case Some(Arn(arn)) if Arn.isValid(arn) =>
           mongoService.findInactiveAgentRelationships(arn).map { result =>
@@ -195,7 +198,7 @@ class RelationshipController @Inject()(
   }
 
   val findActiveRelationships: Action[AnyContent] = Action.async { implicit request =>
-    authConnector.authorisedForAfi(strideRole) { implicit taxIdentifier => implicit credentials =>
+    authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
       taxIdentifier match {
         case Some(Arn(arn)) if Arn.isValid(arn) =>
           mongoService.findActiveAgentRelationships(arn).map { result =>
@@ -253,7 +256,7 @@ class RelationshipController @Inject()(
     else
       throw new IllegalArgumentException("No providerType found in Credentials")
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRole: String)(action: => Future[Result])(
+  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRoles: Seq[String])(action: => Future[Result])(
     implicit taxIdentifier: Option[TaxIdentifier]) =
     taxIdentifier match {
       case Some(t) =>
@@ -271,8 +274,8 @@ class RelationshipController @Inject()(
           }
         }
       case _ =>
-        strideRole match {
-          case "Maintain Agent client relationships" => action
+        strideRoles match {
+          case Seq("maintain agent relationships", "maintain_agent_relationships") => action
           case _ =>
             Logger.warn("Unsupported ProviderType / Role")
             Future successful Forbidden

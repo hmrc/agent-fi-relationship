@@ -52,7 +52,11 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
       override def authConnector: AuthConnector = mockPlayAuthConnector
     }
-  val strideRole = "Maintain Agent client relationships"
+
+  val oldStrideRole = "maintain agent relationships"
+  val newStrideRole = "maintain_agent_relationships"
+  val strideRoles = Seq(oldStrideRole, newStrideRole)
+
   val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
     override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
   }
@@ -65,7 +69,9 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     ecp,
     false,
     false,
-    strideRole)
+    oldStrideRole,
+    newStrideRole
+  )
 
   override def afterEach() {
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
@@ -278,7 +284,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: OK for deleting a record as hmrc" in {
-      authStub(strideEnrolmentsCred)
+      authStub(strideEnrolmentsCred(oldStrideEnrolment))
       when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
         .thenReturn(Future successful true)
 
@@ -338,7 +344,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: NOT_FOUND for failing to delete a record as hmrc" in {
-      authStub(strideEnrolmentsCred)
+      authStub(strideEnrolmentsCred(oldStrideEnrolment))
       when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
         .thenReturn(Future successful false)
 
@@ -408,7 +414,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(agentAffinityAndEnrolmentsCreds)
-      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(agentAction))
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(agentAction))
         .thenReturn(Future successful Ok)
       when(mockMongoService.findInactiveAgentRelationships(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
@@ -427,7 +433,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(agentAffinityAndEnrolmentsCreds)
-      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(agentAction))
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(agentAction))
         .thenReturn(Future successful Ok)
       when(mockMongoService.findActiveAgentRelationships(eqs(validTestArn))(any()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
@@ -446,7 +452,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(clientAffinityAndEnrolments)
-      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(action))
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(action))
         .thenReturn(Future successful Ok)
       when(mockMongoService.findInactiveClientRelationships(eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
@@ -465,7 +471,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(clientAffinityAndEnrolments)
-      when(mockAgentClientAuthConnector.authorisedForAfi(strideRole)(action))
+      when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(action))
         .thenReturn(Future successful Ok)
       when(mockMongoService.findActiveClientRelationships(eqs(validTestNINO))(any()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))

@@ -171,7 +171,26 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
-      isLoggedInWithStride
+      isLoggedInWithStride("maintain agent relationships")
+      Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
+
+      When("I call the terminate relationship endpoint")
+      val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
+
+      Then("I should get a 200 OK response")
+      terminateRelationshipResponse.status shouldBe OK
+
+      And("the relationship should be terminated")
+      val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
+      viewRelationshipResponse.status shouldBe NOT_FOUND
+    }
+
+    scenario("Stride user (new format) terminates an existing relationship with client for a given service") {
+
+      Given("there exists a relationship between an agent and client for a given service")
+      givenCreatedAuditEventStub(auditDetails)
+      givenEndedAuditEventStub(auditDetails)
+      isLoggedInWithStride("maintain_agent_relationships")
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the terminate relationship endpoint")

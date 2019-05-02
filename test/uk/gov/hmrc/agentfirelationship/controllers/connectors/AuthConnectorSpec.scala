@@ -53,7 +53,10 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     Future successful Ok
   }
 
-  val strideId = "Maintain Agent client relationships"
+  val oldStrideId = "maintain agent relationships"
+  val newStrideId = "maintain_agent_relationships"
+
+  val strideRoles = Seq(oldStrideId, newStrideId)
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
@@ -68,7 +71,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
       authStub(agentAffinityAndEnrolmentsCreds)
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(agentAction))
 
       status(response) shouldBe OK
     }
@@ -77,16 +80,25 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
       authStub(clientAffinityAndEnrolments)
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(clientAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(clientAction))
 
       status(response) shouldBe OK
     }
 
     "return OK for a stride authenticated user" in {
-      authStub(strideEnrolmentsCred)
+      authStub(strideEnrolmentsCred(oldStrideEnrolment))
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(agentAction))
+
+      status(response) shouldBe OK
+    }
+
+    "return OK for a new stride authenticated user" in {
+      authStub(strideEnrolmentsCred(newStrideEnrolment))
+
+      val response: Result =
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(agentAction))
 
       status(response) shouldBe OK
     }
@@ -95,7 +107,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
       authStub(agentNoEnrolments)
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -104,7 +116,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
       authStub(clientNoEnrolments)
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(clientAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(clientAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -113,7 +125,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
       authStub(neitherHaveAffinityOrEnrolment)
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
@@ -122,7 +134,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
       authStub(failedAuthStub)
 
       val response: Result =
-        await(mockAuthConnector.authorisedForAfi(strideId)(agentAction))
+        await(mockAuthConnector.authorisedForAfi(strideRoles)(agentAction))
 
       status(response) shouldBe FORBIDDEN
     }
