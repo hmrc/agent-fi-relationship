@@ -64,7 +64,8 @@ class MicroserviceModule(val environment: Environment, val configuration: Config
     bindBooleanProperty("features.check-cesa-relationships")
     bindProperty("des.environment", "des.environment")
     bindProperty("des.authorizationToken", "des.authorization-token")
-    bindProperty("auth.stride.role", URLDecoder.decode(_, "utf-8"))
+    bindProperty("old.auth.stride.role", URLDecoder.decode(_, "utf-8"))
+    bindProperty("new.auth.stride.role")
     bindServiceConfigProperty[Duration]("inactive-relationships.show-last-days")
   }
 

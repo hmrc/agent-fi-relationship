@@ -193,14 +193,13 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
     this
   }
 
-  def isLoggedInWithStride = {
+  def isLoggedInWithStride(key: String) = {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
       s"""
          |{
-         |  "affinityGroup": "Individual",
          |  "allEnrolments": [
          |    {
-         |      "key": "maintain agent relationships"
+         |      "key": "$key"
          |    }
          |  ],
          |  "credentials": {

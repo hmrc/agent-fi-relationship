@@ -51,7 +51,9 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
       override def authConnector: AuthConnector = mockPlayAuthConnector
     }
-  val strideRole = "maintain agent relationships"
+  val oldStrideRole = "maintain agent relationships"
+  val newStrideRole = "maintain_agent_relationships"
+
   val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
     override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
   }
@@ -73,7 +75,8 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       ecp,
       true,
       true,
-      strideRole)
+      oldStrideRole,
+      newStrideRole)
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
       when(

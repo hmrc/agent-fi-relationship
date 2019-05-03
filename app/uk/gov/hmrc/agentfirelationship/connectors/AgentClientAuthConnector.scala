@@ -42,7 +42,7 @@ class AgentClientAuthConnector @Inject()(microserviceAuthConnector: Microservice
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]
 
-  def authorisedForAfi(strideRole: String)(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] =
+  def authorisedForAfi(strideRoles: Seq[String])(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] =
     authorised()
       .retrieve(affinityGroupAllEnrollsCreds) {
         case affinity ~ enrols ~ creds =>
@@ -55,7 +55,7 @@ class AgentClientAuthConnector @Inject()(microserviceAuthConnector: Microservice
               extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
                 action(Some(nino))(creds)
               }
-            case (_, "PrivilegedApplication") if hasRequiredStrideRole(enrols, strideRole) =>
+            case (_, "PrivilegedApplication") if hasRequiredStrideRole(enrols, strideRoles) =>
               action(None)(creds)
             case _ =>
               Future successful Forbidden("Invalid affinity group and credentials found")
@@ -75,8 +75,8 @@ class AgentClientAuthConnector @Inject()(microserviceAuthConnector: Microservice
 
   case class CurrentUser(credentials: Credentials, affinityGroup: Option[AffinityGroup])
 
-  def hasRequiredStrideRole(enrolments: Enrolments, strideRole: String): Boolean =
-    enrolments.enrolments.exists(_.key.toUpperCase == strideRole.toUpperCase)
+  def hasRequiredStrideRole(enrolments: Enrolments, strideRoles: Seq[String]): Boolean =
+    strideRoles.exists(s => enrolments.enrolments.exists(_.key == s))
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =
     enrolls
