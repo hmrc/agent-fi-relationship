@@ -45,17 +45,18 @@ class AgentClientAuthConnector @Inject()(microserviceAuthConnector: Microservice
   def authorisedForAfi(strideRoles: Seq[String])(action: AfiAction)(implicit hc: HeaderCarrier): Future[Result] =
     authorised()
       .retrieve(affinityGroupAllEnrollsCreds) {
-        case affinity ~ enrols ~ creds =>
-          (affinity, creds.providerType) match {
-            case (Some(AffinityGroup.Agent), "GovernmentGateway") =>
+        case affinity ~ enrols ~ optCreds =>
+          (affinity, optCreds) match {
+            case (Some(AffinityGroup.Agent), Some(creds @ Credentials(_, "GovernmentGateway"))) =>
               extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
                 action(Some(arn))(creds)
               }
-            case (Some(_), "GovernmentGateway") =>
+            case (Some(_), Some(creds @ Credentials(_, "GovernmentGateway"))) =>
               extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
                 action(Some(nino))(creds)
               }
-            case (_, "PrivilegedApplication") if hasRequiredStrideRole(enrols, strideRoles) =>
+            case (_, Some(creds @ Credentials(_, "PrivilegedApplication")))
+                if hasRequiredStrideRole(enrols, strideRoles) =>
               action(None)(creds)
             case _ =>
               Future successful Forbidden("Invalid affinity group and credentials found")

@@ -16,6 +16,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
+import language.postfixOps
 
 @Singleton
 class TerminateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs

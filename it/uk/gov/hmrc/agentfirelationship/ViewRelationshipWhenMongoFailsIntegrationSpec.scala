@@ -18,6 +18,7 @@ import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import language.postfixOps
 
 @Singleton
 class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent)

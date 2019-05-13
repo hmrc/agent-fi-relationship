@@ -13,6 +13,7 @@ import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import language.postfixOps
 
 class ViewRelationshipWhenCopyCesaFlagOnIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
   with GuiceOneServerPerSuite with RelationshipActions with MongoApp {

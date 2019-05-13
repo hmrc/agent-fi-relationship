@@ -7,6 +7,7 @@ import uk.gov.hmrc.agentfirelationship.support.{ IntegrationSpec, RelationshipAc
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import language.postfixOps
 
 class FailuresIntegrationSpec extends IntegrationSpec
   with GuiceOneServerPerSuite
