@@ -15,10 +15,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
+import language.postfixOps
 
 @Singleton
 class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
-  with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
+with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
   me: DualSuite =>
 
   def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]

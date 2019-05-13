@@ -120,7 +120,8 @@ class RelationshipMongoService @Inject()(
   private def updateStatusToTerminated(
     selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] =
     collection
-      .update(
+      .update(ordered = false)
+      .one(
         selector,
         BSONDocument(
           "$set" -> BSONDocument(

@@ -19,7 +19,7 @@ package uk.gov.hmrc.agentfirelationship.controllers.connectors
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
@@ -60,10 +60,10 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
 
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
-  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
+  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]) =
     when(
       mockPlayAuthConnector
-        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
+        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]]())(any(), any()))
       .thenReturn(returnValue)
 
   "authorisedForAfi" should {

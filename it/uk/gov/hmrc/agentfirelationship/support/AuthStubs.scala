@@ -37,7 +37,7 @@ trait ClientUserAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "state": "Activated"
          |    }
          |  ],
-         |  "credentials": {
+         |  "optionalCredentials": {
          |    "providerId": "12345-credId",
          |    "providerType": "GovernmentGateway"
          |  }
@@ -95,7 +95,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "state": "Activated"
          |    }
          |  ],
-         |  "credentials": {
+         |  "optionalCredentials": {
          |    "providerId": "12345-credId",
          |    "providerType": "GovernmentGateway"
          |  }
@@ -131,7 +131,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "state": "Activated"
          |    }
          |  ],
-         |  "credentials": {
+         |  "optionalCredentials": {
          |    "providerId": "12345-credId",
          |    "providerType": "GovernmentGateway"
          |  }
@@ -156,7 +156,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "state": "Activated"
          |    }
          |  ],
-         |  "credentials": {
+         |  "optionalCredentials": {
          |    "providerId": "12345-credId",
          |    "providerType": "GovernmentGateway"
          |  }
@@ -183,7 +183,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "state": "Activated"
          |    }
          |  ],
-         |  "credentials": {
+         |  "optionalCredentials": {
          |    "providerId": "12345-credId",
          |    "providerType": "GovernmentGateway"
          |  }
@@ -202,7 +202,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "key": "$key"
          |    }
          |  ],
-         |  "credentials": {
+         |  "optionalCredentials": {
          |    "providerId": "12345-credId",
          |    "providerType": "PrivilegedApplication"
          |  }

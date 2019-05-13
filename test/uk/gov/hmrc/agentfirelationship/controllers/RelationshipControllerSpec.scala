@@ -20,7 +20,7 @@ import javax.inject.Provider
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
@@ -80,10 +80,10 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]
 
-  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Credentials]]) =
+  private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]) =
     when(
       mockPlayAuthConnector
-        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Credentials]]]())(any(), any()))
+        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]]())(any(), any()))
       .thenReturn(returnValue)
 
   "RelationshipController" should {
