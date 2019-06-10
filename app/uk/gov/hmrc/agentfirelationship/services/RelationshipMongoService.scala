@@ -16,12 +16,10 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
-import java.net.URL
 import java.time.{LocalDateTime, ZoneId}
 import javax.inject.{Inject, Named}
 
 import com.google.inject.Singleton
-import org.joda.time.{DateTime, LocalDate}
 import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
