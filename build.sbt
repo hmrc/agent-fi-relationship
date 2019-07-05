@@ -22,7 +22,7 @@ lazy val compileDeps = Seq(
   "de.threedimensions" %% "metrics-play" % "2.5.13",
   "com.github.blemale" %% "scaffeine" % "2.6.0",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "3.8.0",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.19.0-play-25",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-25",
   ws
 )
 
