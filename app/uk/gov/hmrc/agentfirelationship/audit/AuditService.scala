@@ -43,8 +43,7 @@ class AuditData {
 
   private val details = new ConcurrentHashMap[String, Any]
 
-  def set(key: String, value: Any): Unit =
-    details.put(key, value)
+  def set(key: String, value: Any): Any = details.put(key, value)
 
   def getDetails: Map[String, Any] =
     JavaConversions.mapAsScalaMap(details).toMap
@@ -58,15 +57,16 @@ class AuditService @Inject()(val auditConnector: AuditConnector) {
       (f, data.getOrElse(f, ""))
     }
 
-  val createRelationshipDetailsFields =
+  val createRelationshipDetailsFields: Seq[String] =
     Seq("authProviderId", "arn", "service", "clientId", "clientIdType")
 
-  val TerminateRelationshipFields =
+  val TerminateRelationshipFields: Seq[String] =
     Seq("authProviderId", "authProviderIdType", "agentReferenceNumber", "service", "clientId", "clientIdType")
 
-  val createdFromExistingRelationship = Seq("agentReferenceNumber", "saAgentRef", "service", "clientId", "clientIdType")
+  val createdFromExistingRelationship: Seq[String] =
+    Seq("agentReferenceNumber", "saAgentRef", "service", "clientId", "clientIdType")
 
-  val hmrcDeleteRelationshipDetailsFields =
+  val hmrcDeleteRelationshipDetailsFields: Seq[String] =
     Seq("authProviderId", "authProviderIdType", "agentReferenceNumber", "clientId", "service")
 
   def sendCreateRelationshipEvent(

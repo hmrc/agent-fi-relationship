@@ -44,7 +44,7 @@ class MicroserviceMonitoringFilter @Inject()(metrics: Metrics, routes: Routes)(
 object KeyToPatternMappingFromRoutes {
   def apply(routes: Routes, placeholders: Set[String] = Set.empty): Seq[(String, String)] =
     routes.documentation.map {
-      case (method, route, _) => {
+      case (method, route, _) =>
         val r = route.replace("<[^/]+>", "")
         val key = r
           .split("/")
@@ -57,7 +57,6 @@ object KeyToPatternMappingFromRoutes {
         val pattern = r.replace("$", ":")
         Logger.info(s"$key-$method -> $pattern")
         (key, pattern)
-      }
     }
 }
 
@@ -65,7 +64,7 @@ abstract class MonitoringFilter(kenshooRegistry: MetricRegistry)(implicit ec: Ex
     extends Filter
     with MonitoringKeyMatcher {
 
-  override def apply(nextFilter: (RequestHeader) => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
+  override def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
 
     implicit val hc: HeaderCarrier = fromHeadersAndSession(requestHeader.headers)
 
@@ -94,12 +93,7 @@ abstract class MonitoringFilter(kenshooRegistry: MetricRegistry)(implicit ec: Ex
         val status = result.header.status
         val timerName = s"Timer-$serviceName"
         val counterName = timerName + "." + status
-        kenshooRegistry.getTimers
-          .getOrDefault(timerName, kenshooRegistry.timer(timerName))
-          .update(System.nanoTime() - start, NANOSECONDS)
-        kenshooRegistry.getCounters
-          .getOrDefault(counterName, kenshooRegistry.counter(counterName))
-          .inc()
+        updateMetrics(start, timerName, counterName)
 
       case Failure(exception: Upstream5xxResponse) =>
         recordFailure(serviceName, exception.upstreamResponseCode, start)
@@ -116,13 +110,18 @@ abstract class MonitoringFilter(kenshooRegistry: MetricRegistry)(implicit ec: Ex
     val counterName =
       if (upstreamResponseCode >= 500) s"Http5xxErrorCount-$serviceName"
       else s"Http4xxErrorCount-$serviceName"
+    updateMetrics(startTime, timerName, counterName)
+  }
+
+  private def updateMetrics(start: Long, timerName: String, counterName: String): Unit = {
     kenshooRegistry.getTimers
       .getOrDefault(timerName, kenshooRegistry.timer(timerName))
-      .update(System.nanoTime() - startTime, NANOSECONDS)
+      .update(System.nanoTime() - start, NANOSECONDS)
     kenshooRegistry.getCounters
       .getOrDefault(counterName, kenshooRegistry.counter(counterName))
       .inc()
   }
+
 }
 
 trait MonitoringKeyMatcher {

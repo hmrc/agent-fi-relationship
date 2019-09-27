@@ -5,11 +5,12 @@ import java.net.URL
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.Eventually
-import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, Suite }
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
-import uk.gov.hmrc.agentfirelationship.stubs.{ DesStubs, MappingStubs }
+import uk.gov.hmrc.agentfirelationship.stubs.{DesStubs, MappingStubs}
 import uk.gov.hmrc.play.it.Port
 
 trait UpstreamServicesStubs extends BeforeAndAfterAll
@@ -41,9 +42,10 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
     reset()
     givenAuthReturnsUserDetails()
     givenImplicitAuditEvents()
+    ()
   }
 
-  def givenCreatedAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
+  def givenCreatedAuditEventStub(detail: Map[String, String] = Map.empty): StubMapping = {
     stubFor(post(urlPathEqualTo("/write/audit"))
       .withRequestBody(similarToJson(
         s"""{
@@ -54,7 +56,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
       .willReturn(aResponse().withStatus(204)))
   }
 
-  def givenEndedAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
+  def givenEndedAuditEventStub(detail: Map[String, String] = Map.empty): StubMapping = {
     stubFor(post(urlPathEqualTo("/write/audit"))
       .withRequestBody(similarToJson(
         s"""{
@@ -65,7 +67,7 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
       .willReturn(aResponse().withStatus(204)))
   }
 
-  def givenCesaCopyAuditEventStub(detail: Map[String, String] = Map.empty): Unit = {
+  def givenCesaCopyAuditEventStub(detail: Map[String, String] = Map.empty): StubMapping = {
     stubFor(post(urlPathEqualTo("/write/audit"))
       .withRequestBody(similarToJson(
         s"""{
@@ -76,11 +78,11 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
       .willReturn(aResponse().withStatus(204)))
   }
 
-  def givenImplicitAuditEvents() = {
+  def givenImplicitAuditEvents(): StubMapping = {
     stubFor(post(urlPathEqualTo("/write/audit/merged")).willReturn(aResponse().withStatus(204)))
   }
 
-  def givenAuthReturnsUserDetails(): Unit = {
+  def givenAuthReturnsUserDetails(): StubMapping = {
     val oid: String = "556737e15500005500eaf68f"
     val wireMockBaseUrlAsString = s"http://$wireMockHost:$wireMockPort"
     val wireMockBaseUrl = new URL(wireMockBaseUrlAsString)

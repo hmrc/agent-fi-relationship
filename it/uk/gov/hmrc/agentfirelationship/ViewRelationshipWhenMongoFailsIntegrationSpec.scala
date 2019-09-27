@@ -55,6 +55,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
       .overrides(new AbstractModule {
         override def configure(): Unit = {
           bind(classOf[RelationshipMongoService]).to(classOf[TestRelationshipMongoService])
+          ()
         }
       })
 

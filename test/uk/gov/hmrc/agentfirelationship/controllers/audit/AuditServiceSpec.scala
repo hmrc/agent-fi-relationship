@@ -32,6 +32,8 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.test.UnitSpec
 
+import scala.concurrent.ExecutionContext
+
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
   implicit val testConfig = PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(200, Millis)))
   "auditEvent" should {
@@ -58,7 +60,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
-        verify(mockConnector).sendEvent(captor.capture())(any(), any())
+        verify(mockConnector).sendEvent(captor.capture())(any[HeaderCarrier](), any[ExecutionContext]())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
         sentEvent.auditType shouldBe "AgentClientRelationshipCreated"
@@ -97,7 +99,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
-        verify(mockConnector).sendEvent(captor.capture())(any(), any())
+        verify(mockConnector).sendEvent(captor.capture())(any[HeaderCarrier](), any[ExecutionContext]())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
         sentEvent.auditType shouldBe "ClientTerminatedAgentServiceAuthorisation"
@@ -137,7 +139,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
-        verify(mockConnector).sendEvent(captor.capture())(any(), any())
+        verify(mockConnector).sendEvent(captor.capture())(any[HeaderCarrier](), any[ExecutionContext]())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
         sentEvent.auditType shouldBe "AgentClientRelationshipCreatedFromExisting"
@@ -178,7 +180,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
-        verify(mockConnector).sendEvent(captor.capture())(any(), any())
+        verify(mockConnector).sendEvent(captor.capture())(any[HeaderCarrier](), any[ExecutionContext]())
         val sentEvent = captor.getValue.asInstanceOf[DataEvent]
 
         sentEvent.auditType shouldBe "HmrcRemovedAgentServiceAuthorisation"
