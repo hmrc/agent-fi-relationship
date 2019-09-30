@@ -41,15 +41,15 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
   val saAgentRef3 = SaAgentReference("T1133T")
   val mtdItId = MtdItId("ABCDEF123456789")
   val agentCode = AgentCode("ABC1234")
-  val eventualAgentCode = Future successful agentCode
+  private val eventualAgentCode = Future successful agentCode
   val nino: Nino = testDataGenerator.nextNino
 
-  val des = resettingMock[DesConnector]
-  val mapping = resettingMock[MappingConnector]
-  val auditService = resettingMock[AuditService]
+  private val des = resettingMock[DesConnector]
+  private val mapping = resettingMock[MappingConnector]
+  private val auditService = resettingMock[AuditService]
 
   val hc = HeaderCarrier()
-  val ec = implicitly[ExecutionContext]
+  val ec: ExecutionContext = implicitly[ExecutionContext]
 
   "CesaRelationshipCopyService" should {
 
@@ -140,18 +140,12 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
     }
   }
 
-  private def commonRelationshipExists(): Unit = {
-    when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
-      .thenReturn(Future successful Seq(saAgentRef))
-    when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
-      .thenReturn(Future successful Seq(saAgentRef))
-  }
-
   private def commonMultipleRelationshipExists(): Unit = {
     when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
       .thenReturn(Future successful Seq(saAgentRef, saAgentRef3))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
       .thenReturn(Future successful Seq(saAgentRef, saAgentRef2))
+    ()
   }
 
   private def cesaAndMappingReturnEmptyRelationshipSets(): Unit = {
@@ -159,6 +153,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       .thenReturn(Future successful Seq())
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
       .thenReturn(Future successful Seq())
+    ()
   }
 
   private def commonRelationshipDoesNotExistInBothCesaAndMapping(): Unit = {
@@ -166,6 +161,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       .thenReturn(Future successful Seq(saAgentRef))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
       .thenReturn(Future successful Seq(saAgentRef2))
+    ()
   }
 
   private def commonRelationshipDoesNotExistInMapping(): Unit = {
@@ -173,6 +169,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       .thenReturn(Future successful Seq(saAgentRef))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
       .thenReturn(Future successful Seq())
+    ()
   }
 
   private def commonRelationshipDoesNotExistInCesa(): Unit = {
@@ -180,5 +177,6 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       .thenReturn(Future successful Seq())
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
       .thenReturn(Future successful Seq(saAgentRef))
+    ()
   }
 }

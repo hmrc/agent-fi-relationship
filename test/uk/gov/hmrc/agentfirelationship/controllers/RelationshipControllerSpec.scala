@@ -21,22 +21,23 @@ import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.Result
+import play.api.mvc.{Request, Result}
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.audit.AuditService
+import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import concurrent.ExecutionContext.Implicits.global
-
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
@@ -55,7 +56,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
   val oldStrideRole = "maintain agent relationships"
   val newStrideRole = "maintain_agent_relationships"
-  val strideRoles = Seq(oldStrideRole, newStrideRole)
+  val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
 
   val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
     override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
@@ -83,152 +84,242 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   private def authStub(returnValue: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]) =
     when(
       mockPlayAuthConnector
-        .authorise(any(), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]]())(any(), any()))
+        .authorise(any[Predicate](), any[Retrieval[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]]]())(
+          any[HeaderCarrier](),
+          any[ExecutionContext]()))
       .thenReturn(returnValue)
 
   "RelationshipController" should {
+
     "return Status: OK when successfully finding a relationship" in {
+
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+          any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: NOT_FOUND for not finding data" in {
+
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+
+      when(
+        mockMongoService
+          .findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful List())
 
       val response = controller.findRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: CREATED for creating new record as a client" in {
+
       authStub(clientAffinityAndEnrolments)
 
-      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
-
-      when(mockMongoService.createRelationship(any())(any()))
-        .thenReturn(Future successful (()))
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockAuditService
+          .sendCreateRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      when(mockMongoService.createRelationship(any[Relationship]())(any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      when(
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List())
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
-      verify(mockMongoService, times(1)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: CREATED for creating new record as an agent" in {
+
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
-
-      when(mockMongoService.createRelationship(any())(any()))
-        .thenReturn(Future successful (()))
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockAuditService
+          .sendCreateRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      when(
+        mockMongoService
+          .createRelationship(any[Relationship]())(any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      when(
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List())
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
-      verify(mockMongoService, times(1)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+
+      verify(mockMongoService, times(1))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "send an audit event if the relationship is successfully created" in {
+
       authStub(agentAffinityAndEnrolmentsCreds)
 
-      when(mockAuditService.sendCreateRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
-
-      when(mockMongoService.createRelationship(eqs(validTestRelationship))(any()))
-        .thenReturn(Future successful (()))
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockAuditService
+          .sendCreateRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      when(
+        mockMongoService
+          .createRelationship(eqs(validTestRelationship))(any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      when(
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List())
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
       await(response)
+
       verify(mockAuditService, times(1))
-        .sendCreateRelationshipEvent(any())(any(), any(), any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+        .sendCreateRelationshipEvent(any[AuditData]())(
+          any[HeaderCarrier](),
+          any[Request[Any]](),
+          any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record, as a client" in {
+
       authStub(clientAffinityAndEnrolments)
 
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
-      verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+
+      verify(mockMongoService, times(0))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: CREATED when creating a new relationship that already exists, but do not add a duplicate record, as an agent" in {
+
       authStub(agentAffinityAndEnrolmentsCreds)
 
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
-      verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+
+      verify(mockMongoService, times(0))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: CREATED when additional relationships are created as a client" in {
       authStub(clientAffinityAndEnrolments)
 
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
-      verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(0))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: CREATED when additional relationships are created as an agent" in {
       authStub(agentAffinityAndEnrolmentsCreds)
 
       when(
-        mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(any()))
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))(
+            any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response =
         controller.createRelationship(validTestArn, testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe CREATED
-      verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(0))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when creating relationship" in {
@@ -238,8 +329,12 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         controller.createRelationship("JARN0000001", testService, validTestNINO)(fakeCreateRequest)
 
       status(response) shouldBe FORBIDDEN
-      verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(0)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(0))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(0))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: FORBIDDEN when logged in Client NINO does not match given NINO when creating relationship" in {
@@ -249,113 +344,175 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         controller.createRelationship(validTestArn, testService, "AB123456C")(fakeCreateRequest)
 
       status(response) shouldBe FORBIDDEN
-      verify(mockMongoService, times(0)).createRelationship(any())(any())
-      verify(mockMongoService, times(0)).findRelationships(any(), any(), any(), any())(any())
+
+      verify(mockMongoService, times(0))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(0))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: OK for deleting a record as a client" in {
       authStub(clientAffinityAndEnrolments)
-      when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService
+          .sendTerminatedRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: OK for deleting a record as an agent" in {
       authStub(agentAffinityAndEnrolmentsCreds)
-      when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService.sendTerminatedRelationshipEvent(any[AuditData]())(
+          any[HeaderCarrier](),
+          any[Request[Any]](),
+          any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: OK for deleting a record as hmrc" in {
       authStub(strideEnrolmentsCred(oldStrideEnrolment))
-      when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService
+          .sendHmrcLedDeleteRelationshipAuditEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "send an audit event if the relationship is successfully deleting" in {
       authStub(agentAffinityAndEnrolmentsCreds)
-      when(mockMongoService.terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful true)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService
+          .sendTerminatedRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
       await(response)
       verify(mockAuditService, times(1))
-        .sendTerminatedRelationshipEvent(any())(any(), any(), any())
+        .sendTerminatedRelationshipEvent(any[AuditData]())(
+          any[HeaderCarrier](),
+          any[Request[Any]](),
+          any[ExecutionContext]())
     }
 
     "return Status: NOT_FOUND for failing to delete a record as a client" in {
       authStub(clientAffinityAndEnrolments)
-      when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]()))
         .thenReturn(Future successful false)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService
+          .sendTerminatedRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: NOT_FOUND for failing to delete a record as an agent" in {
       authStub(agentAffinityAndEnrolmentsCreds)
-      when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]()))
         .thenReturn(Future successful false)
 
-      when(mockAuditService.sendTerminatedRelationshipEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService
+          .sendTerminatedRelationshipEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: NOT_FOUND for failing to delete a record as hmrc" in {
       authStub(strideEnrolmentsCred(oldStrideEnrolment))
-      when(mockMongoService.terminateRelationship(any(), any(), any())(any()))
+      when(
+        mockMongoService
+          .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]()))
         .thenReturn(Future successful false)
 
-      when(mockAuditService.sendHmrcLedDeleteRelationshipAuditEvent(any())(any(), any(), any()))
-        .thenReturn(Future successful (()))
+      when(
+        mockAuditService
+          .sendHmrcLedDeleteRelationshipAuditEvent(any[AuditData]())(
+            any[HeaderCarrier](),
+            any[Request[Any]](),
+            any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
 
       val response =
         controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: FORBIDDEN when logged in Agent ARN does not match given ARN when deleting relationship" in {
@@ -365,7 +522,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         controller.terminateRelationship("JARN0000001", testService, validTestNINO)(fakeRequest)
 
       status(response) shouldBe FORBIDDEN
-      verify(mockMongoService, times(0)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(0))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: FORBIDDEN when logged in Client NINO does not match given NINO when deleting relationship" in {
@@ -374,37 +532,44 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       val response = controller.terminateRelationship(validTestArn, testService, "AB123456C")(fakeRequest)
 
       status(response) shouldBe FORBIDDEN
-      verify(mockMongoService, times(0)).terminateRelationship(any(), any(), any())(any())
+      verify(mockMongoService, times(0))
+        .terminateRelationship(any[String](), any[String](), any[String]())(any[ExecutionContext]())
     }
 
     "return Status: OK for finding data via access control endpoint" in {
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(
-            any()))
+            any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response =
         controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe OK
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(
-            any()))
+            any[ExecutionContext]()))
         .thenReturn(Future successful List())
-      when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any()))
+      when(
+        mockMongoService
+          .findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful List())
 
       val response =
         controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
 
       status(response) shouldBe NOT_FOUND
-      verify(mockMongoService, times(1)).findRelationships(any(), any(), any(), any())(any())
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
+          any[ExecutionContext]())
     }
 
     "return Status: OK with json body of all agent invitations with TERMINATED status" in {
@@ -414,16 +579,20 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(agentAffinityAndEnrolmentsCreds)
+
       when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(agentAction))
         .thenReturn(Future successful Ok)
-      when(mockMongoService.findInactiveAgentRelationships(eqs(validTestArn))(any()))
+
+      when(
+        mockMongoService
+          .findInactiveAgentRelationships(eqs(validTestArn))(any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
 
       val response = controller.findInactiveRelationships(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
-        .findInactiveAgentRelationships(any())(any())
+        .findInactiveAgentRelationships(any[String]())(any[ExecutionContext]())
     }
 
     "return Status: OK with json body of all agent invitations with ACTIVE status" in {
@@ -433,16 +602,20 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(agentAffinityAndEnrolmentsCreds)
+
       when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(agentAction))
         .thenReturn(Future successful Ok)
-      when(mockMongoService.findActiveAgentRelationships(eqs(validTestArn))(any()))
+
+      when(
+        mockMongoService
+          .findActiveAgentRelationships(eqs(validTestArn))(any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
 
       val response = controller.findActiveRelationships(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
-        .findActiveAgentRelationships(any())(any())
+        .findActiveAgentRelationships(any[String]())(any[ExecutionContext]())
     }
 
     "return Status: OK with json body of all client invitations with TERMINATED status" in {
@@ -452,16 +625,20 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(clientAffinityAndEnrolments)
+
       when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(action))
         .thenReturn(Future successful Ok)
-      when(mockMongoService.findInactiveClientRelationships(eqs(validTestNINO))(any()))
+
+      when(
+        mockMongoService
+          .findInactiveClientRelationships(eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
 
       val response = controller.findInactiveRelationships(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
-        .findInactiveClientRelationships(any())(any())
+        .findInactiveClientRelationships(any[String]())(any[ExecutionContext]())
     }
 
     "return Status: OK with json body of all client invitations with ACTIVE status" in {
@@ -471,16 +648,20 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       }
 
       authStub(clientAffinityAndEnrolments)
+
       when(mockAgentClientAuthConnector.authorisedForAfi(strideRoles)(action))
         .thenReturn(Future successful Ok)
-      when(mockMongoService.findActiveClientRelationships(eqs(validTestNINO))(any()))
+
+      when(
+        mockMongoService
+          .findActiveClientRelationships(eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationshipTerminated, validTestRelationshipCesa))
 
       val response = controller.findActiveRelationships(fakeRequest)
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
-        .findActiveClientRelationships(any())(any())
+        .findActiveClientRelationships(any[String]())(any[ExecutionContext]())
     }
   }
 }
