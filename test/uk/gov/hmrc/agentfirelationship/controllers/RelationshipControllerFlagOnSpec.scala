@@ -61,13 +61,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
   }
 
-//  private def authStub(returnValue: Future[~[Option[AffinityGroup], Enrolments]]): OngoingStubbing[Future[Option[AffinityGroup] ~
-//                                                                                                          Enrolments]] =
-//    when(mockPlayAuthConnector.authorise(
-//      any[Predicate](), any[Retrieval[~[Option[AffinityGroup], Enrolments]]]())
-//      (any[HeaderCarrier](), any[ExecutionContext]()))
-//      .thenReturn(returnValue)
-
   "RelationshipController (Both Flags On)" should {
 
     val controller = new RelationshipController(
