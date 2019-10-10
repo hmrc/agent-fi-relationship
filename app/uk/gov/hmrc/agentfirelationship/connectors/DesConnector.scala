@@ -62,6 +62,11 @@ class DesConnector @Inject()(
         _.agents
           .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
           .flatMap(_.agentId))
+      .recover {
+
+        // APB-4424: If the NINO is not even in CESA, then there can't be a relationship there
+        case _: uk.gov.hmrc.http.NotFoundException => Seq.empty
+      }
   }
 
   private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(
