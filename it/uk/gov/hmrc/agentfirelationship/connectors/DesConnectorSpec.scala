@@ -1,17 +1,16 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.agentfirelationship.stubs.{ DataStreamStub, DesStubs }
-import uk.gov.hmrc.agentfirelationship.support.{ MetricTestSupport, WireMockSupport }
-import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost }
+import uk.gov.hmrc.agentfirelationship.stubs.{DataStreamStub, DesStubs}
+import uk.gov.hmrc.agentfirelationship.support.{MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
 
@@ -25,11 +24,11 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
         "auditing.consumer.baseUri.host" -> wireMockHost,
         "auditing.consumer.baseUri.port" -> wireMockPort)
 
-  private implicit val hc = HeaderCarrier()
-  private implicit val ec = ExecutionContext.global
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+  private implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
-  val httpGet = app.injector.instanceOf[HttpGet]
-  val httpPost = app.injector.instanceOf[HttpPost]
+  private val httpGet = app.injector.instanceOf[HttpGet]
+  private val httpPost = app.injector.instanceOf[HttpPost]
 
   val desConnector = new DesConnector(wireMockBaseUrl, "token", "stub", httpGet, httpPost, app.injector.instanceOf[Metrics])
 
@@ -63,6 +62,12 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
       await(desConnector.getClientSaAgentSaReferences(nino)) shouldBe empty
     }
 
+    "return empty seq when client's NINO not found in CESA" in {
+      givenClientHasNoNinoInCESA(nino)
+      givenAuditConnector()
+      await(desConnector.getClientSaAgentSaReferences(nino)) shouldBe empty
+    }
+
     "return empty seq when client relationship with agent ceased" in {
       givenClientRelationshipWithAgentCeasedInCESA(nino, "foo")
       givenAuditConnector()
@@ -73,12 +78,6 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
       givenAuditConnector()
       givenAllClientRelationshipsWithAgentsCeasedInCESA(nino, Seq("001", "002", "003", "004", "005", "005", "007"))
       await(desConnector.getClientSaAgentSaReferences(nino)) shouldBe empty
-    }
-
-    "fail when client is unknown" in {
-      givenClientIsUnknownInCESAFor(nino)
-      givenAuditConnector()
-      an[Exception] should be thrownBy await(desConnector.getClientSaAgentSaReferences(nino))
     }
 
     "fail when DES is unavailable" in {
