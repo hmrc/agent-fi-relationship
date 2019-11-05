@@ -23,7 +23,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.controllers._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
@@ -32,19 +32,13 @@ import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
-  val mockMicroserviceAuthConnector: MicroserviceAuthConnector =
-    mock[MicroserviceAuthConnector]
-  val mockAuthConnector: AgentClientAuthConnector =
-    new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
-      override def authConnector: PlayAuthConnector = mockPlayAuthConnector
-    }
-
+  val mockAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]
 

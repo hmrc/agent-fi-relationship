@@ -17,8 +17,8 @@
 package uk.gov.hmrc.agentfirelationship.services
 
 import java.time.{LocalDateTime, ZoneId}
-import javax.inject.{Inject, Named}
 
+import javax.inject.{Inject, Named}
 import com.google.inject.Singleton
 import play.api.Logger
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
@@ -26,6 +26,7 @@ import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json.ImplicitBSONHandlers._
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.repository.StrictlyEnsureIndexes
@@ -37,9 +38,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class RelationshipMongoService @Inject()(
-  @Named("inactive-relationships.show-last-days") showInactiveRelationshipsDuration: Duration,
-  mongoComponent: ReactiveMongoComponent)
+class RelationshipMongoService @Inject()(appConfig: AppConfig, mongoComponent: ReactiveMongoComponent)
     extends ReactiveRepository[Relationship, BSONObjectID](
       "fi-relationship",
       mongoComponent.mongoConnector.db,
@@ -102,7 +101,7 @@ class RelationshipMongoService @Inject()(
     updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
   def findInactiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
-    val from = LocalDateTime.now().minusDays(showInactiveRelationshipsDuration.toDays.toInt)
+    val from = LocalDateTime.now().minusDays(appConfig.inactiveRelationshipsShowLastDays.toDays.toInt)
     find("arn" -> arn, "relationshipStatus" -> "TERMINATED").map(_.filter(_.startDate.isAfter(from)))
   }
 

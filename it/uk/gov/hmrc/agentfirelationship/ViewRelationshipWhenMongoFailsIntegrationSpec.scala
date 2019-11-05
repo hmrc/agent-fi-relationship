@@ -1,28 +1,28 @@
 package uk.gov.hmrc.agentfirelationship
 
 import javax.inject.Inject
-
-import com.google.inject.{ AbstractModule, Singleton }
+import com.google.inject.{AbstractModule, Singleton}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsArray, JsNull, Json}
 import play.api.libs.ws.WSResponse
 import play.modules.reactivemongo.ReactiveMongoComponent
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import language.postfixOps
 
 @Singleton
-class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent)
-  extends RelationshipMongoService(30 days, mongoComponent) {
+class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent, appConfig: AppConfig)
+  extends RelationshipMongoService(appConfig, mongoComponent) {
 
   override def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
     Future failed new Exception("Test mongodb failure")
@@ -96,12 +96,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
 
       And("The response body will not contain the relationship details")
       val jsonResponse = Json.parse(viewRelationshipResponse.body)
-      val actualAgentId = (jsonResponse(0) \ "arn").asOpt[String]
-      val actualClientId = (jsonResponse(0) \ "clientId").asOpt[String]
-      val actualService = (jsonResponse(0) \ "service").asOpt[String]
-      actualAgentId shouldBe None
-      actualClientId shouldBe None
-      actualService shouldBe None
+      jsonResponse shouldBe JsArray()
     }
   }
 }

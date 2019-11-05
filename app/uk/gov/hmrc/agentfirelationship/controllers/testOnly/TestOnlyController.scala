@@ -21,17 +21,18 @@ import java.time.LocalDateTime
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestOnlyController @Inject()(mongoService: RelationshipMongoService)(implicit ec: ExecutionContext)
-    extends BaseController {
+class TestOnlyController @Inject()(mongoService: RelationshipMongoService, cc: ControllerComponents)(
+  implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
   case class Invitation(startDate: LocalDateTime)
 

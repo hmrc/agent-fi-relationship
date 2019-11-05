@@ -18,12 +18,13 @@ package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.time.{LocalDateTime, ZoneId}
 
-import javax.inject.{Inject, Named, Provider, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
@@ -31,7 +32,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
@@ -42,13 +43,11 @@ class RelationshipController @Inject()(
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
   ecp: Provider[ExecutionContextExecutor],
-  @Named("features.check-cesa-relationships") checkCesaRelationships: Boolean,
-  @Named("features.copy-cesa-relationships") copyCesaRelationships: Boolean,
-  @Named("old.auth.stride.role") oldStrideRole: String,
-  @Named("new.auth.stride.role") newStrideRole: String)
-    extends BaseController {
+  appConfig: AppConfig,
+  cc: ControllerComponents
+) extends BackendController(cc) {
 
-  val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
+  val strideRoles: Seq[String] = Seq(appConfig.oldStrideRole, appConfig.newStrideRole)
 
   implicit val ec: ExecutionContext = ecp.get
 
@@ -66,14 +65,14 @@ class RelationshipController @Inject()(
             if (previousRelationships.nonEmpty) {
               Future successful NotFound
             } else {
-              if (checkCesaRelationships) {
+              if (appConfig.checkCesaRelationshipFlag) {
                 checkCesaService
                   .lookupCesaForOldRelationship(Arn(arn), Nino(clientId))
                   .flatMap { saAgentRefs =>
                     if (saAgentRefs.isEmpty) {
                       Future successful NotFound
                     } else {
-                      if (copyCesaRelationships) {
+                      if (appConfig.copyCesaRelationshipFlag) {
                         val activeRelationship = Relationship(
                           arn = Arn(arn),
                           service = service,
@@ -275,7 +274,7 @@ class RelationshipController @Inject()(
         }
       case _ =>
         strideRoles match {
-          case roles if roles.contains(oldStrideRole) || roles.contains(newStrideRole) => action
+          case roles if roles.contains(appConfig.oldStrideRole) || roles.contains(appConfig.newStrideRole) => action
           case _ =>
             Logger.warn("Unsupported ProviderType / Role")
             Future successful Forbidden

@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentfirelationship.support
 
-import org.scalatest.{ BeforeAndAfterEach, Suite, TestSuite }
-import org.scalatestplus.play.OneServerPerSuite
-import uk.gov.hmrc.mongo.{ MongoSpecSupport, Awaiting => MongoAwaiting }
+import org.scalatest.{BeforeAndAfterEach, Suite, TestSuite}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import uk.gov.hmrc.mongo.{MongoSpecSupport, Awaiting => MongoAwaiting}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
 
 trait DualSuite extends Suite with TestSuite
 
-trait MongoApp extends BeforeAndAfterEach with MongoSpecSupport with OneServerPerSuite {
+trait MongoApp extends BeforeAndAfterEach with MongoSpecSupport with GuiceOneServerPerSuite {
   me: DualSuite with MongoSpecSupport =>
 
   override def beforeEach(): Unit = {

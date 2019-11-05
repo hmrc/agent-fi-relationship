@@ -16,24 +16,28 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
+import java.net.URL
+
 import javax.inject.Provider
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
+import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, MicroserviceAuthConnector}
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.auth.core.{AuthConnector, PlayAuthConnector}
+import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
@@ -44,13 +48,22 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
   val mockCesaRelationship: CesaRelationshipCopyService =
     mock[CesaRelationshipCopyService]
-  val mockMicroserviceAuthConnector: MicroserviceAuthConnector =
-    mock[MicroserviceAuthConnector]
   val mockEc: ExecutionContext = mock[ExecutionContext]
-  val mockAgentClientAuthConnector: AgentClientAuthConnector =
-    new AgentClientAuthConnector(mockMicroserviceAuthConnector) {
-      override def authConnector: AuthConnector = mockPlayAuthConnector
-    }
+  val mockAgentClientAuthConnector: AgentClientAuthConnector = mock[AgentClientAuthConnector]
+  val testAppConfig = new AppConfig {
+    override val appName: String = "agent-fi-relationship"
+    override val agentMappingBaseUrl: URL = new URL("http://localhost:9999/agent-mapping")
+    override val desBaseUrl: URL = new URL("http://localhost:9999/des")
+    override val authBaseUrl: URL = new URL("http://localhost:9999/auth")
+    override val copyCesaRelationshipFlag: Boolean = true
+    override val checkCesaRelationshipFlag: Boolean = true
+    override val desEnvironment: String = "des.env"
+    override val desAuthToken: String = "des.auth.token"
+    override val oldStrideRole: String = "maintain agent relationships"
+    override val newStrideRole: String = "maintain_agent_relationships"
+    override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
+  }
+  val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"
   val newStrideRole = "maintain_agent_relationships"
 
@@ -69,10 +82,8 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       mockAgentClientAuthConnector,
       mockCesaRelationship,
       ecp,
-      true,
-      true,
-      oldStrideRole,
-      newStrideRole)
+      testAppConfig,
+      mockControllerComponents)
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
       when(
