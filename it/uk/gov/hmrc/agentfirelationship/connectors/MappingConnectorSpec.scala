@@ -2,19 +2,21 @@ package uk.gov.hmrc.agentfirelationship.connectors
 
 import com.kenshoo.play.metrics.Metrics
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.agentfirelationship.stubs.{ DataStreamStub, MappingStubs }
-import uk.gov.hmrc.agentfirelationship.support.{ MetricTestSupport, WireMockSupport }
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.stubs.{DataStreamStub, MappingStubs}
+import uk.gov.hmrc.agentfirelationship.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet, HttpPost }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
-class MappingConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport with MappingStubs with DataStreamStub with MetricTestSupport with MockitoSugar {
+class MappingConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with MappingStubs with DataStreamStub with MetricTestSupport with MockitoSugar {
 
   override implicit lazy val app: Application = appBuilder
     .build()
@@ -29,9 +31,10 @@ class MappingConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSup
   private implicit val hc = HeaderCarrier()
   private implicit val ec = ExecutionContext.global
 
-  val httpGet = app.injector.instanceOf[HttpGet]
+  val httpClient = app.injector.instanceOf[HttpClient]
+  val appConfig = app.injector.instanceOf[AppConfig]
 
-  val mappingConnector = new MappingConnector(wireMockBaseUrl, httpGet, app.injector.instanceOf[Metrics])
+  val mappingConnector = new MappingConnector(appConfig, httpClient, app.injector.instanceOf[Metrics])
 
   "MappingConnector" should {
 

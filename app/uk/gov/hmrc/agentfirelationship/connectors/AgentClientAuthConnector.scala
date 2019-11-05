@@ -31,13 +31,10 @@ import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentClientAuthConnector @Inject()(microserviceAuthConnector: MicroserviceAuthConnector)(
-  implicit ec: ExecutionContext)
+class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(implicit ec: ExecutionContext)
     extends AuthorisedFunctions {
   implicit def hc(implicit rh: RequestHeader) =
     fromHeadersAndSession(rh.headers)
-
-  override def authConnector: AuthConnector = microserviceAuthConnector
 
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]

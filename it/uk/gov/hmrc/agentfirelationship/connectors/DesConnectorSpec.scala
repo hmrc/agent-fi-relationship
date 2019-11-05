@@ -1,18 +1,20 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import com.kenshoo.play.metrics.Metrics
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentfirelationship.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
+class DesConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSupport with DesStubs with DataStreamStub with MetricTestSupport {
 
   override implicit lazy val app: Application = appBuilder
     .build()
@@ -27,10 +29,10 @@ class DesConnectorSpec extends UnitSpec with OneAppPerSuite with WireMockSupport
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
-  private val httpGet = app.injector.instanceOf[HttpGet]
-  private val httpPost = app.injector.instanceOf[HttpPost]
+  private val httpClient = app.injector.instanceOf[HttpClient]
+  private val appConfig = app.injector.instanceOf[AppConfig]
 
-  val desConnector = new DesConnector(wireMockBaseUrl, "token", "stub", httpGet, httpPost, app.injector.instanceOf[Metrics])
+  val desConnector = new DesConnector(appConfig, httpClient, app.injector.instanceOf[Metrics])
 
   "DesConnector GetStatusAgentRelationship" should {
 

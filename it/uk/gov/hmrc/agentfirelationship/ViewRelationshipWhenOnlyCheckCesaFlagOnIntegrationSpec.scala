@@ -3,12 +3,12 @@ package uk.gov.hmrc.agentfirelationship
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsArray, Json}
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{ Nino, SaAgentReference }
+import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -97,12 +97,7 @@ class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec extends Integration
 
       And("The response body will not contain the relationship details")
       val jsonResponse = Json.parse(viewRelationshipResponse.body)
-      val actualAgentId = (jsonResponse(0) \ "arn").asOpt[String]
-      val actualClientId = (jsonResponse(0) \ "clientId").asOpt[String]
-      val actualService = (jsonResponse(0) \ "service").asOpt[String]
-      actualAgentId shouldBe None
-      actualClientId shouldBe None
-      actualService shouldBe None
+      jsonResponse shouldBe JsArray()
     }
   }
 }

@@ -17,16 +17,18 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
-import javax.inject.{Inject, Named, Singleton}
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json._
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost, HttpReads}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,19 +46,12 @@ object ClientRelationship {
 }
 
 @Singleton
-class DesConnector @Inject()(
-  @Named("des-baseUrl") baseUrl: URL,
-  @Named("des.authorizationToken") authorizationToken: String,
-  @Named("des.environment") environment: String,
-  httpGet: HttpGet,
-  httpPost: HttpPost,
-  metrics: Metrics)
-    extends HttpAPIMonitor {
+class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getClientSaAgentSaReferences(
     nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
-    val url = new URL(baseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
+    val url = new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
     getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url)
       .map(
         _.agents
@@ -73,10 +68,10 @@ class DesConnector @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
-      authorization = Some(Authorization(s"Bearer $authorizationToken")),
-      extraHeaders = hc.extraHeaders :+ "Environment" -> environment)
+      authorization = Some(Authorization(s"Bearer ${appConfig.desAuthToken}")),
+      extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment)
     monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      httpGet.GET[A](url.toString)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
+      http.GET[A](url.toString)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
     }
   }
 
