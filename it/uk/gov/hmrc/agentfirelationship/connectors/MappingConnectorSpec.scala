@@ -53,9 +53,9 @@ class MappingConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMo
       await(mappingConnector.getSaAgentReferencesFor(arn)) shouldBe references
     }
 
-    "return an empty sequence when the service returns not found" in {
+    "return an empty sequence when there are no agent refs found" in {
       givenAuditConnector()
-      givenArnNotFoundFor(arn)
+      givenAgentRefsNotFoundFor(arn)
       await(mappingConnector.getSaAgentReferencesFor(arn)) shouldBe Seq.empty
     }
 

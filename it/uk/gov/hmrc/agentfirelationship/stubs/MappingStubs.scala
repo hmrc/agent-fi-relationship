@@ -22,7 +22,7 @@ trait MappingStubs {
           .withBody(s"""{"mappings":[${refs.map(ref => s"""{"arn":"${arn.value}","saAgentReference":"${ref.value}"}""").mkString(",")}]}""")))
   }
 
-  def givenArnNotFoundFor(arn: Arn) = {
+  def givenAgentRefsNotFoundFor(arn: Arn) = {
     stubFor(
       get(urlEqualTo(s"/agent-mapping/mappings/sa/${arn.value}"))
         .willReturn(aResponse()
