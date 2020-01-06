@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,10 +47,11 @@ class MappingConnector @Inject()(appConfig: AppConfig, httpGet: HttpClient, metr
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
-    val url = new URL(appConfig.agentMappingBaseUrl, s"/agent-mapping/mappings/${arn.value}")
+    val url = new URL(appConfig.agentMappingBaseUrl, s"/agent-mapping/mappings/sa/${arn.value}")
     monitor(s"ConsumedAPI-Digital-Mappings-GET") {
       httpGet.GET[Mappings](url.toString)
-    }.map(_.mappings.map(_.saAgentReference))
+    }.map(_.mappings.map(_.saAgentReference)).recover {
+      case _: NotFoundException => Seq.empty
+    }
   }
-
 }
