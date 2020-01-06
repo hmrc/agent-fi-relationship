@@ -53,10 +53,10 @@ class MappingConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMo
       await(mappingConnector.getSaAgentReferencesFor(arn)) shouldBe references
     }
 
-    "fail when arn is unknown in " in {
+    "return an empty sequence when the service returns not found" in {
       givenAuditConnector()
-      givenArnIsUnknownFor(arn)
-      an[Exception] should be thrownBy await(mappingConnector.getSaAgentReferencesFor(arn))
+      givenArnNotFoundFor(arn)
+      await(mappingConnector.getSaAgentReferencesFor(arn)) shouldBe Seq.empty
     }
 
     "fail when mapping service is unavailable" in {
@@ -78,7 +78,5 @@ class MappingConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMo
       await(mappingConnector.getSaAgentReferencesFor(arn))
       timerShouldExistsAndBeenUpdated("ConsumedAPI-Digital-Mappings-GET")
     }
-
   }
-
 }
