@@ -64,5 +64,15 @@ class FailuresIntegrationSpec extends IntegrationSpec
       Then("I will receive a 500 INTERNAL SERVER ERROR response")
       response.status shouldBe INTERNAL_SERVER_ERROR
     }
+
+    scenario("Login as Stride User and removing relationships but Failed")  {
+      Given("Login as Stride")
+      isLoggedInWithStride("caat")
+
+      When("HMRC User calls the remove agent relationships by arn")
+      val result = Await.result(removeAFIRelationshipsForAgent(agentId), 10 seconds)
+
+      result.status shouldBe INTERNAL_SERVER_ERROR
+    }
   }
 }

@@ -83,6 +83,19 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
       result.status shouldBe 200
       result.json shouldBe Json.obj("arn" -> agentId, "AFIRelationshipsRemoved" -> 0)
     }
+
+    scenario("Login as Stride User and removing relationships but provided invalid ARN")  {
+      Given("Login as Stride")
+      isLoggedInWithStride("caat")
+
+      Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0
+      Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0
+
+      When("HMRC User calls the remove agent relationships but with invalid ARN")
+      val result = Await.result(removeAFIRelationshipsForAgent("MARN01"), 10 seconds)
+
+      result.status shouldBe 400
+    }
   }
 
 }
