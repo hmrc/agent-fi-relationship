@@ -14,7 +14,8 @@ trait RelationshipActions extends ScalaFutures {
 
   this: Suite with ServerProvider =>
 
-  val url = s"http://localhost:$port/agent-fi-relationship/relationships"
+  val baseUrl = s"http://localhost:$port/agent-fi-relationship"
+  val url = s"$baseUrl/relationships"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -42,4 +43,9 @@ trait RelationshipActions extends ScalaFutures {
     wsClient
       .url(s"$url/inactive")
       .get()
+
+  def removeAFIRelationshipsForAgent(arn: String): Future[WSResponse] =
+    wsClient
+      .url(s"$baseUrl/agent/$arn/terminate")
+      .delete()
 }

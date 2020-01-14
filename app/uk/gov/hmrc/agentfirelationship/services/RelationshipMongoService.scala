@@ -18,9 +18,10 @@ package uk.gov.hmrc.agentfirelationship.services
 
 import java.time.{LocalDateTime, ZoneId}
 
-import javax.inject.{Inject, Named}
+import javax.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logger
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.indexes.{Index, IndexType}
@@ -34,7 +35,6 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.collection.Seq
-import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -113,6 +113,11 @@ class RelationshipMongoService @Inject()(appConfig: AppConfig, mongoComponent: R
 
   def findActiveClientRelationships(clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> "ACTIVE")
+
+  def terminateAgentRelationship(arn: String)(implicit ec: ExecutionContext): Future[Int] = {
+    val query = Json.obj("arn" -> arn)
+    collection.delete().one(query).map(_.n)
+  }
 
   private def updateStatusToTerminated(
     selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] =

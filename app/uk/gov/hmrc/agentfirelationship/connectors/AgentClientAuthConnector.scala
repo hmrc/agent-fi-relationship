@@ -22,7 +22,9 @@ import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -69,6 +71,21 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
         case ex: AuthorisationException =>
           Logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
           Future.successful(Forbidden)
+      }
+
+  def onlyStride(strideRole: String)(
+    action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+    authorised(AuthProviders(PrivilegedApplication))
+      .retrieve(allEnrolments) {
+        case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
+        case e =>
+          Logger(getClass).warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
+          Future successful Unauthorized
+      }
+      .recover {
+        case e =>
+          Logger(getClass).warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")
+          Forbidden
       }
 
   case class CurrentUser(credentials: Credentials, affinityGroup: Option[AffinityGroup])
