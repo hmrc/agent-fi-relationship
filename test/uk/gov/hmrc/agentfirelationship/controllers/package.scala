@@ -78,6 +78,7 @@ package object controllers {
 
   val oldStrideEnrolment = Set(Enrolment("maintain agent relationships"))
   val newStrideEnrolment = Set(Enrolment("maintain_agent_relationships"))
+  val terminateStrideEnrolment = Set(Enrolment("caat"))
 
   val clientAffinityAndEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
     Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), Some(GGcredentials))
@@ -100,4 +101,10 @@ package object controllers {
 
   val failedAuthStub: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
     Future failed new InsufficientEnrolments
+
+  val onlyStride: Set[Enrolment] => Future[Enrolments] =
+    strideEnrolments => Future successful Enrolments(strideEnrolments)
+
+  val onlyStrideFail: Future[Enrolments] =
+    Future failed new UnsupportedAuthProvider
 }

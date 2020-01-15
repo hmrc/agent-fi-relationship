@@ -63,6 +63,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     override val desAuthToken: String = "des.auth.token"
     override val oldStrideRole: String = "maintain agent relationships"
     override val newStrideRole: String = "maintain_agent_relationships"
+    override val terminationStrideRole: String = "caat"
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
   }
   val mockControllerComponents = Helpers.stubControllerComponents()

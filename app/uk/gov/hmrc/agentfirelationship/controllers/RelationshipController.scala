@@ -47,7 +47,9 @@ class RelationshipController @Inject()(
   cc: ControllerComponents
 ) extends BackendController(cc) {
 
-  val strideRoles: Seq[String] = Seq(appConfig.oldStrideRole, appConfig.newStrideRole)
+  import appConfig.{newStrideRole, oldStrideRole, terminationStrideRole}
+
+  val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
 
   implicit val ec: ExecutionContext = ecp.get
 
@@ -219,6 +221,23 @@ class RelationshipController @Inject()(
           Logger(getClass).error("Arn/Nino Not Found in Login")
           Future successful NotFound
       }
+    }
+  }
+
+  def removeAFIRelationshipsForAgent(arn: String): Action[AnyContent] = Action.async { implicit request =>
+    authConnector.onlyStride(terminationStrideRole) {
+      if (Arn.isValid(arn)) {
+        mongoService
+          .terminateAgentRelationship(arn)
+          .map { result =>
+            Ok(Json.obj("arn" -> arn, "AFIRelationshipsRemoved" -> result))
+          }
+          .recover {
+            case e =>
+              Logger(getClass).warn(s"Something has gone for $arn due to: ${e.getMessage}")
+              InternalServerError
+          }
+      } else Future successful BadRequest
     }
   }
 

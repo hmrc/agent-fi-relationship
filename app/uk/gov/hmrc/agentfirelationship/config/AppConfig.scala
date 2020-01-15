@@ -36,6 +36,7 @@ trait AppConfig {
   val desAuthToken: String
   val oldStrideRole: String
   val newStrideRole: String
+  val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
 }
 
@@ -54,6 +55,7 @@ class AppConfigImpl @Inject()(config: ServicesConfig) extends AppConfig {
   override val desAuthToken: String = config.getConfString("des.authorization-token", "des.authorization-token")
   override val oldStrideRole: String = URLDecoder.decode(config.getString("old.auth.stride.role"), "utf-8")
   override val newStrideRole: String = config.getString("new.auth.stride.role")
+  override val terminationStrideRole: String = config.getString("termination.stride.enrolment")
 
   override val inactiveRelationshipsShowLastDays: Duration =
     Duration.create(config.getConfString("inactive-relationships.show-last-days", "30 days").replace("_", " "))

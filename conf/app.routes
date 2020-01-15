@@ -13,3 +13,7 @@ GET           /relationships/service/:service/clientId/:clientId                
 
 GET           /relationships/inactive                                                                 @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findInactiveRelationships
 GET           /relationships/active                                                                   @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.findActiveRelationships
+
+# Stride Routes
+# --------------------------------
+DELETE        /agent/:arn/terminate                                                                   @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.removeAFIRelationshipsForAgent(arn: String)
