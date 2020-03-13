@@ -225,15 +225,21 @@ class RelationshipController @Inject()(
   }
 
   def removeAFIRelationshipsForAgent(arn: String): Action[AnyContent] = Action.async { implicit request =>
-    authConnector.onlyStride(terminationStrideRole) {
+    authConnector.onlyStride(terminationStrideRole) { creds =>
       if (Arn.isValid(arn)) {
         mongoService
           .terminateAgentRelationship(arn)
           .map { result =>
+            auditService.sendTerminateMtdAgentForIndividualsRelationships(Arn(arn), "Success", creds.providerId)
             Ok(Json.obj("arn" -> arn, "AFIRelationshipsRemoved" -> result))
           }
           .recover {
             case e =>
+              auditService.sendTerminateMtdAgentForIndividualsRelationships(
+                Arn(arn),
+                "Failed",
+                creds.providerId,
+                Some(e.getMessage))
               Logger(getClass).warn(s"Something has gone for $arn due to: ${e.getMessage}")
               InternalServerError
           }

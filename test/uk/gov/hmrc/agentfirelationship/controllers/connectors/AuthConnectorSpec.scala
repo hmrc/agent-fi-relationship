@@ -144,7 +144,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return 200 for successful stride authentication" in {
       authStubGen(onlyStride(terminateStrideEnrolment))
 
-      val response: Result = await(mockAuthConnector.onlyStride(terminateStrideId)(strideAction))
+      val response: Result = await(mockAuthConnector.onlyStride(terminateStrideId)(_ => strideAction))
 
       status(response) shouldBe OK
     }
@@ -152,7 +152,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return 401 for unauthorised stride authentication" in {
       authStubGen(onlyStride(newStrideEnrolment))
 
-      val response: Result = await(mockAuthConnector.onlyStride(terminateStrideId)(strideAction))
+      val response: Result = await(mockAuthConnector.onlyStride(terminateStrideId)(_ => strideAction))
 
       status(response) shouldBe UNAUTHORIZED
     }
@@ -160,7 +160,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
     "return 403 for unsuccessful stride authentication" in {
       authStubGen(failedAuthStub)
 
-      val response: Result = await(mockAuthConnector.onlyStride(terminateStrideId)(strideAction))
+      val response: Result = await(mockAuthConnector.onlyStride(terminateStrideId)(_ => strideAction))
 
       status(response) shouldBe FORBIDDEN
     }
