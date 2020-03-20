@@ -74,11 +74,11 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
       }
 
   def onlyStride(strideRole: String)(
-    action: => Credentials => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+    action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(PrivilegedApplication))
-      .retrieve(allEnrolments and credentials) {
-        case allEnrols ~ Some(creds) if allEnrols.enrolments.map(_.key).contains(strideRole) => action(creds)
-        case e ~ _ =>
+      .retrieve(allEnrolments) {
+        case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
+        case e =>
           Logger(getClass).warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
           Future successful Unauthorized
       }
