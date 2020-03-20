@@ -6,7 +6,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, TerminationResponse}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
@@ -60,7 +60,7 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
       val result = Await.result(removeAFIRelationshipsForAgent(agentId), 10 seconds)
 
       result.status shouldBe 200
-      result.json shouldBe Json.obj("arn" -> agentId, "AFIRelationshipsRemoved" -> 2)
+      result.json shouldBe Json.toJson[TerminationResponse](TerminationResponse(Seq(DeletionCount("agent-fi-relationship", "fi-relationship", 2))))
 
       Then("the relationship is removed from mongo")
       Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0
@@ -81,7 +81,7 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
       val result = Await.result(removeAFIRelationshipsForAgent(agentId), 10 seconds)
 
       result.status shouldBe 200
-      result.json shouldBe Json.obj("arn" -> agentId, "AFIRelationshipsRemoved" -> 0)
+      result.json shouldBe Json.toJson[TerminationResponse](TerminationResponse(Seq(DeletionCount("agent-fi-relationship", "fi-relationship", 0))))
     }
 
     scenario("Login as Stride User and removing relationships but provided invalid ARN")  {

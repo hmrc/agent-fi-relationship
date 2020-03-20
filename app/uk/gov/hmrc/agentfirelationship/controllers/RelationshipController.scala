@@ -26,7 +26,7 @@ import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, RelationshipStatus, TerminationResponse}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -225,21 +225,16 @@ class RelationshipController @Inject()(
   }
 
   def removeAFIRelationshipsForAgent(arn: String): Action[AnyContent] = Action.async { implicit request =>
-    authConnector.onlyStride(terminationStrideRole) { creds =>
+    authConnector.onlyStride(terminationStrideRole) {
       if (Arn.isValid(arn)) {
         mongoService
           .terminateAgentRelationship(arn)
           .map { result =>
-            auditService.sendTerminateMtdAgentForIndividualsRelationships(Arn(arn), "Success", creds.providerId)
-            Ok(Json.obj("arn" -> arn, "AFIRelationshipsRemoved" -> result))
+            Ok(Json.toJson[TerminationResponse](
+              TerminationResponse(Seq(DeletionCount(appConfig.appName, "fi-relationship", result)))))
           }
           .recover {
             case e =>
-              auditService.sendTerminateMtdAgentForIndividualsRelationships(
-                Arn(arn),
-                "Failed",
-                creds.providerId,
-                Some(e.getMessage))
               Logger(getClass).warn(s"Something has gone for $arn due to: ${e.getMessage}")
               InternalServerError
           }

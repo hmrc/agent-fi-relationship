@@ -102,8 +102,8 @@ package object controllers {
   val failedAuthStub: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
     Future failed new InsufficientEnrolments
 
-  val onlyStride: Set[Enrolment] => Future[Enrolments ~ Option[Credentials]] =
-    strideEnrolments => Future successful new ~(Enrolments(strideEnrolments), Some(Credentials("001", "ABC")))
+  val onlyStride: Set[Enrolment] => Future[Enrolments] =
+    strideEnrolments => Future successful Enrolments(strideEnrolments)
 
   val onlyStrideFail: Future[Enrolments] =
     Future failed new UnsupportedAuthProvider
