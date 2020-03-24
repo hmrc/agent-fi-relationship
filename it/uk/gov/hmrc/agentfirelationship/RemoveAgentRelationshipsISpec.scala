@@ -68,11 +68,10 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
 
     }
 
-    scenario("Login as Stride User and removing relationships for given arn but return 0")  {
+    scenario("Login with Basic Auth and removing relationships for given arn but return 0")  {
       Given("Agent Has No Relationships")
 
       And("Login as Stride")
-      isLoggedInWithStride("caat")
 
       Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0
       Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0
@@ -86,7 +85,6 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
 
     scenario("Login as Stride User and removing relationships but provided invalid ARN")  {
       Given("Login as Stride")
-      isLoggedInWithStride("caat")
 
       Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0
       Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0

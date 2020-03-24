@@ -29,7 +29,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.models.{BasicAuthentication, Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.PlayAuthConnector
@@ -63,6 +63,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     override val newStrideRole: String = "maintain_agent_relationships"
     override val terminationStrideRole: String = "caat"
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
+    override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"

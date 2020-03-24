@@ -225,7 +225,7 @@ class RelationshipController @Inject()(
   }
 
   def removeAFIRelationshipsForAgent(arn: String): Action[AnyContent] = Action.async { implicit request =>
-    authConnector.onlyStride(terminationStrideRole) {
+    authConnector.withBasicAuth(appConfig.expectedAuth) {
       if (Arn.isValid(arn)) {
         mongoService
           .terminateAgentRelationship(arn)

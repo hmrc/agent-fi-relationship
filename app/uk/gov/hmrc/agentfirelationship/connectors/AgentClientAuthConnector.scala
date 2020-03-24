@@ -16,21 +16,26 @@
 
 package uk.gov.hmrc.agentfirelationship.connectors
 
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.Base64
+
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.models.Auth._
+import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, credentials}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
 import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.matching.Regex
 
 @Singleton
 class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(implicit ec: ExecutionContext)
@@ -72,6 +77,26 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
           Logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
           Future.successful(Forbidden)
       }
+
+  val basicAuthHeader: Regex = "Basic (.+)".r
+  val decodedAuth: Regex = "(.+):(.+)".r
+
+  private def decodeFromBase64(encodedString: String): String =
+    try {
+      new String(Base64.getDecoder.decode(encodedString), UTF_8)
+    } catch { case _: Throwable => "" }
+
+  def withBasicAuth(expectedAuth: BasicAuthentication)(body: => Future[Result])(
+    implicit request: Request[_]): Future[Result] =
+    request.headers.get(HeaderNames.authorisation) match {
+      case Some(basicAuthHeader(encodedAuthHeader)) =>
+        decodeFromBase64(encodedAuthHeader) match {
+          case decodedAuth(username, password) if (BasicAuthentication(username, password) == expectedAuth) =>
+            body
+          case _ => Future successful Unauthorized
+        }
+      case _ => Future successful Unauthorized
+    }
 
   def onlyStride(strideRole: String)(
     action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =

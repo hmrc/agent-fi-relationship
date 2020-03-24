@@ -20,6 +20,7 @@ import java.net.{URL, URLDecoder}
 
 import com.google.inject.ImplementedBy
 import javax.inject.Inject
+import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.duration.Duration
@@ -38,6 +39,7 @@ trait AppConfig {
   val newStrideRole: String
   val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
+  def expectedAuth: BasicAuthentication
 }
 
 class AppConfigImpl @Inject()(config: ServicesConfig) extends AppConfig {
@@ -59,4 +61,11 @@ class AppConfigImpl @Inject()(config: ServicesConfig) extends AppConfig {
 
   override val inactiveRelationshipsShowLastDays: Duration =
     Duration.create(config.getConfString("inactive-relationships.show-last-days", "30 days").replace("_", " "))
+
+  def expectedAuth: BasicAuthentication = {
+    val username = config.getString("agent-termination.username")
+    val password = config.getString("agent-termination.password")
+
+    BasicAuthentication(username, password)
+  }
 }
