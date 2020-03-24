@@ -87,16 +87,28 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
     } catch { case _: Throwable => "" }
 
   def withBasicAuth(expectedAuth: BasicAuthentication)(body: => Future[Result])(
-    implicit request: Request[_]): Future[Result] =
+    implicit request: Request[_]): Future[Result] = {
     request.headers.get(HeaderNames.authorisation) match {
       case Some(basicAuthHeader(encodedAuthHeader)) =>
         decodeFromBase64(encodedAuthHeader) match {
-          case decodedAuth(username, password) if (BasicAuthentication(username, password) == expectedAuth) =>
-            body
-          case _ => Future successful Unauthorized
+          case decodedAuth(username, password) =>
+            if (BasicAuthentication(username, password) == expectedAuth) body
+            else {
+              Logger.warn(
+                "Authorization header found in the request but invalid username or password")
+              Future successful Unauthorized
+            }
+          case _ =>
+            Logger.warn(
+              "Authorization header found in the request but its not in the expected format")
+            Future successful Unauthorized
         }
-      case _ => Future successful Unauthorized
+      case _ =>
+        Logger.warn(
+          "No Authorization header found in the request for agent termination")
+        Future successful Unauthorized
     }
+  }
 
   def onlyStride(strideRole: String)(
     action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
