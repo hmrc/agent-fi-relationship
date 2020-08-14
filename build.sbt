@@ -15,22 +15,21 @@ lazy val scoverageSettings = {
 
 lazy val compileDeps = Seq(
   ws,
-  "uk.gov.hmrc" %% "bootstrap-play-26" % "0.45.0",
-  "uk.gov.hmrc" %% "auth-client" % "2.31.0-play-26",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.17.0-play-26",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.3.0",
-  "com.typesafe.play" %% "play-json" % "2.6.0",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-26",
-  ws
+  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "2.24.0",
+  "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-27",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.19.0-play-27",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.4.0",
+  "com.typesafe.play" %% "play-json" % "2.7.0",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-26"
 )
 
 def testDeps(scope: String) = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
   "org.scalatest" %% "scalatest" % "3.0.8" % scope,
   "org.mockito" % "mockito-core" % "2.27.0" % scope,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % scope,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.3" % scope,
   "uk.gov.hmrc" %% "reactivemongo-test" % "4.21.0-play-26" % scope,
-  "com.github.tomakehurst" % "wiremock-jre8" % "2.23.2" % scope
+  "com.github.tomakehurst" % "wiremock-jre8" % "2.27.1" % scope
 )
 
 def tmpMacWorkaround(): Seq[ModuleID] =
@@ -42,7 +41,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "agent-fi-relationship",
     organization := "uk.gov.hmrc",
-    scalaVersion := "2.11.11",
+    scalaVersion := "2.12.10",
     majorVersion := 0,
     PlayKeys.playDefaultPort := 9427,
     resolvers := Seq(
@@ -52,7 +51,7 @@ lazy val root = (project in file("."))
       Resolver.jcenterRepo
     ),
     scalacOptions ++= Seq(
-      "-Xfatal-warnings",
+      //"-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
       "-Yno-adapted-args",
       "-Ywarn-value-discard",
