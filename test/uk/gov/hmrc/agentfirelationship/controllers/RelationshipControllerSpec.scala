@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.net.URL
 
-import javax.inject.Provider
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -42,7 +41,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
@@ -72,16 +71,11 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val newStrideRole = "maintain_agent_relationships"
   val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
 
-  val ecp: Provider[ExecutionContextExecutor] = new Provider[ExecutionContextExecutor] {
-    override def get(): ExecutionContextExecutor = concurrent.ExecutionContext.Implicits.global
-  }
-
   val controller = new RelationshipController(
     mockAuditService,
     mockMongoService,
     mockAgentClientAuthConnector,
     mockCesaRelationship,
-    ecp,
     testAppConfig,
     mockControllerComponents
   )

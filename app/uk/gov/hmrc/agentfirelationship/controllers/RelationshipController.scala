@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.time.{LocalDateTime, ZoneId}
 
-import javax.inject.{Inject, Provider, Singleton}
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
@@ -34,7 +34,7 @@ import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipController @Inject()(
@@ -42,16 +42,14 @@ class RelationshipController @Inject()(
   mongoService: RelationshipMongoService,
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
-  ecp: Provider[ExecutionContextExecutor],
   appConfig: AppConfig,
   cc: ControllerComponents
-) extends BackendController(cc) {
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
-  import appConfig.{newStrideRole, oldStrideRole, terminationStrideRole}
+  import appConfig.{newStrideRole, oldStrideRole}
 
   val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
-
-  implicit val ec: ExecutionContext = ecp.get
 
   def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] =
     findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
