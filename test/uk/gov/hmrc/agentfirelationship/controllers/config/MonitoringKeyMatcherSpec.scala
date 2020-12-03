@@ -20,10 +20,7 @@ import app.Routes
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentfirelationship.wiring.{KeyToPatternMappingFromRoutes, MonitoringKeyMatcher}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-
-import scala.concurrent.ExecutionContext
 
 class MonitoringKeyMatcherSpec extends UnitSpec {
 
@@ -32,9 +29,6 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-
-  private implicit val hc = HeaderCarrier()
-  private implicit val ec = ExecutionContext.global
 
   val routes = app.injector.instanceOf[Routes]
 
@@ -101,14 +95,11 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
       tested.findMatchingKey(
         "http://agent-fi-relationships.protected.mdtp/relationships/agent/ARN123456/service/PERSONAL-INCOME-RECORD/client/GHZ8983HJ") shouldBe Some(
         "relationships-PERSONAL-INCOME-RECORD")
-      tested.findMatchingKey(
-        "http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
         "check-PIR")
-      tested.findMatchingKey(
-        "http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
         "check-AFI")
-      tested.findMatchingKey(
-        "http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some(
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some(
         "client-relationships-PERSONAL-INCOME-RECORD")
     }
 
@@ -120,14 +111,11 @@ class MonitoringKeyMatcherSpec extends UnitSpec {
       tested.findMatchingKey(
         "http://agent-fi-relationships.protected.mdtp/relationships/agent/ARN123456/service/PERSONAL-INCOME-RECORD/client/GHZ8983HJ") shouldBe Some(
         "__relationships__agent__:__service__PERSONAL-INCOME-RECORD__client__:")
-      tested.findMatchingKey(
-        "http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/PERSONAL-INCOME-RECORD/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
         "__relationships__PERSONAL-INCOME-RECORD__agent__:__client__:")
-      tested.findMatchingKey(
-        "http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/afi/agent/ARN123456/client/GHZ8983HJ") shouldBe Some(
         "__relationships__afi__agent__:__client__:")
-      tested.findMatchingKey(
-        "http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some(
+      tested.findMatchingKey("http://agent-fi-relationships.protected.mdtp/relationships/service/PERSONAL-INCOME-RECORD/clientId/GHZ8983HJ") shouldBe Some(
         "__relationships__service__PERSONAL-INCOME-RECORD__clientId__:")
     }
   }

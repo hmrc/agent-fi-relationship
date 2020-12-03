@@ -27,10 +27,12 @@ import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HttpErrorFunctions._
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import play.api.http.Status._
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -49,24 +51,25 @@ object ClientRelationship {
 class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getClientSaAgentSaReferences(
-    nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+  def getClientSaAgentSaReferences(nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val url = new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
-    getWithDesHeaders[ClientRelationship]("GetStatusAgentRelationship", url)
-      .map(
-        _.agents
-          .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
-          .flatMap(_.agentId))
-      .recover {
-
-        // APB-4424: If the NINO is not even in CESA, then there can't be a relationship there
-        case _: uk.gov.hmrc.http.NotFoundException => Seq.empty
+    getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map { response =>
+      response.status match {
+        case s if is2xx(s) =>
+          response.json
+            .as[ClientRelationship]
+            .agents
+            .filter(agent => agent.hasAgent && agent.agentCeasedDate.isEmpty)
+            .flatMap(_.agentId)
+        case NOT_FOUND =>
+          Seq.empty // APB-4424: If the NINO is not even in CESA, then there can't be a relationship there
+        case s =>
+          throw UpstreamErrorResponse(s"Error calling: ${url.toString}", s)
       }
+    }
   }
 
-  private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[A] = {
+  private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
       authorization = Some(Authorization(s"Bearer ${appConfig.desAuthToken}")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment)

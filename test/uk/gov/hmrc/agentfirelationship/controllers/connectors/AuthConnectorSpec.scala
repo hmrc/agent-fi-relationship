@@ -20,20 +20,20 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.{Result, Results}
 import play.api.mvc.Results._
+import play.api.mvc.{Result, Results}
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
+import uk.gov.hmrc.agentfirelationship.controllers._
 import uk.gov.hmrc.auth.core.PlayAuthConnector
+import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.agentfirelationship.controllers._
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
@@ -42,10 +42,10 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]
 
-  val agentAction: AfiAction = { implicit arn => implicit credentials =>
+  val agentAction: AfiAction = { arn => credentials =>
     Future successful Ok
   }
-  val clientAction: AfiAction = { implicit nino => implicit credentials =>
+  val clientAction: AfiAction = { nino => credentials =>
     Future successful Ok
   }
 
@@ -62,8 +62,7 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
   override def beforeEach(): Unit = reset(mockPlayAuthConnector)
 
   private def authStubGen[T](returnValue: Future[T]) =
-    when(
-      mockPlayAuthConnector.authorise(any[Predicate](), any[Retrieval[T]]())(any[HeaderCarrier], any[ExecutionContext]))
+    when(mockPlayAuthConnector.authorise(any[Predicate](), any[Retrieval[T]]())(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(returnValue)
 
   "authorisedForAfi" should {

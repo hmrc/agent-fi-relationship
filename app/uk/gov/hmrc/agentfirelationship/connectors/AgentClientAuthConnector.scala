@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Base64
 
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
 import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.models.Auth._
@@ -38,8 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
 
 @Singleton
-class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(implicit ec: ExecutionContext)
-    extends AuthorisedFunctions {
+class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends AuthorisedFunctions with Logging {
   implicit def hc(implicit rh: RequestHeader) =
     fromHeadersAndSession(rh.headers)
 
@@ -59,22 +58,21 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
               extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
                 action(Some(nino))(creds)
               }
-            case (_, Some(creds @ Credentials(_, "PrivilegedApplication")))
-                if hasRequiredStrideRole(enrols, strideRoles) =>
+            case (_, Some(creds @ Credentials(_, "PrivilegedApplication"))) if hasRequiredStrideRole(enrols, strideRoles) =>
               action(None)(creds)
             case _ =>
               Future successful Forbidden("Invalid affinity group and credentials found")
           }
         case _ =>
-          Logger.warn("Invalid affinity group or enrolments or credentials whilst trying to manipulate relationships")
+          logger.warn("Invalid affinity group or enrolments or credentials whilst trying to manipulate relationships")
           Future.successful(Forbidden)
       }
       .recoverWith {
         case ex: NoActiveSession =>
-          Logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)
+          logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)
           Future.successful(Unauthorized)
         case ex: AuthorisationException =>
-          Logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
+          logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
           Future.successful(Forbidden)
       }
 
@@ -86,38 +84,36 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
       new String(Base64.getDecoder.decode(encodedString), UTF_8)
     } catch { case _: Throwable => "" }
 
-  def withBasicAuth(expectedAuth: BasicAuthentication)(body: => Future[Result])(
-    implicit request: Request[_]): Future[Result] =
+  def withBasicAuth(expectedAuth: BasicAuthentication)(body: => Future[Result])(implicit request: Request[_]): Future[Result] =
     request.headers.get(HeaderNames.authorisation) match {
       case Some(basicAuthHeader(encodedAuthHeader)) =>
         decodeFromBase64(encodedAuthHeader) match {
           case decodedAuth(username, password) =>
             if (BasicAuthentication(username, password) == expectedAuth) body
             else {
-              Logger.warn("Authorization header found in the request but invalid username or password")
+              logger.warn("Authorization header found in the request but invalid username or password")
               Future successful Unauthorized
             }
           case _ =>
-            Logger.warn("Authorization header found in the request but its not in the expected format")
+            logger.warn("Authorization header found in the request but its not in the expected format")
             Future successful Unauthorized
         }
       case _ =>
-        Logger.warn("No Authorization header found in the request for agent termination")
+        logger.warn("No Authorization header found in the request for agent termination")
         Future successful Unauthorized
     }
 
-  def onlyStride(strideRole: String)(
-    action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+  def onlyStride(strideRole: String)(action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(PrivilegedApplication))
       .retrieve(allEnrolments) {
         case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
         case e =>
-          Logger(getClass).warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
+          logger.warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
           Future successful Unauthorized
       }
       .recover {
         case e =>
-          Logger(getClass).warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")
+          logger.warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")
           Forbidden
       }
 

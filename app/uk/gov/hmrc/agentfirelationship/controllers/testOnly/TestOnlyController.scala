@@ -19,20 +19,20 @@ package uk.gov.hmrc.agentfirelationship.controllers.testOnly
 import java.time.LocalDateTime
 
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestOnlyController @Inject()(mongoService: RelationshipMongoService, cc: ControllerComponents)(
-  implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+class TestOnlyController @Inject()(mongoService: RelationshipMongoService, cc: ControllerComponents)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
   case class Invitation(startDate: LocalDateTime)
 
@@ -43,19 +43,13 @@ class TestOnlyController @Inject()(mongoService: RelationshipMongoService, cc: C
       withJsonBody[Invitation] { invitation =>
         mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
           case Nil =>
-            Logger.info("Creating a relationship")
+            logger.info("Creating a relationship")
             for {
               _ <- mongoService.createRelationship(
-                    Relationship(
-                      Arn(arn),
-                      service,
-                      clientId,
-                      Some(RelationshipStatus.Active),
-                      invitation.startDate,
-                      None))
+                    Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None))
             } yield Created
           case _ =>
-            Logger.info("Relationship already exists")
+            logger.info("Relationship already exists")
             Future successful Created
         }
       }
@@ -63,14 +57,14 @@ class TestOnlyController @Inject()(mongoService: RelationshipMongoService, cc: C
     }
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] =
-    Action.async { implicit request =>
+    Action.async {
       val relationshipDeleted: Future[Boolean] = for {
         successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
       } yield successOrFail
       relationshipDeleted.map(
         if (_) Ok
         else {
-          Logger.warn("Relationship Not Found")
+          logger.warn("Relationship Not Found")
           NotFound
         })
     }

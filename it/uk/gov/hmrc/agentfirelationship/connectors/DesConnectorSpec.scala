@@ -8,8 +8,8 @@ import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentfirelationship.support.{MetricTestSupport, WireMockSupport}
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpPost}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}

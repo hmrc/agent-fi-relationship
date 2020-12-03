@@ -18,9 +18,8 @@ package uk.gov.hmrc.agentfirelationship.services
 
 import java.time.{LocalDateTime, ZoneId}
 
-import javax.inject.Inject
 import com.google.inject.Singleton
-import play.api.Logger
+import javax.inject.Inject
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.modules.reactivemongo.ReactiveMongoComponent
@@ -56,22 +55,13 @@ class RelationshipMongoService @Inject()(appConfig: AppConfig, mongoComponent: R
           "relationshipStatus" -> IndexType.Ascending),
         Some("Arn_Service_ClientId_RelationshipStatus")
       ),
+      Index(Seq("clientId" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending), Some("ClientId_RelationshipStatus")),
+      Index(Seq("arn"      -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending), Some("Arn_RelationshipStatus")),
       Index(
-        Seq("clientId" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
-        Some("ClientId_RelationshipStatus")),
-      Index(
-        Seq("arn" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
-        Some("Arn_RelationshipStatus")),
-      Index(
-        Seq(
-          "service"            -> IndexType.Ascending,
-          "clientId"           -> IndexType.Ascending,
-          "relationshipStatus" -> IndexType.Ascending),
+        Seq("service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending, "relationshipStatus" -> IndexType.Ascending),
         Some("Service_ClientId_RelationshipStatus")
       ),
-      Index(
-        Seq("arn" -> IndexType.Ascending, "service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending),
-        Some("Arn_Service")),
+      Index(Seq("arn"     -> IndexType.Ascending, "service"  -> IndexType.Ascending, "clientId" -> IndexType.Ascending), Some("Arn_Service")),
       Index(Seq("service" -> IndexType.Ascending, "clientId" -> IndexType.Ascending), Some("Service_ClientId"))
     )
 
@@ -79,25 +69,21 @@ class RelationshipMongoService @Inject()(appConfig: AppConfig, mongoComponent: R
     implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
 
-  def findAnyRelationships(arn: String, service: String, clientId: String)(
-    implicit ec: ExecutionContext): Future[List[Relationship]] =
+  def findAnyRelationships(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", ""))
 
   def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] =
     insert(relationship.copy(clientId = relationship.clientId.replaceAll(" ", "")))
       .map(_ => ())
 
-  def terminateRelationship(arn: String, service: String, clientId: String)(
-    implicit ec: ExecutionContext): Future[Boolean] =
-    updateStatusToTerminated(
-      BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
+  def terminateRelationship(arn: String, service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] =
+    updateStatusToTerminated(BSONDocument("arn" -> arn, "service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
   def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active)(
     implicit ec: ExecutionContext): Future[List[Relationship]] =
     find("service" -> service, "clientId" -> clientId.replaceAll(" ", ""), "relationshipStatus" -> status)
 
-  def deleteAllClientIdRelationships(service: String, clientId: String)(
-    implicit ec: ExecutionContext): Future[Boolean] =
+  def deleteAllClientIdRelationships(service: String, clientId: String)(implicit ec: ExecutionContext): Future[Boolean] =
     updateStatusToTerminated(BSONDocument("service" -> service, "clientId" -> clientId.replaceAll(" ", "")))(true, ec)
 
   def findInactiveAgentRelationships(arn: String)(implicit ec: ExecutionContext): Future[List[Relationship]] = {
@@ -119,8 +105,7 @@ class RelationshipMongoService @Inject()(appConfig: AppConfig, mongoComponent: R
     collection.delete().one(query).map(_.n)
   }
 
-  private def updateStatusToTerminated(
-    selector: BSONDocument)(implicit multi: Boolean = false, ec: ExecutionContext): Future[Boolean] =
+  private def updateStatusToTerminated(selector: BSONDocument)(implicit multi: Boolean, ec: ExecutionContext): Future[Boolean] =
     collection
       .update(ordered = false)
       .one(
@@ -133,7 +118,7 @@ class RelationshipMongoService @Inject()(appConfig: AppConfig, mongoComponent: R
       )
       .map { result =>
         result.writeErrors.foreach(error =>
-          Logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
+          logger.warn(s"Updating Relationship status to TERMINATED for ${selector.elements.mkString} failed: $error"))
         if (result.nModified > 0) true else false
       }
 }
