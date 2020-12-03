@@ -1,22 +1,22 @@
 package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
-import javax.inject.Singleton
 
+import javax.inject.Singleton
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
-import language.postfixOps
+import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
 @Singleton
 class TerminateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs

@@ -57,24 +57,13 @@ package object controllers {
     Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
   val validTestRelationshipTerminated: Relationship =
     Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), testResponseDate, None)
-  val validTestRelationshipCesa: Relationship = Relationship(
-    Arn(validTestArn),
-    testService,
-    validTestNINO,
-    Some(Terminated),
-    testResponseDate,
-    None,
-    fromCesa = Some(true))
+  val validTestRelationshipCesa: Relationship =
+    Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
 
   val agentEnrolment = Set(
-    Enrolment(
-      "HMRC-AS-AGENT",
-      Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),
-      state = "",
-      delegatedAuthRule = None))
+    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)), state = "", delegatedAuthRule = None))
 
-  val clientEnrolment = Set(
-    Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
+  val clientEnrolment = Set(Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
 
   val oldStrideEnrolment = Set(Enrolment("maintain agent relationships"))
   val newStrideEnrolment = Set(Enrolment("maintain_agent_relationships"))
@@ -87,8 +76,7 @@ package object controllers {
     Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)), Some(GGcredentials))
 
   val strideEnrolmentsCred: Set[Enrolment] => Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    strideEnrolments =>
-      Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(strideEnrolments)), Some(PAcredentials))
+    strideEnrolments => Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(strideEnrolments)), Some(PAcredentials))
 
   val clientNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
     Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(Set.empty)), Some(GGcredentials))

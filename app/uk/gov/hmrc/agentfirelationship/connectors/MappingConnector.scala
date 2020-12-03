@@ -21,13 +21,15 @@ import java.net.URL
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import javax.inject.{Inject, Singleton}
+import play.api.http.Status._
 import play.api.libs.json._
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpErrorFunctions._
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,17 +43,21 @@ object Mappings {
 }
 
 @Singleton
-class MappingConnector @Inject()(appConfig: AppConfig, httpGet: HttpClient, metrics: Metrics)(
-  implicit ec: ExecutionContext)
-    extends HttpAPIMonitor {
+class MappingConnector @Inject()(appConfig: AppConfig, httpGet: HttpClient, metrics: Metrics)(implicit ec: ExecutionContext) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
   def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val url = new URL(appConfig.agentMappingBaseUrl, s"/agent-mapping/mappings/sa/${arn.value}")
     monitor(s"ConsumedAPI-Digital-Mappings-GET") {
-      httpGet.GET[Mappings](url.toString)
-    }.map(_.mappings.map(_.saAgentReference)).recover {
-      case _: NotFoundException => Seq.empty
+      httpGet
+        .GET[HttpResponse](url.toString)
+        .map { response =>
+          response.status match {
+            case s if is2xx(s) => response.json.as[Mappings].mappings.map(_.saAgentReference)
+            case NOT_FOUND     => Seq.empty
+            case s             => throw UpstreamErrorResponse(s"Error calling: ${url.toString}", s)
+          }
+        }
     }
   }
 }

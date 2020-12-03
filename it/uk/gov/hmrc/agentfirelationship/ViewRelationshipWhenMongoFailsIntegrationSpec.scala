@@ -1,11 +1,11 @@
 package uk.gov.hmrc.agentfirelationship
 
-import javax.inject.Inject
 import com.google.inject.{AbstractModule, Singleton}
+import javax.inject.Inject
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsArray, JsNull, Json}
+import play.api.libs.json.{JsArray, Json}
 import play.api.libs.ws.WSResponse
 import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
@@ -15,10 +15,10 @@ import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import language.postfixOps
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
 
 @Singleton
 class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent, appConfig: AppConfig)

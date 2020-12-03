@@ -17,9 +17,7 @@
 package uk.gov.hmrc.agentfirelationship.services
 
 import javax.inject.{Inject, Singleton}
-
-import play.api.Logger
-import play.api.mvc.Request
+import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -29,13 +27,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CesaRelationshipCopyService @Inject()(des: DesConnector, mapping: MappingConnector, auditService: AuditService) {
+class CesaRelationshipCopyService @Inject()(des: DesConnector, mapping: MappingConnector, auditService: AuditService) extends Logging {
 
-  def lookupCesaForOldRelationship(arn: Arn, nino: Nino)(
-    implicit ec: ExecutionContext,
-    hc: HeaderCarrier,
-    request: Request[Any],
-    auditData: AuditData): Future[Set[SaAgentReference]] = {
+  def lookupCesaForOldRelationship(
+    arn: Arn,
+    nino: Nino)(implicit ec: ExecutionContext, hc: HeaderCarrier, auditData: AuditData): Future[Set[SaAgentReference]] = {
     auditData.set("clientId", nino)
     for {
       references <- des.getClientSaAgentSaReferences(nino)
@@ -48,18 +44,16 @@ class CesaRelationshipCopyService @Inject()(des: DesConnector, mapping: MappingC
     }
   }
 
-  private def intersection[A](cesaIds: Seq[A])(
-    mappingServiceCall: => Future[Seq[A]])(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Set[A]] = {
+  private def intersection[A](cesaIds: Seq[A])(mappingServiceCall: => Future[Seq[A]])(implicit ec: ExecutionContext): Future[Set[A]] = {
     val cesaIdSet = cesaIds.toSet
 
     if (cesaIdSet.isEmpty) {
-      Logger.warn("The sa references in cesa are empty.")
+      logger.warn("The sa references in cesa are empty.")
       Future.successful(Set.empty)
     } else
       mappingServiceCall.map { mappingServiceIds =>
         val intersected = mappingServiceIds.toSet.intersect(cesaIdSet)
-        Logger.info(
-          s"The sa references in mapping store are $mappingServiceIds. The intersected value between mapping store and DES is $intersected")
+        logger.info(s"The sa references in mapping store are $mappingServiceIds. The intersected value between mapping store and DES is $intersected")
         intersected
       }
   }

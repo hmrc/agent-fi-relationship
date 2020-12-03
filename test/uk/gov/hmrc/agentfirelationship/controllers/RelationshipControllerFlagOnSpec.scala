@@ -22,7 +22,6 @@ import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.Request
 import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
@@ -86,8 +85,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
       when(
         mockMongoService
-          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(
-            any[ExecutionContext]()))
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationship))
 
       val response =
@@ -95,20 +93,16 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
-        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
-          any[ExecutionContext]())
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(any[ExecutionContext]())
     }
 
     "return Status: NOT_FOUND if any previous relationships are found" in {
       when(
         mockMongoService
-          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(
-            any[ExecutionContext]()))
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any[ExecutionContext]()))
         .thenReturn(Future successful List())
 
-      when(
-        mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(
-          any[ExecutionContext]()))
+      when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful List(validTestRelationshipCesa))
 
       val response =
@@ -117,8 +111,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       status(response) shouldBe NOT_FOUND
 
       verify(mockMongoService, times(1))
-        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
-          any[ExecutionContext]())
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(any[ExecutionContext]())
 
       verify(mockMongoService, times(1))
         .findAnyRelationships(any[String](), any[String](), any[String]())(any[ExecutionContext]())
@@ -127,19 +120,15 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     "return Status: NOT FOUND when no relationship in Cesa and Agent Mapping is found" in {
       when(
         mockMongoService
-          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(
-            any[ExecutionContext]()))
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any[ExecutionContext]()))
         .thenReturn(Future successful List())
-      when(
-        mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(
-          any[ExecutionContext]()))
+      when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
         .thenReturn(Future successful List())
       when(
         mockCesaRelationship
           .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
             any[ExecutionContext](),
             any[HeaderCarrier](),
-            any[Request[Any]](),
             any[AuditData]()))
         .thenReturn(Future successful Set[SaAgentReference]())
 
@@ -148,25 +137,19 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1))
-        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
-          any[ExecutionContext]())
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(any[ExecutionContext]())
 
       verify(mockMongoService, times(1))
         .findAnyRelationships(any[String](), any[String](), any[String]())(any[ExecutionContext]())
 
       verify(mockCesaRelationship, times(1))
-        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(
-          any[ExecutionContext](),
-          any[HeaderCarrier](),
-          any[Request[Any]](),
-          any[AuditData]())
+        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(any[ExecutionContext](), any[HeaderCarrier](), any[AuditData]())
     }
 
     "return Status: NOT FOUND when failed to copy relationship from Cesa " in {
       when(
         mockMongoService
-          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(
-            any[ExecutionContext]()))
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any[ExecutionContext]()))
         .thenReturn(Future successful List())
       when(
         mockMongoService
@@ -177,7 +160,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
           .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
             any[ExecutionContext](),
             any[HeaderCarrier](),
-            any[Request[Any]](),
             any[AuditData]()))
         .thenReturn(Future successful Set[SaAgentReference]())
 
@@ -191,18 +173,13 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       status(response) shouldBe NOT_FOUND
       verify(mockMongoService, times(1))
-        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(
-          any[ExecutionContext]())
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(any[ExecutionContext]())
 
       verify(mockMongoService, times(1))
         .findAnyRelationships(any[String](), any[String](), any[String]())(any[ExecutionContext]())
 
       verify(mockCesaRelationship, times(1))
-        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(
-          any[ExecutionContext](),
-          any[HeaderCarrier](),
-          any[Request[Any]](),
-          any[AuditData]())
+        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(any[ExecutionContext](), any[HeaderCarrier](), any[AuditData]())
     }
   }
 }

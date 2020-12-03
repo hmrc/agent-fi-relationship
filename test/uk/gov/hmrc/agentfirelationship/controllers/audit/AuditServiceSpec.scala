@@ -52,11 +52,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(
-        service.sendCreateRelationshipEvent(auditData)(
-          hc,
-          FakeRequest("GET", "/path"),
-          concurrent.ExecutionContext.Implicits.global))
+      await(service.sendCreateRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path"), concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -91,11 +87,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(
-        service.sendTerminatedRelationshipEvent(auditData)(
-          hc,
-          FakeRequest("GET", "/path"),
-          concurrent.ExecutionContext.Implicits.global))
+      await(service.sendTerminatedRelationshipEvent(auditData)(hc, FakeRequest("GET", "/path"), concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -131,11 +123,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("service", "afi")
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("clientIdType", "ni")
-      await(
-        service.sendCreateRelationshipFromExisting(auditData)(
-          hc,
-          FakeRequest("GET", "/path"),
-          concurrent.ExecutionContext.Implicits.global))
+      await(service.sendCreateRelationshipFromExisting(auditData)(hc, FakeRequest("GET", "/path"), concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
@@ -172,11 +160,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("clientId", Nino("KS969148D").value)
       auditData.set("service", "personal-income-record")
 
-      await(
-        service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(
-          hc,
-          FakeRequest("GET", "/path"),
-          concurrent.ExecutionContext.Implicits.global))
+      await(service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(hc, FakeRequest("GET", "/path"), concurrent.ExecutionContext.Implicits.global))
 
       eventually {
         val captor = ArgumentCaptor.forClass(classOf[DataEvent])
