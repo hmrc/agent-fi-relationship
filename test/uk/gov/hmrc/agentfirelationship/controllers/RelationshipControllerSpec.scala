@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.net.URL
-
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -28,7 +27,7 @@ import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{BasicAuthentication, Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
@@ -50,6 +49,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockAuditService: AuditService = mock[AuditService]
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
   val mockCesaRelationship: CesaRelationshipCopyService = mock[CesaRelationshipCopyService]
+  val mockDesConnector: DesConnector = mock[DesConnector]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
   val testAppConfig = new AppConfig {
     override val appName: String = "agent-fi-relationship"
@@ -76,6 +76,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     mockMongoService,
     mockAgentClientAuthConnector,
     mockCesaRelationship,
+    mockDesConnector,
     testAppConfig,
     mockControllerComponents
   )

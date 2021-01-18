@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.net.URL
-
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -26,7 +25,7 @@ import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.{BasicAuthentication, Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -45,8 +44,10 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     mock[RelationshipMongoService]
   val mockAuditService: AuditService = mock[AuditService]
   val mockPlayAuthConnector: PlayAuthConnector = mock[PlayAuthConnector]
-  val mockCesaRelationship: CesaRelationshipCopyService =
+  val mockCesaRelationship: CesaRelationshipCopyService = {
     mock[CesaRelationshipCopyService]
+  }
+  val mockDesConnector: DesConnector = mock[DesConnector]
   val mockEc: ExecutionContext = mock[ExecutionContext]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = mock[AgentClientAuthConnector]
   val testAppConfig = new AppConfig {
@@ -79,6 +80,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       mockMongoService,
       mockAgentClientAuthConnector,
       mockCesaRelationship,
+      mockDesConnector,
       testAppConfig,
       mockControllerComponents)
 

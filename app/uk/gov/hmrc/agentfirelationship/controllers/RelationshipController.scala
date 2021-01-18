@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import java.time.{LocalDateTime, ZoneId}
-
 import javax.inject.{Inject, Singleton}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -25,10 +24,10 @@ import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
+import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, RelationshipStatus, TerminationResponse}
 import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -42,6 +41,7 @@ class RelationshipController @Inject()(
   mongoService: RelationshipMongoService,
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
+  des: DesConnector,
   appConfig: AppConfig,
   cc: ControllerComponents
 )(implicit ec: ExecutionContext)
@@ -212,6 +212,13 @@ class RelationshipController @Inject()(
           logger.error("Arn/Nino Not Found in Login")
           Future successful NotFound
       }
+    }
+  }
+
+  def hasLegacySaRelationship(utr: Utr): Action[AnyContent] = Action.async { implicit request =>
+    des.getClientSaAgentSaReferences(utr).map {
+      case Nil => NotFound
+      case _   => Ok
     }
   }
 

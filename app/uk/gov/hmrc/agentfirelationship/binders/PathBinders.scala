@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.models
+package uk.gov.hmrc.agentfirelationship.binders
 
-case class BasicAuthentication(username: String, password: String)
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+
+object PathBinders {
+  implicit object UtrBinder extends SimpleObjectBinder[Utr](utr => if (Utr.isValid(utr)) Utr.apply(utr) else throw new Exception("invalid"), _.value)
+}

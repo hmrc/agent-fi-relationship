@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
-
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
+
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json._
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
 import uk.gov.hmrc.http.HttpErrorFunctions._
@@ -33,6 +33,7 @@ import uk.gov.hmrc.http.HttpErrorFunctions._
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import play.api.http.Status._
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -51,8 +52,15 @@ object ClientRelationship {
 class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
 
-  def getClientSaAgentSaReferences(nino: Nino)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
-    val url = new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
+  def getClientSaAgentSaReferences(
+    saTaxIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+    val url = {
+      saTaxIdentifier match {
+        case Nino(nino) => new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino)}")
+        case Utr(utr)   => new URL(appConfig.desBaseUrl, s"/registration/relationship/utr/${encodePathSegment(utr)}")
+        case _          => throw new RuntimeException("Unexpected TaxIdentifier")
+      }
+    }
     getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map { response =>
       response.status match {
         case s if is2xx(s) =>

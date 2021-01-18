@@ -12,4 +12,5 @@ package object agentfirelationship {
   val auditDetails = Map("authProviderId" -> fakeCredId, "arn" -> agentId, "service" -> "personal-income-record", "clientId" -> clientId)
   val auditDetails2 = Map("authProviderId" -> fakeCredId, "arn" -> agentId, "service" -> "personal-income-record", "clientId" -> clientId2)
   val testResponseDate = LocalDateTime.now
+  val clientUtr = "1307171695"
 }
