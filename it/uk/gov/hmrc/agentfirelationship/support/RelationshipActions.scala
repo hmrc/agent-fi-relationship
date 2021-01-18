@@ -1,9 +1,5 @@
 package uk.gov.hmrc.agentfirelationship.support
 
-import java.nio.charset.StandardCharsets.UTF_8
-import java.time.LocalDateTime
-import java.util.Base64
-
 import org.scalatest.Suite
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.ServerProvider
@@ -11,6 +7,9 @@ import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 import uk.gov.hmrc.http.HeaderNames
 
+import java.nio.charset.StandardCharsets.UTF_8
+import java.time.LocalDateTime
+import java.util.Base64
 import scala.concurrent.Future
 
 trait RelationshipActions extends ScalaFutures {
@@ -54,4 +53,9 @@ trait RelationshipActions extends ScalaFutures {
       .url(s"$baseUrl/agent/$arn/terminate")
     .withHttpHeaders(HeaderNames.authorisation -> s"Basic ${basicAuth("username:password")}")
       .delete()
+
+  def hasActiveLegacySaRelationship(utr: String): Future[WSResponse] =
+    wsClient
+      .url(s"$url/active-legacy-sa/utr/$utr")
+      .get()
 }

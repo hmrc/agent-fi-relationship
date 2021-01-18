@@ -7,6 +7,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentfirelationship.support.{MetricTestSupport, WireMockSupport}
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
@@ -37,6 +38,7 @@ class DesConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSu
   "DesConnector GetStatusAgentRelationship" should {
 
     val nino = Nino("AB123456C")
+    val utr = Utr("1307171695")
 
     "return a CESA identifier when client has an active agent" in {
       val agentId = "bar"
@@ -100,6 +102,13 @@ class DesConnectorSpec extends UnitSpec with GuiceOneAppPerSuite with WireMockSu
       givenAuditConnector()
       await(desConnector.getClientSaAgentSaReferences(nino))
       timerShouldExistsAndBeenUpdated("ConsumedAPI-DES-GetStatusAgentRelationship-GET")
+    }
+
+    "return a CESA identifier when client has an active agent using Utr" in {
+      val agentId = "bar"
+      givenClientHasRelationshipWithAgentInCESA(utr, agentId)
+      givenAuditConnector()
+      await(desConnector.getClientSaAgentSaReferences(utr)) shouldBe Seq(SaAgentReference(agentId))
     }
   }
 }

@@ -2,51 +2,58 @@ package uk.gov.hmrc.agentfirelationship.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 
 trait DesStubs {
 
   val someAlienAgent = """{"hasAgent":false,"agentId":"alien"}"""
   val someCeasedAgent = """{"hasAgent":true,"agentId":"ex-agent","agentCeasedDate":"someDate"}"""
 
-  def givenClientHasRelationshipWithAgentInCESA(nino: Nino, agentId: String): StubMapping = {
+  def givenClientHasRelationshipWithAgentInCESA(taxIdentifier: TaxIdentifier, agentId: String): StubMapping = {
+    val url = desUrlForTaxIdentifier(taxIdentifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(url))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[$someCeasedAgent,{"hasAgent":true,"agentId":"$agentId"}, $someAlienAgent]}""")))
   }
 
-  def givenClientHasRelationshipWithMultipleAgentsInCESA(nino: Nino, agentIds: Seq[String]): StubMapping = {
+  def givenClientHasRelationshipWithMultipleAgentsInCESA(taxIdentifier: TaxIdentifier, agentIds: Seq[String]): StubMapping = {
+    val url = desUrlForTaxIdentifier(taxIdentifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(url))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[${agentIds.map(id => s"""{"hasAgent":true,"agentId":"$id"}""").mkString(",")}, $someAlienAgent, $someCeasedAgent ]}""")))
   }
 
-  def givenClientRelationshipWithAgentCeasedInCESA(nino: Nino, agentId: String): StubMapping = {
+  def givenClientRelationshipWithAgentCeasedInCESA(taxIdentifier: TaxIdentifier, agentId: String): StubMapping = {
+    val url = desUrlForTaxIdentifier(taxIdentifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(url))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[{"hasAgent":true,"agentId":"$agentId","agentCeasedDate":"2010-01-01"}]}""")))
   }
 
-  def givenAllClientRelationshipsWithAgentsCeasedInCESA(nino: Nino, agentIds: Seq[String]): StubMapping = {
+  def givenAllClientRelationshipsWithAgentsCeasedInCESA(taxIdentifier: TaxIdentifier, agentIds: Seq[String]): StubMapping = {
+    val url = desUrlForTaxIdentifier(taxIdentifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(url))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[${agentIds.map(id => s"""{"hasAgent":true,"agentId":"$id","agentCeasedDate":"2020-12-31"}""").mkString(",")}]}""")))
   }
 
-  def givenClientHasNoActiveRelationshipWithAgentInCESA(nino: Nino): StubMapping = {
+  def givenClientHasNoActiveRelationshipWithAgentInCESA(taxIdentifier: TaxIdentifier): StubMapping = {
+    val url = desUrlForTaxIdentifier(taxIdentifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(url))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{"agents":[$someCeasedAgent, $someAlienAgent]}""")))
   }
 
-  def givenClientHasNoRelationshipWithAnyAgentInCESA(nino: Nino): StubMapping = {
+  def givenClientHasNoRelationshipWithAnyAgentInCESA(taxIdentifier: TaxIdentifier): StubMapping = {
+    val url = desUrlForTaxIdentifier(taxIdentifier)
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
+      get(urlEqualTo(url))
         .willReturn(aResponse().withStatus(200)
           .withBody(s"""{}""")))
   }
@@ -78,5 +85,10 @@ trait DesStubs {
     stubFor(
       get(urlMatching(s"/registration/.*"))
         .willReturn(aResponse().withStatus(503)))
+  }
+
+  private val desUrlForTaxIdentifier: TaxIdentifier => String = {
+    case Utr(utr) => s"/registration/relationship/utr/$utr"
+    case Nino(nino) => s"/registration/relationship/nino/$nino"
   }
 }

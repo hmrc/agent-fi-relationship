@@ -7,6 +7,7 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -30,6 +31,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
         "microservice.services.auth.port" -> wireMockPort,
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
+        "microservice.services.des.port" -> wireMockPort,
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
@@ -68,6 +70,38 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
 
       Then("I will receive a 404 NOT FOUND response")
       viewRelationshipResponse.status shouldBe NOT_FOUND
+    }
+  }
+
+  feature("Check legacy SA relationship for a client"){
+    scenario("Client has an active legacy SA relationship with an agent"){
+      Given("There exists a relationship between an agent and client for IR-SA")
+      givenClientHasRelationshipWithAgentInCESA(Utr(clientUtr), "foo")
+
+      When("I call the check legacy SA relationship endpoint")
+      val checkLegacySaRelationshipResponse: WSResponse = Await.result(hasActiveLegacySaRelationship(clientUtr), 10 seconds)
+      Then("I will receive a 200 OK response")
+      checkLegacySaRelationshipResponse.status shouldBe OK
+    }
+
+    scenario("Client no longer has an active relationship with an agent"){
+      Given("There does not exist an active relationship between an agent and client for IR-SA")
+      givenClientRelationshipWithAgentCeasedInCESA(Utr(clientUtr), "foo")
+
+      When("I call the check legacy SA relationship endpoint")
+      val checkLegacySaRelationshipResponse: WSResponse = Await.result(hasActiveLegacySaRelationship(clientUtr), 10 seconds)
+      Then("I will get a 404 Not Found response")
+      checkLegacySaRelationshipResponse.status shouldBe 404
+    }
+
+    scenario("Client does not have any relationship with any agent"){
+      Given("There does not exist an active relationship between an agent and client for IR-SA")
+      givenClientHasNoRelationshipWithAnyAgentInCESA(Utr(clientUtr))
+
+      When("I call the check legacy SA relationship endpoint")
+      val checkLegacySaRelationshipResponse: WSResponse = Await.result(hasActiveLegacySaRelationship(clientUtr), 10 seconds)
+      Then("I will get a 404 Not Found response")
+      checkLegacySaRelationshipResponse.status shouldBe 404
     }
   }
 }
