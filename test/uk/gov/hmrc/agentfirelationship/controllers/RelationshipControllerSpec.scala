@@ -51,6 +51,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockCesaRelationship: CesaRelationshipCopyService = mock[CesaRelationshipCopyService]
   val mockDesConnector: DesConnector = mock[DesConnector]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
+  val testIrvArn = "TARN0000001"
   val testAppConfig = new AppConfig {
     override val appName: String = "agent-fi-relationship"
     override val agentMappingBaseUrl: URL = new URL("http://localhost:9999/agent-mapping")
@@ -65,6 +66,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     override val terminationStrideRole: String = "caat"
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
+    override val irvAllowedArns: Seq[String] = Seq(testIrvArn)
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"
@@ -607,6 +609,16 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
         .findActiveClientRelationships(any[String]())(any[ExecutionContext]())
+    }
+
+    "return Status: NO_CONTENT for an IRV allowlist check of an allowlisted ARN" in {
+      val response = controller.irvAllowed(testIrvArn)(fakeRequest)
+      status(response) shouldBe NO_CONTENT
+    }
+
+    "return Status: NOT_FOUND for an IRV allowlist check of a non-allowlisted ARN" in {
+      val response = controller.irvAllowed("TARN0000002")(fakeRequest)
+      status(response) shouldBe NOT_FOUND
     }
   }
 }
