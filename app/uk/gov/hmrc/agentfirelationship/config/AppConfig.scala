@@ -17,8 +17,9 @@
 package uk.gov.hmrc.agentfirelationship.config
 
 import java.net.{URL, URLDecoder}
-
 import com.google.inject.ImplementedBy
+import play.api.Configuration
+
 import javax.inject.Inject
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -40,9 +41,10 @@ trait AppConfig {
   val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
   def expectedAuth: BasicAuthentication
+  val irvAllowedArns: Seq[String]
 }
 
-class AppConfigImpl @Inject()(config: ServicesConfig) extends AppConfig {
+class AppConfigImpl @Inject()(config: ServicesConfig, configuration: Configuration) extends AppConfig {
 
   override val appName = config.getString("appName")
 
@@ -68,4 +70,6 @@ class AppConfigImpl @Inject()(config: ServicesConfig) extends AppConfig {
 
     BasicAuthentication(username, password)
   }
+
+  override val irvAllowedArns: Seq[String] = configuration.get[Seq[String]]("irv.arns")
 }
