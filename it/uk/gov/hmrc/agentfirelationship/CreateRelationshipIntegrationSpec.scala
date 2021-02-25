@@ -6,15 +6,15 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.models.{ Relationship, RelationshipStatus }
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import language.postfixOps
 
 @Singleton
@@ -83,6 +83,35 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       And("the new relationship should not be created")
       val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
+    }
+
+    scenario("A relationship for same service already exists with different agent") {
+
+      isLoggedInAndIsSubscribedAsAgent(agentId2)
+      Given("agent 2 has a relationship")
+      givenCreatedAuditEventStub(auditDetails)
+      val createRelationshipResponse1: WSResponse = Await.result(createRelationship(agentId2, clientId, service, testResponseDate), 10 seconds)
+      Then("I will receive a 201 response ")
+      createRelationshipResponse1.status shouldBe CREATED
+
+      And("the new relationship should be created")
+      val agentRelationships1: Future[List[Relationship]] = repo.findRelationships(agentId2, service, clientId)
+      Await.result(agentRelationships1, 10 seconds).length shouldBe 1
+
+      isLoggedInAndIsSubscribedAsAgent
+
+      When("I call the create-relationship for same service for agent 1")
+      val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
+
+      Then("I will receive a 201 response ")
+      createRelationshipResponse.status shouldBe CREATED
+
+      And("the new relationship should be created")
+      val agentRelationships: Future[List[Relationship]] = repo.findRelationships(agentId, service, clientId)
+      Await.result(agentRelationships, 10 seconds).length shouldBe 1
+
+      And("the relationship with agent 2 should be terminated")
+      Await.result(repo.findRelationships(agentId2, service, clientId, Terminated), 10 seconds).length shouldBe 1
     }
 
     scenario("The user is not logged in with GG credentials") {

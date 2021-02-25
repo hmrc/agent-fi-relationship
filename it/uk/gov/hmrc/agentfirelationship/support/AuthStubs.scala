@@ -54,7 +54,9 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
 
   protected var saAgentReference: Option[SaAgentReference] = None
 
-  def isLoggedInAndIsSubscribedAsAgent = {
+  def isLoggedInAndIsSubscribedAsAgent: AgentAuthStubs = isLoggedInAndIsSubscribedAsAgent(arn)
+
+  def isLoggedInAndIsSubscribedAsAgent(newArn: String): AgentAuthStubs = {
     stubFor(post(urlPathEqualTo(s"/auth/authorise")).willReturn(aResponse().withStatus(200).withBody(
       s"""
          |{
@@ -65,7 +67,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |      "identifiers": [
          |        {
          |          "key": "AgentReferenceNumber",
-         |          "value": "$arn"
+         |          "value": "$newArn"
          |        }
          |      ],
          |      "state": "Activated"
@@ -89,7 +91,7 @@ trait AgentAuthStubs extends BasicUserAuthStubs { WiremockAware =>
          |        },
          |        {
          |          "key": "AgentReferenceNumber",
-         |          "value": "$arn"
+         |          "value": "$newArn"
          |        }
          |      ],
          |      "state": "Activated"
