@@ -122,6 +122,14 @@ class RelationshipController @Inject()(
               case Nil =>
                 logger.info("Creating a relationship")
                 for {
+                  similar <- mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active)
+                  _ <- Future.sequence(
+                        similar.map(
+                          r =>
+                            mongoService
+                              .terminateRelationship(r.arn.value, service, clientId)
+                              .map(r => logger.info(s"Terminated Relationship $r")))
+                      )
                   _ <- mongoService.createRelationship(
                         Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None))
                   auditData <- setAuditData(arn, clientId, credentials)
