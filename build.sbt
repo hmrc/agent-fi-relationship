@@ -17,7 +17,7 @@ lazy val compileDeps = Seq(
   ws,
   "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "2.24.0",
   "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-27",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.19.0-play-27",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.23.0-play-27",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.4.0",
   "com.typesafe.play" %% "play-json" % "2.7.0",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-26"
@@ -44,11 +44,8 @@ lazy val root = (project in file("."))
     scalaVersion := "2.12.10",
     majorVersion := 0,
     PlayKeys.playDefaultPort := 9427,
-    resolvers := Seq(
-      Resolver.bintrayRepo("hmrc", "releases"),
-      Resolver.bintrayRepo("hmrc", "release-candidates"),
+    resolvers ++= Seq(
       Resolver.typesafeRepo("releases"),
-      Resolver.jcenterRepo
     ),
     scalacOptions ++= Seq(
       "-Xfatal-warnings",
