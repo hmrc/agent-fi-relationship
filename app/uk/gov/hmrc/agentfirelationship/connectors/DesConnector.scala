@@ -26,14 +26,15 @@ import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
 import uk.gov.hmrc.http.HttpErrorFunctions._
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import play.api.http.Status._
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+
+import java.util.UUID
 
 case class ClientRelationship(agents: Seq[Agent])
 
@@ -51,6 +52,17 @@ object ClientRelationship {
 @Singleton
 class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Metrics) extends HttpAPIMonitor {
   override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+
+  private val Environment = "Environment"
+  private val CorrelationId = "CorrelationId"
+  private val Authorization_ = "Authorization"
+
+  private def explicitHeaders =
+    Seq(
+      Environment    -> s"${appConfig.desEnvironment}",
+      CorrelationId  -> UUID.randomUUID().toString,
+      Authorization_ -> s"Bearer ${appConfig.desAuthToken}"
+    )
 
   def getClientSaAgentSaReferences(
     saTaxIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
@@ -82,8 +94,7 @@ class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Me
       authorization = Some(Authorization(s"Bearer ${appConfig.desAuthToken}")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment)
     monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      http.GET[A](url.toString)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
+      http.GET[A](url.toString, headers = explicitHeaders)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
     }
   }
-
 }

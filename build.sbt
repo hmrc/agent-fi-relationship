@@ -15,10 +15,10 @@ lazy val scoverageSettings = {
 
 lazy val compileDeps = Seq(
   ws,
-  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "2.24.0",
-  "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-27",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.23.0-play-27",
-  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.4.0",
+  "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "5.6.0",
+  "uk.gov.hmrc" %% "auth-client" % "5.6.0-play-27",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.25.0-play-27",
+  "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.7.0-play-27",
   "com.typesafe.play" %% "play-json" % "2.7.0",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-26"
 )
@@ -78,6 +78,7 @@ lazy val root = (project in file("."))
     parallelExecution in IntegrationTest := false,
     scalafmtOnCompile in IntegrationTest := true
   )
-  .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin,SbtArtifactory)
+  .settings(resolvers += "HMRC-local-artefacts-maven" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases-local")
+  .enablePlugins(PlayScala, SbtDistributablesPlugin)
 
 inConfig(IntegrationTest)(scalafmtCoreSettings)

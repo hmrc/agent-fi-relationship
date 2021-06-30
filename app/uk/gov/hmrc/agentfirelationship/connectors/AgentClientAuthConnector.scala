@@ -18,7 +18,6 @@ package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Base64
-
 import javax.inject.{Inject, Singleton}
 import play.api.Logging
 import play.api.mvc.Results._
@@ -32,7 +31,7 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
-import uk.gov.hmrc.play.HeaderCarrierConverter.fromHeadersAndSession
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
@@ -40,7 +39,7 @@ import scala.util.matching.Regex
 @Singleton
 class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends AuthorisedFunctions with Logging {
   implicit def hc(implicit rh: RequestHeader) =
-    fromHeadersAndSession(rh.headers)
+    HeaderCarrierConverter.fromRequestAndSession(rh, rh.session)
 
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]
