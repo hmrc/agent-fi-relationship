@@ -35,9 +35,9 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
-  feature("View relationships for a client individual") {
+  Feature("View relationships for a client individual") {
 
-    scenario("Agent views an existing relationship") {
+    Scenario("Agent views an existing relationship") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -60,7 +60,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
       actualService shouldBe service
     }
 
-    scenario("Agent views a non-existent relationship") {
+    Scenario("Agent views a non-existent relationship") {
 
       Given("no relationship exists for a combination of agent, client and service")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
@@ -73,8 +73,8 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
     }
   }
 
-  feature("Check legacy SA relationship for a client"){
-    scenario("Client has an active legacy SA relationship with an agent"){
+  Feature("Check legacy SA relationship for a client"){
+    Scenario("Client has an active legacy SA relationship with an agent"){
       Given("There exists a relationship between an agent and client for IR-SA")
       givenClientHasRelationshipWithAgentInCESA(Utr(clientUtr), "foo")
 
@@ -84,7 +84,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
       checkLegacySaRelationshipResponse.status shouldBe OK
     }
 
-    scenario("Client no longer has an active relationship with an agent"){
+    Scenario("Client no longer has an active relationship with an agent"){
       Given("There does not exist an active relationship between an agent and client for IR-SA")
       givenClientRelationshipWithAgentCeasedInCESA(Utr(clientUtr), "foo")
 
@@ -94,7 +94,7 @@ class ViewRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServi
       checkLegacySaRelationshipResponse.status shouldBe 404
     }
 
-    scenario("Client does not have any relationship with any agent"){
+    Scenario("Client does not have any relationship with any agent"){
       Given("There does not exist an active relationship between an agent and client for IR-SA")
       givenClientHasNoRelationshipWithAnyAgentInCESA(Utr(clientUtr))
 

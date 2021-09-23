@@ -42,8 +42,8 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
         "features.check-cesa-relationships" -> false)
 
 
-  feature("Remove Agent Relationships for given ARN")  {
-    scenario("Login as Stride User and removing relationships for given arn")  {
+  Feature("Remove Agent Relationships for given ARN")  {
+    Scenario("Login as Stride User and removing relationships for given arn")  {
 
       Given("Agent Has Relationships")
 
@@ -68,7 +68,7 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
 
     }
 
-    scenario("Login with Basic Auth and removing relationships for given arn but return 0")  {
+    Scenario("Login with Basic Auth and removing relationships for given arn but return 0")  {
       Given("Agent Has No Relationships")
 
       And("Login as Stride")
@@ -83,7 +83,7 @@ class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamService
       result.json shouldBe Json.toJson[TerminationResponse](TerminationResponse(Seq(DeletionCount("agent-fi-relationship", "fi-relationship", 0))))
     }
 
-    scenario("Login as Stride User and removing relationships but provided invalid ARN")  {
+    Scenario("Login as Stride User and removing relationships but provided invalid ARN")  {
       Given("Login as Stride")
 
       Await.result(repo.findRelationships(arn, service, clientId), 10 seconds).length shouldBe 0

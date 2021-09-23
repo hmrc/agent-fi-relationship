@@ -33,9 +33,9 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
-  feature("View inactive relationships for an agent") {
+  Feature("View inactive relationships for an agent") {
 
-    scenario("Agent views an existing relationships that are inactive") {
+    Scenario("Agent views an existing relationships that are inactive") {
 
       Given("there are inactive relationships between an agent and their clients")
       isLoggedInAndIsSubscribedAsAgent
@@ -77,7 +77,7 @@ class ViewInActiveRelationshipsISpec extends IntegrationSpec with UpstreamServic
       actualClientId2 should equal(clientId).or(equal(clientId2))
     }
 
-    scenario("Agent does not find any inactive relationships") {
+    Scenario("Agent does not find any inactive relationships") {
 
       Given("no inactive relationship exists for an agent")
       Await.result(repo.findInactiveAgentRelationships(agentId), 10 seconds) shouldBe empty

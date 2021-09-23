@@ -20,7 +20,7 @@ import app.Routes
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.agentfirelationship.wiring.{KeyToPatternMappingFromRoutes, MonitoringKeyMatcher}
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
 class MonitoringKeyMatcherSpec extends UnitSpec {
 

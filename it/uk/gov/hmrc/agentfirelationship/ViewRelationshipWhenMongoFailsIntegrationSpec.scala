@@ -59,9 +59,9 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
         }
       })
 
-  feature("View relationships for a client individual") {
+  Feature("View relationships for a client individual") {
 
-    scenario("Agent views a non-existent relationship") {
+    Scenario("Agent views a non-existent relationship") {
 
       Given("no relationship exists for a combination of agent, client and service")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
@@ -74,7 +74,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
 
-    scenario("Agent views a relationship existing only in CESA") {
+    Scenario("Agent views a relationship existing only in CESA") {
 
       Given("relationship exists in CESA and has been mapped for a combination of agent and client")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty

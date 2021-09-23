@@ -2,16 +2,17 @@ package uk.gov.hmrc.agentfirelationship.services
 
 import java.time.LocalDateTime
 import javax.inject.Singleton
-
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{ Active, Terminated }
-import uk.gov.hmrc.agentfirelationship.{ agentId, clientId, service }
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
+import uk.gov.hmrc.agentfirelationship.{agentId, clientId, service}
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton

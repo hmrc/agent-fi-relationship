@@ -41,9 +41,9 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
-  feature("Terminate a relationship between an agent and a client") {
+  Feature("Terminate a relationship between an agent and a client") {
 
-    scenario("Agent terminates an existing relationship with client for a given service") {
+    Scenario("Agent terminates an existing relationship with client for a given service") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -62,7 +62,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
 
-    scenario("Agent terminates an existing relationship with client for a given service when the relationship is created for the second time") {
+    Scenario("Agent terminates an existing relationship with client for a given service when the relationship is created for the second time") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
@@ -98,7 +98,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Await.result(repo.findAnyRelationships(agentId, service, clientId), 10 seconds).last.relationshipStatus shouldBe Some(RelationshipStatus.Terminated)
     }
 
-    scenario("Agent fails to terminates the relation with client for an invalid service") {
+    Scenario("Agent fails to terminates the relation with client for an invalid service") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -117,7 +117,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
 
-    scenario("Agent fails to terminates the relation with client for an invalid agent id") {
+    Scenario("Agent fails to terminates the relation with client for an invalid agent id") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -132,7 +132,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("The user is not logged in with GG credentials") {
+    Scenario("The user is not logged in with GG credentials") {
       isNotLoggedIn
       When("I call the terminates relationship endpoint")
       val terminateRelationshipResponse: WSResponse = Await.result(terminateRelationship(agentId, clientId, service), 10 seconds)
@@ -141,7 +141,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       terminateRelationshipResponse.status shouldBe UNAUTHORIZED
     }
 
-    scenario("The user does not have an affinity group") {
+    Scenario("The user does not have an affinity group") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
@@ -154,7 +154,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("The user has invalid enrolments") {
+    Scenario("The user has invalid enrolments") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
@@ -167,7 +167,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       terminateRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("Stride user terminates an existing relationship with client for a given service") {
+    Scenario("Stride user terminates an existing relationship with client for a given service") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -186,7 +186,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
 
-    scenario("Stride user (new format) terminates an existing relationship with client for a given service") {
+    Scenario("Stride user (new format) terminates an existing relationship with client for a given service") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
