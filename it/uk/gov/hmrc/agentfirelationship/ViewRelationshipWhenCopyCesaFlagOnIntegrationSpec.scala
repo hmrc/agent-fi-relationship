@@ -37,9 +37,9 @@ class ViewRelationshipWhenCopyCesaFlagOnIntegrationSpec extends IntegrationSpec 
         "features.copy-cesa-relationships" -> true,
         "features.check-cesa-relationships" -> true)
 
-  feature("View relationships for a client individual") {
+  Feature("View relationships for a client individual") {
 
-    scenario("Agent views an existing relationship") {
+    Scenario("Agent views an existing relationship") {
 
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
@@ -62,7 +62,7 @@ class ViewRelationshipWhenCopyCesaFlagOnIntegrationSpec extends IntegrationSpec 
       actualService shouldBe service
     }
 
-    scenario("Agent views a non-existent relationship") {
+    Scenario("Agent views a non-existent relationship") {
 
       Given("no relationship exists for a combination of agent, client and service")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
@@ -75,7 +75,7 @@ class ViewRelationshipWhenCopyCesaFlagOnIntegrationSpec extends IntegrationSpec 
       viewRelationshipResponse.status shouldBe NOT_FOUND
     }
 
-    scenario("Agent views a relationship existing only in CESA") {
+    Scenario("Agent views a relationship existing only in CESA") {
 
       Given("relationship exists in CESA and has been mapped for a combination of agent and client")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty

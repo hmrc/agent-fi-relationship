@@ -27,9 +27,9 @@ class FailuresIntegrationSpec extends IntegrationSpec
         "mongodb.uri" -> "mongodb://nowhere:27017/none",
         "features.run-mongodb-migration" -> false)
 
-  feature("Do not handle infrastructure failures, propagates errors downstream") {
+  Feature("Do not handle infrastructure failures, propagates errors downstream") {
 
-    scenario("Mongodb not available when creating relationship") {
+    Scenario("Mongodb not available when creating relationship") {
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
       isLoggedInAndIsSubscribedAsAgent
@@ -39,7 +39,7 @@ class FailuresIntegrationSpec extends IntegrationSpec
       Then("I will receive a 500 INTERNAL SERVER ERROR response")
     }
 
-    scenario("Mongodb not available when deleting relationship") {
+    Scenario("Mongodb not available when deleting relationship") {
       Given("there exists a relationship between an agent and client for a given service")
       givenEndedAuditEventStub(auditDetails)
 
@@ -51,7 +51,7 @@ class FailuresIntegrationSpec extends IntegrationSpec
       response.status shouldBe INTERNAL_SERVER_ERROR
     }
 
-    scenario("Mongodb not available when viewing relationship") {
+    Scenario("Mongodb not available when viewing relationship") {
       Given("there exists a relationship between an agent and client for a given service")
       givenCreatedAuditEventStub(auditDetails)
       isLoggedInAndIsSubscribedAsAgent
@@ -65,7 +65,7 @@ class FailuresIntegrationSpec extends IntegrationSpec
       response.status shouldBe INTERNAL_SERVER_ERROR
     }
 
-    scenario("Login as Stride User and removing relationships but Failed")  {
+    Scenario("Login as Stride User and removing relationships but Failed")  {
       Given("Login as Stride")
       isLoggedInWithStride("caat")
 

@@ -18,7 +18,7 @@ package uk.gov.hmrc.agentfirelationship.controllers.binders
 
 import uk.gov.hmrc.agentfirelationship.binders.PathBinders
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
 class PathBindersSpec extends UnitSpec {
 

@@ -1,7 +1,6 @@
 package uk.gov.hmrc.agentfirelationship.support
 
 import java.net.URL
-
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
@@ -11,7 +10,6 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
 import uk.gov.hmrc.agentfirelationship.stubs.{DesStubs, MappingStubs}
-import uk.gov.hmrc.play.it.Port
 
 trait UpstreamServicesStubs extends BeforeAndAfterAll
   with BeforeAndAfterEach with Eventually with ClientUserAuthStubs with AgentAuthStubs with DesStubs with MappingStubs {
@@ -100,4 +98,3 @@ trait UpstreamServicesStubs extends BeforeAndAfterAll
 
   private def similarToJson(value: String) = equalToJson(value.stripMargin, true, true)
 }
-

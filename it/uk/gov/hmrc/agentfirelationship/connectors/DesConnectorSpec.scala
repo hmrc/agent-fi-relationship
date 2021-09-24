@@ -4,6 +4,7 @@ import com.kenshoo.play.metrics.Metrics
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.stubs.{DataStreamStub, DesStubs}
 import uk.gov.hmrc.agentfirelationship.support.{MetricTestSupport, WireMockSupport}
@@ -11,7 +12,7 @@ import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 

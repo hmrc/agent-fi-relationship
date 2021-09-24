@@ -40,12 +40,12 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
-  feature("Create a relationship between an agent and an individual as an agent") {
+  Feature("Create a relationship between an agent and an individual as an agent") {
 
     info("I want to create a relationship with a client individual for a specific service")
     info("So that I am permitted to view the client's service/regime data")
 
-    scenario("Create a new relationship with simple values") {
+    Scenario("Create a new relationship with simple values") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
@@ -66,7 +66,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       agentRelationship.relationshipStatus shouldBe Some(RelationshipStatus.Active)
     }
 
-    scenario("A relationship which is the same already exists") {
+    Scenario("A relationship which is the same already exists") {
 
       isLoggedInAndIsSubscribedAsAgent
 
@@ -85,7 +85,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       Await.result(agentRelationships, 10 seconds).length shouldBe 1
     }
 
-    scenario("A relationship for same service already exists with different agent") {
+    Scenario("A relationship for same service already exists with different agent") {
 
       isLoggedInAndIsSubscribedAsAgent(agentId2)
       Given("agent 2 has a relationship")
@@ -114,7 +114,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       Await.result(repo.findRelationships(agentId2, service, clientId, Terminated), 10 seconds).length shouldBe 1
     }
 
-    scenario("The user is not logged in with GG credentials") {
+    Scenario("The user is not logged in with GG credentials") {
       isNotLoggedIn
       When("I call the create-relationship endpoint")
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
@@ -123,7 +123,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       createRelationshipResponse.status shouldBe UNAUTHORIZED
     }
 
-    scenario("The user does not have an affinity group") {
+    Scenario("The user does not have an affinity group") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
@@ -136,7 +136,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       createRelationshipResponse.status shouldBe FORBIDDEN
     }
 
-    scenario("The user has invalid enrolments") {
+    Scenario("The user has invalid enrolments") {
 
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
@@ -150,12 +150,12 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
     }
   }
 
-  feature("Create a relationship between an agent and an individual as a client") {
+  Feature("Create a relationship between an agent and an individual as a client") {
 
     info("I want to create a relationship with a client individual for a specific service")
     info("So that I am permitted to view the client's service/regime data")
 
-    scenario("Create a new relationship with simple values") {
+    Scenario("Create a new relationship with simple values") {
 
       isLoggedInAsClient
 
@@ -173,7 +173,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       Await.result(agentRelationships, 10 seconds).head.startDate shouldBe testResponseDate
     }
 
-    scenario("A relationship which is the same already exists") {
+    Scenario("A relationship which is the same already exists") {
 
       isLoggedInAsClient
 
