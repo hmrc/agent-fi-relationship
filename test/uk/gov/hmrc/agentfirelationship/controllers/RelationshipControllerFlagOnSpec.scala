@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.{BasicAuthentication, Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
@@ -47,6 +47,8 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   val mockCesaRelationship: CesaRelationshipCopyService = {
     mock[CesaRelationshipCopyService]
   }
+  val mockAcaService: AgentClientAuthorisationService =
+    mock[AgentClientAuthorisationService]
   val mockDesConnector: DesConnector = mock[DesConnector]
   val mockEc: ExecutionContext = mock[ExecutionContext]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = mock[AgentClientAuthConnector]
@@ -65,13 +67,14 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
     override val irvAllowedArns: Seq[String] = Nil
+    override val acaBaseUrl: URL = new URL("http://localhost:9999/aca")
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"
   val newStrideRole = "maintain_agent_relationships"
 
   override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
+    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship, mockAcaService)
   }
 
   "RelationshipController (Both Flags On)" should {
@@ -81,9 +84,11 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       mockMongoService,
       mockAgentClientAuthConnector,
       mockCesaRelationship,
+      mockAcaService,
       mockDesConnector,
       testAppConfig,
-      mockControllerComponents)
+      mockControllerComponents
+    )
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
       when(

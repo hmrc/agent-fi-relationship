@@ -1,7 +1,6 @@
 package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
-
 import javax.inject.Singleton
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
@@ -10,8 +9,10 @@ import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.stubs.AcaStubs
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -20,7 +21,7 @@ import scala.language.postfixOps
 
 @Singleton
 class TerminateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
-  with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
+  with RelationshipActions with GuiceOneServerPerSuite with MongoApp with AcaStubs{
   me: DualSuite =>
 
   def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
@@ -39,7 +40,8 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> false,
-        "features.check-cesa-relationships" -> false)
+        "features.check-cesa-relationships" -> false,
+      "microservice.services.aca.port" -> wireMockPort )
 
   Feature("Terminate a relationship between an agent and a client") {
 
@@ -49,6 +51,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAndIsSubscribedAsAgent
+      givenSetRelationshipEndedReturns(Arn(agentId), Nino(clientId), "Agent", 204)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the terminates relationship endpoint")
@@ -67,6 +70,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
+      givenSetRelationshipEndedReturns(Arn(agentId), Nino(clientId), "Agent", 204)
 
       When("I call the create-relationship endpoint")
       isLoggedInAndIsSubscribedAsAgent
@@ -173,6 +177,7 @@ class TerminateRelationshipIntegrationSpec extends IntegrationSpec with Upstream
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
       isLoggedInWithStride("maintain agent relationships")
+      givenSetRelationshipEndedReturns(Arn(agentId), Nino(clientId), "HMRC", 204)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the terminate relationship endpoint")

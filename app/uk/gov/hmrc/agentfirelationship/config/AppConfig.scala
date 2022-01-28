@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ trait AppConfig {
   val inactiveRelationshipsShowLastDays: Duration
   def expectedAuth: BasicAuthentication
   val irvAllowedArns: Seq[String]
+  val acaBaseUrl: URL
 }
 
 class AppConfigImpl @Inject()(config: ServicesConfig, configuration: Configuration) extends AppConfig {
@@ -72,4 +73,6 @@ class AppConfigImpl @Inject()(config: ServicesConfig, configuration: Configurati
   }
 
   override val irvAllowedArns: Seq[String] = configuration.get[Seq[String]]("irv.arns")
+
+  override val acaBaseUrl: URL = new URL(config.baseUrl("aca"))
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, RelationshipStatus, TerminationResponse}
-import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
@@ -41,6 +41,7 @@ class RelationshipController @Inject()(
   mongoService: RelationshipMongoService,
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
+  acaService: AgentClientAuthorisationService,
   des: DesConnector,
   appConfig: AppConfig,
   cc: ControllerComponents
@@ -128,7 +129,16 @@ class RelationshipController @Inject()(
                           r =>
                             mongoService
                               .terminateRelationship(r.arn.value, service, clientId)
-                              .map(r => logger.info(s"Terminated Relationship $r")))
+                              .map(terminated => {
+                                if (terminated) {
+                                  logger.info(s"Terminated Relationship true")
+                                  acaService
+                                    .setRelationshipEnded(r.arn, clientId)
+                                    .map(ended =>
+                                      if (ended) logger.info("set relationship ended for other invitation succeeded")
+                                      else logger.warn("failed to set relationship ended for other invitation"))
+                                } else logger.warn("failed to end other relationship...leaving the status of the other invitation unchanged.")
+                              }))
                       )
                   _ <- mongoService.createRelationship(
                         Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None))
@@ -153,12 +163,13 @@ class RelationshipController @Inject()(
             auditData     <- setAuditData(arn, clientId, credentials)
             _             <- sendAuditEventForThisUser(credentials, auditData)
           } yield successOrFail
-          relationshipDeleted.map(
-            if (_) Ok
-            else {
-              logger.warn("Relationship Not Found")
-              NotFound
-            })
+          relationshipDeleted.map(if (_) {
+            acaService.setRelationshipEnded(Arn(arn), clientId)
+            Ok
+          } else {
+            logger.warn("Relationship Not Found")
+            NotFound
+          })
 
         }
       }
