@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship
+package uk.gov.hmrc.agentfirelationship.models
 
-import play.api.libs.json._
+import play.api.libs.json.Json
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 
-package object models {
-  implicit val relationshipFormatter: Format[Relationship] =
-    Json.format[Relationship]
+case class SetRelationshipEndedPayload(arn: Arn, clientId: String, service: String, endedBy: Option[String])
+
+object SetRelationshipEndedPayload {
+  implicit val jsonFormat = Json.format[SetRelationshipEndedPayload]
 }

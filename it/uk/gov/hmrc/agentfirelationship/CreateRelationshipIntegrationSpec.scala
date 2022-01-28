@@ -9,8 +9,10 @@ import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.stubs.AcaStubs
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.domain.Nino
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -19,7 +21,7 @@ import language.postfixOps
 
 @Singleton
 class CreateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
-with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
+with RelationshipActions with GuiceOneServerPerSuite with MongoApp with AcaStubs {
   me: DualSuite =>
 
   def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
@@ -38,7 +40,8 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
         "auditing.consumer.baseUri.port" -> wireMockPort,
         "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships" -> false,
-        "features.check-cesa-relationships" -> false)
+        "features.check-cesa-relationships" -> false,
+      "microservice.services.aca.port" -> wireMockPort)
 
   Feature("Create a relationship between an agent and an individual as an agent") {
 
@@ -101,6 +104,7 @@ with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
       isLoggedInAndIsSubscribedAsAgent
 
       When("I call the create-relationship for same service for agent 1")
+      givenSetRelationshipEndedReturns(Arn(agentId2), Nino(clientId), "Agent", 204)
       val createRelationshipResponse: WSResponse = Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       Then("I will receive a 201 response ")

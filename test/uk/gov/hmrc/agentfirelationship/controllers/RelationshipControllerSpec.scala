@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import java.net.URL
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -30,15 +29,16 @@ import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{BasicAuthentication, Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.services.{CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
+import java.net.URL
 import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -54,6 +54,8 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockDesConnector: DesConnector = mock[DesConnector]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
   val testIrvArn = "TARN0000001"
+  val mockAcaService: AgentClientAuthorisationService = mock[AgentClientAuthorisationService]
+
   val testAppConfig = new AppConfig {
     override val appName: String = "agent-fi-relationship"
     override val agentMappingBaseUrl: URL = new URL("http://localhost:9999/agent-mapping")
@@ -69,6 +71,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
     override val irvAllowedArns: Seq[String] = Seq(testIrvArn)
+    override val acaBaseUrl: URL = new URL("http://localhost:9999/aca")
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"
@@ -80,13 +83,14 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     mockMongoService,
     mockAgentClientAuthConnector,
     mockCesaRelationship,
+    mockAcaService,
     mockDesConnector,
     testAppConfig,
     mockControllerComponents
   )
 
   override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship)
+    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship, mockAcaService)
   }
 
   private type AfiAction =
@@ -205,6 +209,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "return Status: CREATED for creating new record as an agent and terminate similar relationship with any other agent" in {
 
       authStub(agentAffinityAndEnrolmentsCreds)
+      //implicit val taxIdentifier = Some(Arn(""))
 
       when(
         mockAuditService
@@ -229,6 +234,11 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockMongoService
           .terminateRelationship(eqs(validTestArn2), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
+        .thenReturn(Future successful true)
+
+      when(
+        mockAcaService
+          .setRelationshipEnded(eqs(Arn(validTestArn2)), eqs(validTestNINO))(any[Option[Arn]](), any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future successful true)
 
       val response =
