@@ -70,7 +70,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     override val terminationStrideRole: String = "caat"
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
-    override val irvAllowedArns: Seq[String] = Seq(testIrvArn)
     override val acaBaseUrl: URL = new URL("http://localhost:9999/aca")
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
@@ -679,16 +678,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
         .findActiveClientRelationships(any[String]())(any[ExecutionContext]())
-    }
-
-    "return Status: NO_CONTENT for an IRV allowlist check of an allowlisted ARN" in {
-      val response = controller.irvAllowed(testIrvArn)(fakeRequest)
-      status(response) shouldBe NO_CONTENT
-    }
-
-    "return Status: NOT_FOUND for an IRV allowlist check of a non-allowlisted ARN" in {
-      val response = controller.irvAllowed("TARN0000002")(fakeRequest)
-      status(response) shouldBe NOT_FOUND
     }
   }
 }

@@ -27,7 +27,6 @@ class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoCompo
   override def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
     Future failed new Exception("Test mongodb failure")
   }
-
 }
 
 class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
