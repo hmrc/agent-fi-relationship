@@ -41,7 +41,6 @@ trait AppConfig {
   val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
   def expectedAuth: BasicAuthentication
-  val irvAllowedArns: Seq[String]
   val acaBaseUrl: URL
 }
 
@@ -71,8 +70,6 @@ class AppConfigImpl @Inject()(config: ServicesConfig, configuration: Configurati
 
     BasicAuthentication(username, password)
   }
-
-  override val irvAllowedArns: Seq[String] = configuration.get[Seq[String]]("irv.arns")
 
   override val acaBaseUrl: URL = new URL(config.baseUrl("aca"))
 }

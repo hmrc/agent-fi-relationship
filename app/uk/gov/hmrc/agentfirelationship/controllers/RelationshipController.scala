@@ -258,14 +258,6 @@ class RelationshipController @Inject()(
     }
   }
 
-  def irvAllowed(arn: String): Action[AnyContent] = Action {
-    if (appConfig.irvAllowedArns.contains(arn)) {
-      NoContent
-    } else {
-      NotFound
-    }
-  }
-
   private def setAuditData(arn: String, clientId: String, creds: Credentials): Future[AuditData] = {
     val auditData = new AuditData()
     if (creds.providerType == "GovernmentGateway") {
