@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.controllers.config
+package uk.gov.hmrc.agentfirelationship.config
 
 import app.Routes
 import play.api.Application

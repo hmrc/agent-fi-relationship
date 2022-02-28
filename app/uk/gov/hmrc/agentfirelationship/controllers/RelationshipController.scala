@@ -56,58 +56,81 @@ class RelationshipController @Inject()(
   def findAfiRelationship(arn: String, clientId: String): Action[AnyContent] =
     findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
 
+  /* Tries to find existing client/agent relationships, and if none found, copies over from cesa */
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    implicit val auditData = new AuditData()
-    mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { result =>
-      if (result.nonEmpty) {
-        Future.successful(Ok(toJson(result)))
+    implicit val auditData: AuditData = new AuditData()
+
+    mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { activeRelationships =>
+      if (activeRelationships.nonEmpty) {
+        Future.successful(Ok(toJson(activeRelationships)))
       } else {
-        mongoService.findAnyRelationships(arn, service, clientId) flatMap { previousRelationships =>
-          if (previousRelationships.nonEmpty) {
+        mongoService.findAnyRelationships(arn, service, clientId) flatMap { anyRelationships =>
+          if (anyRelationships.nonEmpty) {
             Future successful NotFound
           } else {
-            if (appConfig.checkCesaRelationshipFlag) {
-              checkCesaService
-                .lookupCesaForOldRelationship(Arn(arn), Nino(clientId))
-                .flatMap { saAgentRefs =>
-                  if (saAgentRefs.isEmpty) {
-                    Future successful NotFound
-                  } else {
-                    if (appConfig.copyCesaRelationshipFlag) {
-                      val activeRelationship = Relationship(
-                        arn = Arn(arn),
-                        service = service,
-                        clientId = clientId,
-                        relationshipStatus = Some(RelationshipStatus.Active),
-                        startDate = LocalDateTime.now(ZoneId.of("UTC")),
-                        endDate = None,
-                        fromCesa = Some(true)
-                      )
-                      mongoService
-                        .createRelationship(activeRelationship)
-                        .flatMap(_ => mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active))
-                        .map(newResult => {
-                          auditData.set("agentReferenceNumber", arn)
-                          auditData.set("service", "personal-income-record")
-                          auditService.sendCreateRelationshipFromExisting(auditData)
-                          Ok(toJson(newResult))
-                        })
-                        .recover {
-                          case ex =>
-                            logger.error("Relationship creation failed", ex)
-                            Ok(toJson(result))
-                        }
-                    } else {
-                      Future successful Ok(toJson(result))
-                    }
-                  }
-                }
-            } else {
-              Future.successful(NotFound)
-            }
+            handleCesaRelationship(arn, service, clientId, activeRelationships)
           }
         }
       }
+    }
+  }
+
+  private def handleCesaRelationship(arn: String, service: String, clientId: String, activeRelationships: List[Relationship])(
+    implicit auditData: AuditData,
+    hc: HeaderCarrier,
+    request: Request[Any]): Future[Result] =
+    if (appConfig.checkCesaRelationshipFlag) {
+      checkCesaService
+        .lookupCesaForOldRelationship(Arn(arn), Nino(clientId))
+        .flatMap { saAgentRefs =>
+          if (saAgentRefs.isEmpty) {
+            Future successful NotFound
+          } else {
+            mongoService.findActiveClientRelationships(clientId).flatMap { activeRelationshipsAcrossAgents =>
+              if (activeRelationshipsAcrossAgents.isEmpty) {
+                if (appConfig.copyCesaRelationshipFlag) {
+                  copyCesaRelationship(arn, service, clientId, activeRelationships)
+                } else {
+                  Future successful Ok(toJson(activeRelationships))
+                }
+              } else {
+                Future successful NotFound
+              }
+            }
+
+          }
+        }
+    } else {
+      Future.successful(NotFound)
+    }
+
+  private def copyCesaRelationship(arn: String, service: String, clientId: String, activeRelationships: List[Relationship])(
+    implicit auditData: AuditData,
+    hc: HeaderCarrier,
+    request: Request[Any]): Future[Result] = {
+
+    val activeRelationship = Relationship(
+      arn = Arn(arn),
+      service = service,
+      clientId = clientId,
+      relationshipStatus = Some(RelationshipStatus.Active),
+      startDate = LocalDateTime.now(ZoneId.of("UTC")),
+      endDate = None,
+      fromCesa = Some(true)
+    )
+
+    (for {
+      _         <- mongoService.createRelationship(activeRelationship)
+      newResult <- mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active)
+    } yield {
+      auditData.set("agentReferenceNumber", arn)
+      auditData.set("service", "personal-income-record")
+      auditService.sendCreateRelationshipFromExisting(auditData)
+      Ok(toJson(newResult))
+    }).recover {
+      case ex =>
+        logger.error("Relationship creation failed", ex)
+        Ok(toJson(activeRelationships))
     }
   }
 
