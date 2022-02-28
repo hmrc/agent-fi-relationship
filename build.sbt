@@ -9,14 +9,14 @@ lazy val scoverageSettings = {
     ScoverageKeys.coverageMinimum := 80.00,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
-    parallelExecution in Test := false
+    Test / parallelExecution := false
   )
 }
 
 lazy val compileDeps = Seq(
   ws,
   "uk.gov.hmrc" %% "bootstrap-backend-play-28" % "5.20.0",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.28.0-play-27",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.33.0-play-28",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.8.0-play-28",
   "com.typesafe.play" %% "play-json" % "2.9.2",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-28"
@@ -63,18 +63,17 @@ lazy val root = (project in file("."))
     ),
     publishingSettings,
     scoverageSettings,
-    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     routesImport ++= Seq("uk.gov.hmrc.agentfirelationship.binders.PathBinders._"),
-    scalafmtOnCompile in Compile := true,
-    scalafmtOnCompile in Test := true
+    Compile / scalafmtOnCompile := true,
+    Test / scalafmtOnCompile := true
   )
   .configs(IntegrationTest)
   .settings(
-    Keys.fork in IntegrationTest := true,
+    IntegrationTest / Keys.fork := true,
     Defaults.itSettings,
-    unmanagedSourceDirectories in IntegrationTest += baseDirectory(_ / "it").value,
-    parallelExecution in IntegrationTest := false,
-    scalafmtOnCompile in IntegrationTest := true
+    IntegrationTest / unmanagedSourceDirectories += baseDirectory(_ / "it").value,
+    IntegrationTest / parallelExecution := false
   )
   .settings(resolvers += "HMRC-local-artefacts-maven" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases-local")
   .enablePlugins(PlayScala, SbtDistributablesPlugin)

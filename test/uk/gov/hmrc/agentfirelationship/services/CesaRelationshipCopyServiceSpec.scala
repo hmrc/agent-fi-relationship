@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.controllers.services
+package uk.gov.hmrc.agentfirelationship.services
 
 import org.mockito.ArgumentMatchers.{eq => eqs}
 import org.mockito.Mockito._
@@ -22,12 +22,10 @@ import org.scalatest.BeforeAndAfterEach
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
-import uk.gov.hmrc.agentfirelationship.controllers.support.ResettingMockitoSugar
-import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
+import uk.gov.hmrc.agentfirelationship.support.{ResettingMockitoSugar, UnitSpec}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, MtdItId}
 import uk.gov.hmrc.domain.{AgentCode, Generator, Nino, SaAgentReference}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
