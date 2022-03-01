@@ -188,5 +188,80 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       verify(mockCesaRelationship, times(1))
         .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(any[ExecutionContext](), any[HeaderCarrier](), any[AuditData]())
     }
+
+    "return Status: OK when relationship in Cesa and Agent Mapping is found, but active relationships already exist" in {
+      when(
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any[ExecutionContext]()))
+        .thenReturn(Future successful List())
+      when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
+        .thenReturn(Future successful List())
+      when(
+        mockCesaRelationship
+          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
+            any[ExecutionContext](),
+            any[HeaderCarrier](),
+            any[AuditData]()))
+        .thenReturn(Future successful Set(SaAgentReference("existingRef")))
+      when(mockMongoService.findActiveClientRelationships(validTestNINO))
+        .thenReturn(Future successful List(validTestRelationship))
+
+      val response =
+        controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
+
+      status(response) shouldBe NOT_FOUND
+
+      verify(mockMongoService, times(1))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findAnyRelationships(any[String](), any[String](), any[String]())(any[ExecutionContext]())
+
+      verify(mockCesaRelationship, times(1))
+        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(any[ExecutionContext](), any[HeaderCarrier](), any[AuditData]())
+
+      verify(mockMongoService, times(1))
+        .findActiveClientRelationships(any[String]())(any[ExecutionContext]())
+    }
+
+    "return Status: OK when relationship in Cesa and Agent Mapping is found, and active relationships don't already exist" in {
+      when(
+        mockMongoService
+          .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))(any[ExecutionContext]()))
+        .thenReturn(Future successful List())
+      when(mockMongoService.findAnyRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO))(any[ExecutionContext]()))
+        .thenReturn(Future successful List())
+      when(
+        mockCesaRelationship
+          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
+            any[ExecutionContext](),
+            any[HeaderCarrier](),
+            any[AuditData]()))
+        .thenReturn(Future successful Set(SaAgentReference("existingRef")))
+      when(mockMongoService.findActiveClientRelationships(validTestNINO))
+        .thenReturn(Future successful List.empty[Relationship])
+      when(mockMongoService.createRelationship(any[Relationship])(any[ExecutionContext]()))
+        .thenReturn(Future.successful(()))
+
+      val response =
+        controller.findAfiRelationship(validTestArn, validTestNINO)(fakeRequest)
+
+      status(response) shouldBe OK
+
+      verify(mockMongoService, times(2))
+        .findRelationships(any[String](), any[String](), any[String](), any[RelationshipStatus]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .findAnyRelationships(any[String](), any[String](), any[String]())(any[ExecutionContext]())
+
+      verify(mockCesaRelationship, times(1))
+        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(any[ExecutionContext](), any[HeaderCarrier](), any[AuditData]())
+
+      verify(mockMongoService, times(1))
+        .findActiveClientRelationships(any[String]())(any[ExecutionContext]())
+
+      verify(mockMongoService, times(1))
+        .createRelationship(any[Relationship]())(any[ExecutionContext]())
+    }
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.controllers.connectors
+package uk.gov.hmrc.agentfirelationship.connectors
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
@@ -23,14 +23,13 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Results._
 import play.api.mvc.{Result, Results}
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.controllers._
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}

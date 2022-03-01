@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.controllers.support
+package uk.gov.hmrc.agentfirelationship.support
 
 import org.mockito.Mockito
 import org.scalatestplus.mockito.MockitoSugar

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.controllers.audit
+package uk.gov.hmrc.agentfirelationship.audit
 
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -24,13 +24,12 @@ import org.scalatest.time.{Millis, Span}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, RequestId, SessionId}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
