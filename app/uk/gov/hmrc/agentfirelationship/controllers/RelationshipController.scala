@@ -257,6 +257,16 @@ class RelationshipController @Inject()(
     }
   }
 
+  def irvAllowed(arn: String): Action[AnyContent] = Action {
+    if (appConfig.irvAllowListEnabled) {
+      if (appConfig.irvAllowedArns.contains(arn)) {
+        NoContent
+      } else {
+        NotFound
+      }
+    } else NoContent
+  }
+
   def hasLegacySaRelationship(utr: Utr): Action[AnyContent] = Action.async { implicit request =>
     des.getClientSaAgentSaReferences(utr).map {
       case Nil => NotFound

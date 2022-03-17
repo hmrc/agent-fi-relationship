@@ -17,7 +17,7 @@
 package uk.gov.hmrc.agentfirelationship.controllers
 
 import org.mockito.ArgumentMatchers.{any, eq => eqs}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Results._
@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.models.{BasicAuthentication, Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService, RelationshipMongoService}
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -38,10 +38,8 @@ import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments, PlayAuthConnector}
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.net.URL
 import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
@@ -55,27 +53,15 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
   val testIrvArn = "TARN0000001"
   val mockAcaService: AgentClientAuthorisationService = mock[AgentClientAuthorisationService]
-
-  val testAppConfig = new AppConfig {
-    override val appName: String = "agent-fi-relationship"
-    override val agentMappingBaseUrl: URL = new URL("http://localhost:9999/agent-mapping")
-    override val desBaseUrl: URL = new URL("http://localhost:9999/des")
-    override val authBaseUrl: URL = new URL("http://localhost:9999/auth")
-    override val copyCesaRelationshipFlag: Boolean = false
-    override val checkCesaRelationshipFlag: Boolean = false
-    override val desEnvironment: String = "des.env"
-    override val desAuthToken: String = "des.auth.token"
-    override val oldStrideRole: String = "maintain agent relationships"
-    override val newStrideRole: String = "maintain_agent_relationships"
-    override val terminationStrideRole: String = "caat"
-    override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
-    override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
-    override val acaBaseUrl: URL = new URL("http://localhost:9999/aca")
-  }
+  val mockAppConfig: AppConfig = mock[AppConfig]
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"
   val newStrideRole = "maintain_agent_relationships"
   val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
+  when(mockAppConfig.oldStrideRole).thenReturn(oldStrideRole)
+  when(mockAppConfig.newStrideRole).thenReturn(newStrideRole)
+  when(mockAppConfig.irvAllowListEnabled).thenReturn(true)
+  when(mockAppConfig.irvAllowedArns).thenReturn(Seq(testIrvArn))
 
   val controller = new RelationshipController(
     mockAuditService,
@@ -84,7 +70,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     mockCesaRelationship,
     mockAcaService,
     mockDesConnector,
-    testAppConfig,
+    mockAppConfig,
     mockControllerComponents
   )
 
@@ -437,6 +423,9 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: OK for deleting a record as hmrc" in {
+
+      when(mockAppConfig.oldStrideRole).thenReturn("maintain agent relationships")
+      when(mockAppConfig.newStrideRole).thenReturn("maintain_agent_relationships")
       authStub(strideEnrolmentsCred(oldStrideEnrolment))
       when(
         mockMongoService
@@ -678,6 +667,22 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       status(response) shouldBe OK
       verify(mockMongoService, times(1))
         .findActiveClientRelationships(any[String]())(any[ExecutionContext]())
+    }
+
+    "return Status: NO_CONTENT for an IRV allowlist check of an allowlisted ARN" in {
+      val response = controller.irvAllowed(testIrvArn)(fakeRequest)
+      status(response) shouldBe NO_CONTENT
+    }
+
+    "return Status: NOT_FOUND for an IRV allowlist check of a non-allowlisted ARN" in {
+      val response = controller.irvAllowed("TARN0000002")(fakeRequest)
+      status(response) shouldBe NOT_FOUND
+    }
+
+    "return status: NO_CONTENT when the IRV Enabled feature flag is false" in {
+      when(mockAppConfig.irvAllowListEnabled).thenReturn(false)
+      val result = controller.irvAllowed("ARN1")(fakeRequest)
+      status(result) shouldBe 204
     }
   }
 }
