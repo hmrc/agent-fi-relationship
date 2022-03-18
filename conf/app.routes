@@ -16,6 +16,9 @@ GET           /relationships/active                                             
 
 GET           /relationships/active-legacy-sa/utr/:utr                                  @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.hasLegacySaRelationship(utr: uk.gov.hmrc.agentmtdidentifiers.model.Utr)
 
+
+GET           /:arn/irv-allowed                                                                       @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.irvAllowed(arn)
+
 # Stride Routes
 # --------------------------------
 DELETE        /agent/:arn/terminate                                                                   @uk.gov.hmrc.agentfirelationship.controllers.RelationshipController.removeAFIRelationshipsForAgent(arn: String)
