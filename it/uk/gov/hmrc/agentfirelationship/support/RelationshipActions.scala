@@ -24,26 +24,31 @@ trait RelationshipActions extends ScalaFutures {
   def createRelationship(agentId: String, clientId: String, service: String, startDate: LocalDateTime): Future[WSResponse] =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .put(Json.obj("startDate" -> startDate))
 
   def getRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .get()
 
   def terminateRelationship(agentId: String, clientId: String, service: String): Future[WSResponse] =
     wsClient
       .url(s"$url/agent/$agentId/service/$service/client/$clientId")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .delete()
 
   def terminateClientRelationships(clientId: String, service: String): Future[WSResponse] =
     wsClient
       .url(s"$url/service/$service/clientId/$clientId")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .delete()
 
   def getInactiveRelationships: Future[WSResponse] =
     wsClient
       .url(s"$url/inactive")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .get()
 
   def basicAuth(string: String): String = Base64.getEncoder.encodeToString(string.getBytes(UTF_8))

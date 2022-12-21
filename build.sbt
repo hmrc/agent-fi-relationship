@@ -6,7 +6,7 @@ lazy val scoverageSettings = {
   Seq(
     // Semicolon-separated list of regexs matching classes to exclude
     ScoverageKeys.coverageExcludedPackages := """uk\.gov\.hmrc\.BuildInfo;.*\.Routes;.*\.RoutesPrefix;.*Filters?;MicroserviceAuditConnector;Module;GraphiteStartUp;.*\.Reverse[^.]*""",
-    ScoverageKeys.coverageMinimum := 80.00,
+    ScoverageKeys.coverageMinimumStmtTotal := 80.00,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true,
     Test / parallelExecution := false
@@ -15,8 +15,8 @@ lazy val scoverageSettings = {
 
 lazy val compileDeps = Seq(
   ws,
-  "uk.gov.hmrc" %% "bootstrap-backend-play-28" % "5.20.0",
-  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.33.0-play-28",
+  "uk.gov.hmrc" %% "bootstrap-backend-play-28" % "7.12.0",
+  "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.52.0-play-28",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.8.0-play-28",
   "com.typesafe.play" %% "play-json" % "2.9.2",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-28"
@@ -39,7 +39,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "agent-fi-relationship",
     organization := "uk.gov.hmrc",
-    scalaVersion := "2.12.10",
+    scalaVersion := "2.12.15",
     majorVersion := 0,
     PlayKeys.playDefaultPort := 9427,
     resolvers ++= Seq(
@@ -58,8 +58,8 @@ lazy val root = (project in file("."))
       "-P:silencer:pathFilters=views;routes"),
     libraryDependencies ++= tmpMacWorkaround() ++ compileDeps ++ testDeps("test") ++ testDeps("it"),
     libraryDependencies ++= Seq(
-      compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.4.4" cross CrossVersion.full),
-      "com.github.ghik" % "silencer-lib" % "1.4.4" % Provided cross CrossVersion.full
+      compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.7" cross CrossVersion.full),
+      "com.github.ghik" % "silencer-lib" % "1.7.7" % Provided cross CrossVersion.full
     ),
     publishingSettings,
     scoverageSettings,
