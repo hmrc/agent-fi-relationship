@@ -26,7 +26,8 @@ import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
 import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, RelationshipStatus, TerminationResponse}
-import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService, RelationshipMongoService}
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
+import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService}
 import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
@@ -38,7 +39,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class RelationshipController @Inject()(
   auditService: AuditService,
-  mongoService: RelationshipMongoService,
+  mongoService: RelationshipMongoRepository,
   authConnector: AgentClientAuthConnector,
   checkCesaService: CesaRelationshipCopyService,
   acaService: AgentClientAuthorisationService,
@@ -280,7 +281,8 @@ class RelationshipController @Inject()(
         mongoService
           .terminateAgentRelationship(arn)
           .map { result =>
-            Ok(Json.toJson[TerminationResponse](TerminationResponse(Seq(DeletionCount(appConfig.appName, "fi-relationship", result)))))
+            Ok(Json.toJson[TerminationResponse](TerminationResponse(result.map(count =>
+              (DeletionCount(appConfig.appName, "fi-relationship", count))))))
           }
           .recover {
             case e =>

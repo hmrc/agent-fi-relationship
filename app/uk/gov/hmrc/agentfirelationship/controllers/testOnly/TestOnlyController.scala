@@ -23,14 +23,14 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestOnlyController @Inject()(mongoService: RelationshipMongoService, cc: ControllerComponents)(implicit ec: ExecutionContext)
+class TestOnlyController @Inject()(mongoService: RelationshipMongoRepository, cc: ControllerComponents)(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 

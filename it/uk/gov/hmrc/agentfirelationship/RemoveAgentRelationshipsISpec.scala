@@ -1,6 +1,5 @@
 package uk.gov.hmrc.agentfirelationship
 import java.time.LocalDateTime
-
 import javax.inject.Singleton
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
@@ -8,21 +7,22 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, TerminationResponse}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.duration._
 import language.postfixOps
 import scala.concurrent.Await
 
 @Singleton
 class RemoveAgentRelationshipsISpec extends IntegrationSpec with UpstreamServicesStubs
-  with RelationshipActions with GuiceOneServerPerSuite with MongoApp {
-  me: DualSuite =>
+  with RelationshipActions with GuiceOneServerPerSuite with CleanMongoCollectionSupport {
 
-  def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+
+  def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId

@@ -8,19 +8,21 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.{agentId, clientId, service}
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
-import scala.concurrent.ExecutionContext.Implicits.global
+
 
 @Singleton
-class RelationshipMongoServiceIntegrationSpec extends UnitSpec
-  with UpstreamServicesStubs with GuiceOneServerPerSuite with MongoApp {
-  me: DualSuite =>
+class RelationshipMongoRepositoryIntegrationSpec extends UnitSpec
+  with UpstreamServicesStubs with GuiceOneServerPerSuite with CleanMongoCollectionSupport {
 
-  def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+
+  def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId
@@ -40,13 +42,13 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
         "features.copy-cesa-relationships" -> false,
         "features.check-cesa-relationships" -> false)
 
-  "RelationshipMongoService" should {
+  "RelationshipMongoRepository" should {
     "return active relationships for findRelationships" in {
       await(repo.createRelationship(validTestRelationship))
       await(repo.createRelationship(validTestRelationshipCesa))
       await(repo.createRelationship(invalidTestRelationship))
 
-      await(repo.findAll()).size shouldBe 3
+      await(repo.findAnyRelationships(validTestRelationship.arn.value,validTestRelationshipCesa.service,invalidTestRelationship.clientId)).size shouldBe 3
 
       val result = await(repo.findRelationships(arn, service, nino, Active))
 
@@ -66,7 +68,7 @@ class RelationshipMongoServiceIntegrationSpec extends UnitSpec
       await(repo.createRelationship(validTestRelationshipCesa))
       await(repo.createRelationship(invalidTestRelationship))
 
-      await(repo.findAll()).size shouldBe 3
+      await(repo.findAnyRelationships(validTestRelationship.arn.value,validTestRelationshipCesa.service,invalidTestRelationship.clientId)).size shouldBe 3
 
       val result = await(repo.findRelationships(arn, service, nino, Terminated))
 
