@@ -19,13 +19,13 @@ lazy val compileDeps = Seq(
   "uk.gov.hmrc" %% "agent-mtd-identifiers" % "0.52.0-play-28",
   "uk.gov.hmrc" %% "agent-kenshoo-monitoring" % "4.8.0-play-28",
   "com.typesafe.play" %% "play-json" % "2.9.2",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-28"
+  "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28" % "0.74.0"
 )
 
 def testDeps(scope: String) = Seq(
   "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % scope,
   "org.scalatestplus" %% "mockito-3-12" % "3.2.10.0" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "5.0.0-play-28" % scope,
+  "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-28" % "0.74.0" % scope,
   "com.github.tomakehurst" % "wiremock-jre8" % "2.26.1" % scope,
   "com.vladsch.flexmark" % "flexmark-all" % "0.35.10" % scope
 )
@@ -75,7 +75,6 @@ lazy val root = (project in file("."))
     IntegrationTest / unmanagedSourceDirectories += baseDirectory(_ / "it").value,
     IntegrationTest / parallelExecution := false
   )
-  .settings(resolvers += "HMRC-local-artefacts-maven" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases-local")
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
 
 inConfig(IntegrationTest)(scalafmtCoreSettings)

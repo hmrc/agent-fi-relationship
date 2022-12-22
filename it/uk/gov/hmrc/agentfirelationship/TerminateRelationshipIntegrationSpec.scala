@@ -8,23 +8,24 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.stubs.AcaStubs
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 @Singleton
 class TerminateRelationshipIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
-  with RelationshipActions with GuiceOneServerPerSuite with MongoApp with AcaStubs{
-  me: DualSuite =>
+  with RelationshipActions with GuiceOneServerPerSuite with CleanMongoCollectionSupport with AcaStubs{
 
-  def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+
+  def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   override implicit lazy val app: Application = appBuilder.build()
   override def arn = agentId

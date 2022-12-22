@@ -1,39 +1,40 @@
 package uk.gov.hmrc.agentfirelationship
 
 import com.google.inject.{AbstractModule, Singleton}
-import javax.inject.Inject
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsArray, Json}
 import play.api.libs.ws.WSResponse
-import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 @Singleton
-class TestRelationshipMongoService @Inject() (mongoComponent: ReactiveMongoComponent, appConfig: AppConfig)
-  extends RelationshipMongoService(appConfig, mongoComponent) {
+class TestRelationshipMongoRepository @Inject()(mongoComponent: MongoComponent, appConfig: AppConfig)
+  extends RelationshipMongoRepository(appConfig, mongoComponent) {
 
-  override def createRelationship(relationship: Relationship)(implicit ec: ExecutionContext): Future[Unit] = {
+  override def createRelationship(relationship: Relationship): Future[Unit] = {
     Future failed new Exception("Test mongodb failure")
   }
 }
 
 class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
-  with GuiceOneServerPerSuite with RelationshipActions with MongoApp {
-  me: DualSuite =>
+  with GuiceOneServerPerSuite with RelationshipActions with CleanMongoCollectionSupport {
 
-  def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+
+  def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   override def arn = agentId
 
@@ -53,7 +54,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec extends IntegrationSpec with
         "features.check-cesa-relationships" -> true)
       .overrides(new AbstractModule {
         override def configure(): Unit = {
-          bind(classOf[RelationshipMongoService]).to(classOf[TestRelationshipMongoService])
+          bind(classOf[RelationshipMongoRepository]).to(classOf[TestRelationshipMongoRepository])
           ()
         }
       })

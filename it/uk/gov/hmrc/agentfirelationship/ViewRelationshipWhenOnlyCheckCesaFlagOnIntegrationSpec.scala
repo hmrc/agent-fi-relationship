@@ -5,21 +5,22 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsArray, Json}
 import play.api.libs.ws.WSResponse
-import uk.gov.hmrc.agentfirelationship.services.RelationshipMongoService
+import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.support._
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.{Nino, SaAgentReference}
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.duration._
 import language.postfixOps
 
 class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec extends IntegrationSpec with UpstreamServicesStubs
-  with GuiceOneServerPerSuite with RelationshipActions with MongoApp {
-  me: DualSuite =>
+  with GuiceOneServerPerSuite with RelationshipActions with CleanMongoCollectionSupport {
 
-  def repo: RelationshipMongoService = app.injector.instanceOf[RelationshipMongoService]
+
+  def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   override def arn = agentId
   override def nino = clientId
