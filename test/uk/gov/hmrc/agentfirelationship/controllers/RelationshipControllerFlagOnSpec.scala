@@ -68,8 +68,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
     override val acaBaseUrl: URL = new URL("http://localhost:9999/aca")
-    override val irvAllowedArns: Seq[String] = Nil
-    override val irvAllowListEnabled: Boolean = true
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"
