@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
   when(mockAppConfig.oldStrideRole).thenReturn(oldStrideRole)
   when(mockAppConfig.newStrideRole).thenReturn(newStrideRole)
-  when(mockAppConfig.irvAllowListEnabled).thenReturn(true)
-  when(mockAppConfig.irvAllowedArns).thenReturn(Seq(testIrvArn))
 
   val controller = new RelationshipController(
     mockAuditService,
@@ -670,20 +668,5 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         .findActiveClientRelationships(any[String]())
     }
 
-    "return Status: NO_CONTENT for an IRV allowlist check of an allowlisted ARN" in {
-      val response = controller.irvAllowed(testIrvArn)(fakeRequest)
-      status(response) shouldBe NO_CONTENT
-    }
-
-    "return Status: NOT_FOUND for an IRV allowlist check of a non-allowlisted ARN" in {
-      val response = controller.irvAllowed("TARN0000002")(fakeRequest)
-      status(response) shouldBe NOT_FOUND
-    }
-
-    "return status: NO_CONTENT when the IRV Enabled feature flag is false" in {
-      when(mockAppConfig.irvAllowListEnabled).thenReturn(false)
-      val result = controller.irvAllowed("ARN1")(fakeRequest)
-      status(result) shouldBe 204
-    }
   }
 }

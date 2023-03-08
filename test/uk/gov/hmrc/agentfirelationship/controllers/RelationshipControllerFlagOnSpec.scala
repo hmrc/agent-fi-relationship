@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication = BasicAuthentication("username", "password")
     override val acaBaseUrl: URL = new URL("http://localhost:9999/aca")
-    override val irvAllowedArns: Seq[String] = Nil
-    override val irvAllowListEnabled: Boolean = true
   }
   val mockControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole = "maintain agent relationships"

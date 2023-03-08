@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,16 +256,6 @@ class RelationshipController @Inject()(
           Future successful NotFound
       }
     }
-  }
-
-  def irvAllowed(arn: String): Action[AnyContent] = Action {
-    if (appConfig.irvAllowListEnabled) {
-      if (appConfig.irvAllowedArns.contains(arn)) {
-        NoContent
-      } else {
-        NotFound
-      }
-    } else NoContent
   }
 
   def hasLegacySaRelationship(utr: Utr): Action[AnyContent] = Action.async { implicit request =>
