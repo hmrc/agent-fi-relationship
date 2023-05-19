@@ -1,6 +1,6 @@
 # agent-fi-relationship
 
-[![Build Status](https://travis-ci.org/hmrc/agent-fi-relationship.svg)](https://travis-ci.org/hmrc/agent-fi-relationship) [ ![Download](https://api.bintray.com/packages/hmrc/releases/agent-fi-relationship/images/download.svg) ](https://bintray.com/hmrc/releases/agent-fi-relationship/_latestVersion)
+[![Build Status](https://travis-ci.org/hmrc/agent-fi-relationship.svg)](https://travis-ci.org/hmrc/agent-fi-relationship)
 
 This is a backend microservice for managing relationships between agent and client for the PERSONAL-INCOME-RECORD service.
 It allows you to retrieve information about agent-client relationships, create and delete. This service has an isolated relationship store from other
