@@ -3,7 +3,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "agent-fi-relationship",
     organization := "uk.gov.hmrc",
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.10",
     majorVersion := 1,
     PlayKeys.playDefaultPort := 9427,
     resolvers ++= Seq(
@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
     scalacOptions ++= Seq(
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
-      "-Yno-adapted-args",
+      //"-Yno-adapted-args",
       "-Ywarn-value-discard",
       "-Ywarn-dead-code",
       "-deprecation",
