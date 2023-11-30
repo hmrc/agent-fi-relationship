@@ -73,8 +73,12 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   val oldStrideRole = "maintain agent relationships"
   val newStrideRole = "maintain_agent_relationships"
 
-  override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship, mockAcaService)
+  override def afterEach(): Unit = {
+    reset(mockMongoService)
+    reset(mockAuditService)
+    reset(mockPlayAuthConnector)
+    reset(mockCesaRelationship)
+    reset(mockAcaService)
   }
 
   "RelationshipController (Both Flags On)" should {

@@ -73,8 +73,12 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     mockControllerComponents
   )
 
-  override def afterEach() {
-    reset(mockMongoService, mockAuditService, mockPlayAuthConnector, mockCesaRelationship, mockAcaService)
+  override def afterEach(): Unit = {
+    reset(mockMongoService)
+    reset(mockAuditService)
+    reset(mockPlayAuthConnector)
+    reset(mockCesaRelationship)
+    reset(mockAcaService)
   }
 
   private type AfiAction =
