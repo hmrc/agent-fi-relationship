@@ -12,7 +12,6 @@ lazy val root = (project in file("."))
     scalacOptions ++= Seq(
       "-Xfatal-warnings",
       "-Xlint:-missing-interpolator,_",
-      //"-Yno-adapted-args",
       "-Ywarn-value-discard",
       "-Ywarn-dead-code",
       "-deprecation",
@@ -22,6 +21,7 @@ lazy val root = (project in file("."))
       "-Wconf:src=routes/.*:s", // silence warnings from routes
     ),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
     routesImport ++= Seq("uk.gov.hmrc.agentfirelationship.binders.PathBinders._"),
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile := true
@@ -41,3 +41,12 @@ lazy val root = (project in file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
 
 inConfig(IntegrationTest)(scalafmtCoreSettings)
+
+//TODO integration test settings as sub project?
+//lazy val integrationTest = (project in file("it"))
+//  .settings(
+//    Keys.fork := true,
+//    unmanagedSourceDirectories += baseDirectory(_ / "it").value,
+//    parallelExecution := false
+//  )
+
