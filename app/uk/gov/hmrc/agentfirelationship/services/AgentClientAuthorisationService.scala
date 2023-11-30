@@ -22,12 +22,14 @@ import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AgentClientAuthorisationService @Inject()(acaConnector: AgentClientAuthorisationConnector) {
 
-  def setRelationshipEnded(arn: Arn, clientId: String)(implicit taxIdentifier: Option[TaxIdentifier], hc: HeaderCarrier, ec: ExecutionContext) = {
+  def setRelationshipEnded(
+    arn: Arn,
+    clientId: String)(implicit taxIdentifier: Option[TaxIdentifier], hc: HeaderCarrier, ec: ExecutionContext): Future[Boolean] = {
     val endedBy = taxIdentifier match {
       case Some(Arn(_))  => "Agent"
       case Some(Nino(_)) => "Client"
