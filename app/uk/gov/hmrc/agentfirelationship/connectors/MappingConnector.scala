@@ -17,40 +17,44 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
+import javax.inject.Inject
+import javax.inject.Singleton
 
-import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
-import javax.inject.{Inject, Singleton}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import play.api.http.Status._
 import play.api.libs.json._
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.utils.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HttpErrorFunctions._
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http._
-
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class Mappings(mappings: Seq[Mapping])
 
 case class Mapping(arn: Arn, saAgentReference: SaAgentReference)
 
 object Mappings {
-  implicit val mappingReads = Json.reads[Mapping]
-  implicit val reads = Json.reads[Mappings]
+  implicit val mappingReads: Reads[Mapping] = Json.reads[Mapping]
+  implicit val reads: Reads[Mappings]       = Json.reads[Mappings]
 }
 
 @Singleton
-class MappingConnector @Inject()(appConfig: AppConfig, httpGet: HttpClient, metrics: Metrics)(implicit ec: ExecutionContext) extends HttpAPIMonitor {
-  override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+class MappingConnector @Inject() (appConfig: AppConfig, httpGet: HttpClientV2, val metrics: Metrics)(
+    implicit val ec: ExecutionContext
+) extends HttpAPIMonitor {
 
   def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val url = new URL(appConfig.agentMappingBaseUrl, s"/agent-mapping/mappings/sa/${arn.value}")
     monitor(s"ConsumedAPI-Digital-Mappings-GET") {
       httpGet
-        .GET[HttpResponse](url.toString)
+        .get(url)
+        .execute[HttpResponse]
         .map { response =>
           response.status match {
             case s if is2xx(s) => response.json.as[Mappings].mappings.map(_.saAgentReference)

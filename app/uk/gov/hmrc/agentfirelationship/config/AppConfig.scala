@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.agentfirelationship.config
 
-import java.net.{URL, URLDecoder}
-import com.google.inject.ImplementedBy
-import play.api.Configuration
-
+import java.net.URL
+import java.net.URLDecoder
 import javax.inject.Inject
-import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.duration.Duration
+
+import com.google.inject.ImplementedBy
+import play.api.Configuration
+import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @ImplementedBy(classOf[AppConfigImpl])
 trait AppConfig {
@@ -44,21 +45,21 @@ trait AppConfig {
   val acaBaseUrl: URL
 }
 
-class AppConfigImpl @Inject()(config: ServicesConfig, configuration: Configuration) extends AppConfig {
+class AppConfigImpl @Inject() (config: ServicesConfig, configuration: Configuration) extends AppConfig {
 
   override val appName = config.getString("appName")
 
   override val agentMappingBaseUrl = new URL(config.baseUrl("agent-mapping"))
-  override val desBaseUrl: URL = new URL(config.baseUrl("des"))
-  override val authBaseUrl: URL = new URL(config.baseUrl("auth"))
+  override val desBaseUrl: URL     = new URL(config.baseUrl("des"))
+  override val authBaseUrl: URL    = new URL(config.baseUrl("auth"))
 
-  override val copyCesaRelationshipFlag: Boolean = config.getBoolean("features.copy-cesa-relationships")
+  override val copyCesaRelationshipFlag: Boolean  = config.getBoolean("features.copy-cesa-relationships")
   override val checkCesaRelationshipFlag: Boolean = config.getBoolean("features.check-cesa-relationships")
 
-  override val desEnvironment: String = config.getConfString("des.environment", "des.environment")
-  override val desAuthToken: String = config.getConfString("des.authorization-token", "des.authorization-token")
-  override val oldStrideRole: String = URLDecoder.decode(config.getString("old.auth.stride.role"), "utf-8")
-  override val newStrideRole: String = config.getString("new.auth.stride.role")
+  override val desEnvironment: String        = config.getConfString("des.environment", "des.environment")
+  override val desAuthToken: String          = config.getConfString("des.authorization-token", "des.authorization-token")
+  override val oldStrideRole: String         = URLDecoder.decode(config.getString("old.auth.stride.role"), "utf-8")
+  override val newStrideRole: String         = config.getString("new.auth.stride.role")
   override val terminationStrideRole: String = config.getString("termination.stride.enrolment")
 
   override val inactiveRelationshipsShowLastDays: Duration =

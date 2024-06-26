@@ -16,32 +16,44 @@
 
 package uk.gov.hmrc.agentfirelationship.connectors
 
-import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
+import java.net.URL
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.http.Status.NOT_FOUND
+import play.api.http.Status.NO_CONTENT
+import play.api.libs.json.Json
 import play.api.Logging
-import play.api.http.Status.{NOT_FOUND, NO_CONTENT}
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.SetRelationshipEndedPayload
+import uk.gov.hmrc.agentfirelationship.utils.HttpAPIMonitor
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits._
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @Singleton
-class AgentClientAuthorisationConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Metrics) extends HttpAPIMonitor with Logging {
-
-  override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+class AgentClientAuthorisationConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metrics: Metrics)(
+    implicit val ec: ExecutionContext
+) extends HttpAPIMonitor
+    with Logging {
 
   val baseUrl = appConfig.acaBaseUrl
 
-  def setRelationshipEnded(arn: Arn, clientId: String, endedBy: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Boolean] =
+  def setRelationshipEnded(arn: Arn, clientId: String, endedBy: String)(
+      implicit hc: HeaderCarrier,
+      ec: ExecutionContext
+  ): Future[Boolean] =
     monitor("ConsumedAPI-SetRelationshipEnded-PUT") {
-      val url = s"$baseUrl/agent-client-authorisation/invitations/set-relationship-ended"
+      val url         = new URL(s"$baseUrl/agent-client-authorisation/invitations/set-relationship-ended")
       val requestBody = SetRelationshipEndedPayload(arn, clientId, "PERSONAL-INCOME-RECORD", Some(endedBy))
-      http.PUT[SetRelationshipEndedPayload, HttpResponse](url, requestBody).map { response =>
+      http.put(url).withBody(Json.toJson(requestBody)).execute[HttpResponse].map { response =>
         response.status match {
           case NO_CONTENT => true
           case NOT_FOUND =>

@@ -17,47 +17,55 @@
 package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.net.URL
-import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
-
-import javax.inject.{Inject, Singleton}
-import play.api.libs.json._
-import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
-import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.domain.{Nino, SaAgentReference, TaxIdentifier}
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpReads, HttpResponse, UpstreamErrorResponse}
-import uk.gov.hmrc.http.HttpErrorFunctions._
-
-import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import play.api.http.Status._
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
-
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.http.Status._
+import play.api.libs.json._
+import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.utils.HttpAPIMonitor
+import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
+import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.Authorization
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpErrorFunctions._
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class ClientRelationship(agents: Seq[Agent])
 
 case class Agent(hasAgent: Boolean, agentId: Option[SaAgentReference], agentCeasedDate: Option[String])
 
 object ClientRelationship {
-  implicit val agentReads = Json.reads[Agent]
+  implicit val agentReads: Reads[Agent] = Json.reads[Agent]
 
-  implicit val readClientRelationship =
+  implicit val readClientRelationship: Reads[ClientRelationship] =
     (JsPath \ "agents")
       .readNullable[Seq[Agent]]
       .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 }
 
 @Singleton
-class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Metrics) extends HttpAPIMonitor {
-  override val kenshooRegistry: MetricRegistry = metrics.defaultRegistry
+class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metrics: Metrics)(
+    implicit val ec: ExecutionContext
+) extends HttpAPIMonitor {
 
-  private val Environment = "Environment"
-  private val CorrelationId = "CorrelationId"
-  private val Authorization_ = "Authorization"
+  private val Environment: String     = "Environment"
+  private val CorrelationId: String   = "CorrelationId"
+  private val Authorization_ : String = "Authorization"
 
-  private def explicitHeaders =
+  private def explicitHeaders: Seq[(String, String)] =
     Seq(
       Environment    -> s"${appConfig.desEnvironment}",
       CorrelationId  -> UUID.randomUUID().toString,
@@ -65,7 +73,8 @@ class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Me
     )
 
   def getClientSaAgentSaReferences(
-    saTaxIdentifier: TaxIdentifier)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+      saTaxIdentifier: TaxIdentifier
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val url = {
       saTaxIdentifier match {
         case Nino(nino) => new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino)}")
@@ -89,12 +98,19 @@ class DesConnector @Inject()(appConfig: AppConfig, http: HttpClient, metrics: Me
     }
   }
 
-  private def getWithDesHeaders[A: HttpReads](apiName: String, url: URL)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
+  private def getWithDesHeaders[A: HttpReads](
+      apiName: String,
+      url: URL
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
       authorization = Some(Authorization(s"Bearer ${appConfig.desAuthToken}")),
-      extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment)
+      extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment
+    )
     monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      http.GET[A](url.toString, headers = explicitHeaders)(implicitly[HttpReads[A]], desHeaderCarrier, ec)
+      http
+        .get(url)(desHeaderCarrier)
+        .transform(_.addHttpHeaders(explicitHeaders: _*))
+        .execute(implicitly[HttpReads[A]], ec)
     }
   }
 }

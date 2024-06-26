@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.agentfirelationship.support
 
-import org.scalatest.OptionValues
+import scala.concurrent.Future
+
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.OptionValues
 import play.api.libs.json.JsValue
 import play.api.mvc.Result
 import play.api.test.Helpers
 import play.api.test.Helpers.defaultAwaitTimeout
-
-import scala.concurrent.Future
 
 trait UnitSpec extends AnyWordSpecLike with Matchers with OptionValues with ScalaFutures {
   // the following is a collection of useful methods that should minimise

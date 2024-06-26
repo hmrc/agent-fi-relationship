@@ -18,82 +18,103 @@ package uk.gov.hmrc.agentfirelationship
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.{JsObject, Json}
+import scala.concurrent.Future
+
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.mvc.Http.HeaderNames
 import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Terminated
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Future
-
 package object controllers {
-  implicit val hc = new HeaderCarrier
-  val testResponseDate = LocalDateTime.now
+  implicit val hc: HeaderCarrier      = new HeaderCarrier
+  val testResponseDate: LocalDateTime = LocalDateTime.now
 
-  val fakeRequest = FakeRequest("GET", "")
+  val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "")
 
   val fakeCreateRequest: FakeRequest[JsObject] = FakeRequest("PUT", "/")
     .withHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
     .withBody(Json.obj("startDate" -> testResponseDate))
 
-  val saAgentRef = SaAgentReference("T1113T")
-  val saAgentRef2 = SaAgentReference("T1123T")
-  val saAgentRef3 = SaAgentReference("T1133T")
-  val validTestArn = "TARN0000001"
-  val validTestArn2 = "TARN0000002"
-  val testCredId = "q213"
-  val testService = "PERSONAL-INCOME-RECORD"
-  val validTestNINO = "AE123456C"
-  val validTestNINO2 = "AB123456A"
+  val saAgentRef: SaAgentReference  = SaAgentReference("T1113T")
+  val saAgentRef2: SaAgentReference = SaAgentReference("T1123T")
+  val saAgentRef3: SaAgentReference = SaAgentReference("T1133T")
+  val validTestArn: String          = "TARN0000001"
+  val validTestArn2: String         = "TARN0000002"
+  val testCredId: String            = "q213"
+  val testService: String           = "PERSONAL-INCOME-RECORD"
+  val validTestNINO: String         = "AE123456C"
+  val validTestNINO2: String        = "AB123456A"
 
-  val GGcredentials = Credentials("someId", "GovernmentGateway")
-  val PAcredentials = Credentials("someId", "PrivilegedApplication")
+  val GGcredentials: Credentials = Credentials("someId", "GovernmentGateway")
+  val PAcredentials: Credentials = Credentials("someId", "PrivilegedApplication")
 
   val validTestRelationship: Relationship =
     Relationship(Arn(validTestArn), testService, validTestNINO, Some(Active), testResponseDate, None)
   val validTestRelationshipTerminated: Relationship =
     Relationship(Arn(validTestArn), testService, validTestNINO2, Some(Terminated), testResponseDate, None)
   val validTestRelationshipCesa: Relationship =
-    Relationship(Arn(validTestArn), testService, validTestNINO, Some(Terminated), testResponseDate, None, fromCesa = Some(true))
+    Relationship(
+      Arn(validTestArn),
+      testService,
+      validTestNINO,
+      Some(Terminated),
+      testResponseDate,
+      None,
+      fromCesa = Some(true)
+    )
 
-  val agentEnrolment = Set(
-    Enrolment("HMRC-AS-AGENT", Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)), state = "", delegatedAuthRule = None))
+  val agentEnrolment: Set[Enrolment] = Set(
+    Enrolment(
+      "HMRC-AS-AGENT",
+      Seq(EnrolmentIdentifier("AgentReferenceNumber", validTestArn)),
+      state = "",
+      delegatedAuthRule = None
+    )
+  )
 
-  val clientEnrolment = Set(Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None))
+  val clientEnrolment: Set[Enrolment] = Set(
+    Enrolment("HMRC-NI", Seq(EnrolmentIdentifier("NINO", validTestNINO)), state = "", delegatedAuthRule = None)
+  )
 
-  val oldStrideEnrolment = Set(Enrolment("maintain agent relationships"))
-  val newStrideEnrolment = Set(Enrolment("maintain_agent_relationships"))
-  val terminateStrideEnrolment = Set(Enrolment("caat"))
+  val oldStrideEnrolment: Set[Enrolment]       = Set(Enrolment("maintain agent relationships"))
+  val newStrideEnrolment: Set[Enrolment]       = Set(Enrolment("maintain_agent_relationships"))
+  val terminateStrideEnrolment: Set[Enrolment] = Set(Enrolment("caat"))
 
   val clientAffinityAndEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), Some(GGcredentials))
+    Future.successful(new ~(new ~(Some(AffinityGroup.Individual), Enrolments(clientEnrolment)), Some(GGcredentials)))
 
   val agentAffinityAndEnrolmentsCreds: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)), Some(GGcredentials))
+    Future.successful(new ~(new ~(Some(AffinityGroup.Agent), Enrolments(agentEnrolment)), Some(GGcredentials)))
 
   val strideEnrolmentsCred: Set[Enrolment] => Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    strideEnrolments => Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(strideEnrolments)), Some(PAcredentials))
+    strideEnrolments =>
+      Future.successful(new ~(new ~(Some(AffinityGroup.Agent), Enrolments(strideEnrolments)), Some(PAcredentials)))
 
   val clientNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Individual), Enrolments(Set.empty)), Some(GGcredentials))
+    Future.successful(new ~(new ~(Some(AffinityGroup.Individual), Enrolments(Set.empty)), Some(GGcredentials)))
 
   val agentNoEnrolments: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    Future successful new ~(new ~(Some(AffinityGroup.Agent), Enrolments(Set.empty)), Some(GGcredentials))
+    Future.successful(new ~(new ~(Some(AffinityGroup.Agent), Enrolments(Set.empty)), Some(GGcredentials)))
 
   val neitherHaveAffinityOrEnrolment: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    Future successful new ~(new ~(None, Enrolments(Set.empty)), Some(GGcredentials))
+    Future.successful(new ~(new ~(None, Enrolments(Set.empty)), Some(GGcredentials)))
 
   val failedAuthStub: Future[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
-    Future failed new InsufficientEnrolments
+    Future.failed(new InsufficientEnrolments)
 
   val onlyStride: Set[Enrolment] => Future[Enrolments] =
-    strideEnrolments => Future successful Enrolments(strideEnrolments)
+    strideEnrolments => Future.successful(Enrolments(strideEnrolments))
 
   val onlyStrideFail: Future[Enrolments] =
-    Future failed new UnsupportedAuthProvider
+    Future.failed(new UnsupportedAuthProvider)
 }

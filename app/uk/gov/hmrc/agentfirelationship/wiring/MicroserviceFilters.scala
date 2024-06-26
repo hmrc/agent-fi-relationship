@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.agentfirelationship.wiring
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 
-import com.kenshoo.play.metrics.MetricsFilter
 import play.api.http.DefaultHttpFilters
-import uk.gov.hmrc.play.bootstrap.filters.{AuditFilter, CacheControlFilter, LoggingFilter}
+import uk.gov.hmrc.play.bootstrap.filters.AuditFilter
+import uk.gov.hmrc.play.bootstrap.filters.CacheControlFilter
+import uk.gov.hmrc.play.bootstrap.filters.LoggingFilter
+import uk.gov.hmrc.play.bootstrap.metrics.MetricsFilter
 
 @Singleton
-class MicroserviceFilters @Inject()(
-  metricsFilter: MetricsFilter,
-  auditFilter: AuditFilter,
-  loggingFilter: LoggingFilter,
-  cacheFilter: CacheControlFilter,
-  monitoringFilter: MicroserviceMonitoringFilter)
-    extends DefaultHttpFilters(metricsFilter, monitoringFilter, auditFilter, loggingFilter, cacheFilter)
+class MicroserviceFilters @Inject() (
+    metricsFilter: MetricsFilter,
+    auditFilter: AuditFilter,
+    loggingFilter: LoggingFilter,
+    cacheFilter: CacheControlFilter,
+    monitoringFilter: MicroserviceMonitoringFilter
+) extends DefaultHttpFilters(metricsFilter, monitoringFilter, auditFilter, loggingFilter, cacheFilter)

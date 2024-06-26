@@ -16,24 +16,33 @@
 
 package uk.gov.hmrc.agentfirelationship.wiring
 
-import java.util.regex.{Matcher, Pattern}
-
-import akka.stream.Materializer
-import app.Routes
-import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
-import javax.inject.{Inject, Singleton}
-import play.api.Logging
-import play.api.mvc.{Filter, RequestHeader, Result}
-import uk.gov.hmrc.http.{HttpException, UpstreamErrorResponse}
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import javax.inject.Inject
+import javax.inject.Singleton
 
 import scala.concurrent.duration.NANOSECONDS
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+
+import app.Routes
+import com.codahale.metrics.MetricRegistry
+import org.apache.pekko.stream.Materializer
+import play.api.mvc.Filter
+import play.api.mvc.RequestHeader
+import play.api.mvc.Result
+import play.api.Logging
+import uk.gov.hmrc.http.HttpException
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @Singleton
-class MicroserviceMonitoringFilter @Inject()(metrics: Metrics, routes: Routes)(implicit ec: ExecutionContext, val mat: Materializer)
-    extends MonitoringFilter(metrics.defaultRegistry) {
+class MicroserviceMonitoringFilter @Inject() (metrics: Metrics, routes: Routes)(
+    implicit ec: ExecutionContext,
+    val mat: Materializer
+) extends MonitoringFilter(metrics.defaultRegistry) {
   override def keyToPatternMapping: Seq[(String, String)] =
     KeyToPatternMappingFromRoutes(routes, Set("service"))
 }
@@ -49,7 +58,8 @@ object KeyToPatternMappingFromRoutes extends Logging {
             if (p.startsWith("$")) {
               val name = p.substring(1)
               if (placeholders.contains(name)) s"{$name}" else ":"
-            } else p)
+            } else p
+          )
           .mkString("__")
         val pattern = r.replace("$", ":")
         logger.info(s"$key-$method -> $pattern")
@@ -82,8 +92,8 @@ abstract class MonitoringFilter(kenshooRegistry: MetricRegistry)(implicit ec: Ex
     val start = System.nanoTime()
     function.andThen {
       case Success(result) =>
-        val status = result.header.status
-        val timerName = s"Timer-$serviceName"
+        val status      = result.header.status
+        val timerName   = s"Timer-$serviceName"
         val counterName = timerName + "." + status
         updateMetrics(start, timerName, counterName)
 
@@ -126,8 +136,8 @@ trait MonitoringKeyMatcher {
       .map { case (k, (p, vs)) => (k, (Pattern.compile(p), vs)) }
 
   def preparePatternAndVariables(p: String): (String, Seq[String]) = {
-    var pattern = p
-    val m = placeholderPattern.matcher(pattern)
+    var pattern   = p
+    val m         = placeholderPattern.matcher(pattern)
     var variables = Seq[String]()
     while (m.find()) {
       val variable = m.group().substring(1)
@@ -143,16 +153,18 @@ trait MonitoringKeyMatcher {
   }
 
   def findMatchingKey(value: String): Option[String] =
-    patterns.collectFirst {
-      case (key, (pattern, variables)) if pattern.matcher(value).matches() =>
-        (key, variables, readValues(pattern.matcher(value)))
-    } map {
-      case (key, variables, values) => replaceVariables(key, variables, values)
-    }
+    patterns
+      .collectFirst {
+        case (key, (pattern, variables)) if pattern.matcher(value).matches() =>
+          (key, variables, readValues(pattern.matcher(value)))
+      }
+      .map {
+        case (key, variables, values) => replaceVariables(key, variables, values)
+      }
 
   private def readValues(result: Matcher): Seq[String] = {
     result.matches()
-    (1 to result.groupCount()) map result.group
+    (1 to result.groupCount()).map(result.group)
   }
 
   private def replaceVariables(key: String, variables: Seq[String], values: Seq[String]): String =

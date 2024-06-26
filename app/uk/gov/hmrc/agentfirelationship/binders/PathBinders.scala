@@ -19,5 +19,9 @@ package uk.gov.hmrc.agentfirelationship.binders
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 
 object PathBinders {
-  implicit object UtrBinder extends SimpleObjectBinder[Utr](utr => if (Utr.isValid(utr)) Utr.apply(utr) else throw new Exception("invalid"), _.value)
+  implicit object UtrBinder
+      extends SimpleObjectBinder[Utr](
+        utr => if (Utr.isValid(utr)) Utr.apply(utr) else throw new Exception("invalid"),
+        _.value
+      )
 }
