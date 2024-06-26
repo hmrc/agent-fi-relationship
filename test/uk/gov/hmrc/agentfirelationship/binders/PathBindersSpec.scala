@@ -30,7 +30,9 @@ class PathBindersSpec extends UnitSpec {
       utrBinder.unbind("value", Utr("1307171695")) shouldBe "1307171695"
     }
     "not bind when passed invalid utr" in {
-      utrBinder.bind("value", "1234567890") shouldBe Left("Cannot parse parameter 'value' with value '1234567890' as 'Utr'")
+      utrBinder.bind("value", "1234567890") shouldBe Left(
+        "Cannot parse parameter 'value' with value '1234567890' as 'Utr'"
+      )
     }
   }
 

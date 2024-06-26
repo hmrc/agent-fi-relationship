@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.agentfirelationship.support
 
-import org.mockito.Mockito
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterEach, Suite}
-
 import scala.reflect.Manifest
+
+import org.mockito.Mockito
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.Suite
+import org.scalatestplus.mockito.MockitoSugar
 
 trait ResettingMockitoSugar extends MockitoSugar with BeforeAndAfterEach {
   this: Suite =>
@@ -33,7 +34,7 @@ trait ResettingMockitoSugar extends MockitoSugar with BeforeAndAfterEach {
     m
   }
 
-  override protected def beforeEach(): Unit = {
+  protected override def beforeEach(): Unit = {
     super.beforeEach()
     Mockito.reset(mocksToReset: _*)
   }

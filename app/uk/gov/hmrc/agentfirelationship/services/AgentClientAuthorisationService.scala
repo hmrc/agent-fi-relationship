@@ -16,20 +16,25 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthorisationConnector
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
-class AgentClientAuthorisationService @Inject()(acaConnector: AgentClientAuthorisationConnector) {
+class AgentClientAuthorisationService @Inject() (acaConnector: AgentClientAuthorisationConnector) {
 
   def setRelationshipEnded(
-    arn: Arn,
-    clientId: String)(implicit taxIdentifier: Option[TaxIdentifier], hc: HeaderCarrier, ec: ExecutionContext): Future[Boolean] = {
+      arn: Arn,
+      clientId: String
+  )(implicit taxIdentifier: Option[TaxIdentifier], hc: HeaderCarrier, ec: ExecutionContext): Future[Boolean] = {
     val endedBy = taxIdentifier match {
       case Some(Arn(_))  => "Agent"
       case Some(Nino(_)) => "Client"

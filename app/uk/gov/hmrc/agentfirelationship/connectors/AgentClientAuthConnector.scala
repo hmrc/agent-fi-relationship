@@ -18,27 +18,35 @@ package uk.gov.hmrc.agentfirelationship.connectors
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Base64
-import javax.inject.{Inject, Singleton}
-import play.api.Logging
-import play.api.mvc.Results._
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.matching.Regex
+
 import play.api.mvc._
+import play.api.mvc.Results._
+import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
-import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.TaxIdentifier
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HeaderNames
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.matching.Regex
-
 @Singleton
-class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(implicit ec: ExecutionContext) extends AuthorisedFunctions with Logging {
-  implicit def hc(implicit rh: RequestHeader) =
+class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(implicit ec: ExecutionContext)
+    extends AuthorisedFunctions
+    with Logging {
+  implicit def hc(implicit rh: RequestHeader): HeaderCarrier =
     HeaderCarrierConverter.fromRequestAndSession(rh, rh.session)
 
   private type AfiAction =
@@ -50,17 +58,18 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
         case affinity ~ enrols ~ optCreds =>
           (affinity, optCreds) match {
             case (Some(AffinityGroup.Agent), Some(creds @ Credentials(_, "GovernmentGateway"))) =>
-              extractArn(enrols.enrolments).fold(Future successful Forbidden("")) { arn =>
+              extractArn(enrols.enrolments).fold(Future.successful(Forbidden(""))) { arn =>
                 action(Some(arn))(creds)
               }
             case (Some(_), Some(creds @ Credentials(_, "GovernmentGateway"))) =>
-              extractNino(enrols.enrolments).fold(Future successful Forbidden("")) { nino =>
+              extractNino(enrols.enrolments).fold(Future.successful(Forbidden(""))) { nino =>
                 action(Some(nino))(creds)
               }
-            case (_, Some(creds @ Credentials(_, "PrivilegedApplication"))) if hasRequiredStrideRole(enrols, strideRoles) =>
+            case (_, Some(creds @ Credentials(_, "PrivilegedApplication")))
+                if hasRequiredStrideRole(enrols, strideRoles) =>
               action(None)(creds)
             case _ =>
-              Future successful Forbidden("Invalid affinity group and credentials found")
+              Future.successful(Forbidden("Invalid affinity group and credentials found"))
           }
         case _ =>
           logger.warn("Invalid affinity group or enrolments or credentials whilst trying to manipulate relationships")
@@ -76,14 +85,16 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
       }
 
   val basicAuthHeader: Regex = "Basic (.+)".r
-  val decodedAuth: Regex = "(.+):(.+)".r
+  val decodedAuth: Regex     = "(.+):(.+)".r
 
   private def decodeFromBase64(encodedString: String): String =
     try {
       new String(Base64.getDecoder.decode(encodedString), UTF_8)
     } catch { case _: Throwable => "" }
 
-  def withBasicAuth(expectedAuth: BasicAuthentication)(body: => Future[Result])(implicit request: Request[_]): Future[Result] =
+  def withBasicAuth(
+      expectedAuth: BasicAuthentication
+  )(body: => Future[Result])(implicit request: Request[_]): Future[Result] =
     request.headers.get(HeaderNames.authorisation) match {
       case Some(basicAuthHeader(encodedAuthHeader)) =>
         decodeFromBase64(encodedAuthHeader) match {
@@ -91,24 +102,26 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
             if (BasicAuthentication(username, password) == expectedAuth) body
             else {
               logger.warn("Authorization header found in the request but invalid username or password")
-              Future successful Unauthorized
+              Future.successful(Unauthorized)
             }
           case _ =>
             logger.warn("Authorization header found in the request but its not in the expected format")
-            Future successful Unauthorized
+            Future.successful(Unauthorized)
         }
       case _ =>
         logger.warn("No Authorization header found in the request for agent termination")
-        Future successful Unauthorized
+        Future.successful(Unauthorized)
     }
 
-  def onlyStride(strideRole: String)(action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
+  def onlyStride(
+      strideRole: String
+  )(action: => Future[Result])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Result] =
     authorised(AuthProviders(PrivilegedApplication))
       .retrieve(allEnrolments) {
         case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
         case e =>
           logger.warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
-          Future successful Unauthorized
+          Future.successful(Unauthorized)
       }
       .recover {
         case e =>
@@ -123,7 +136,7 @@ class AgentClientAuthConnector @Inject()(val authConnector: AuthConnector)(impli
 
   private def extractArn(enrolls: Set[Enrolment]): Option[Arn] =
     enrolls
-      .find(_.key equals "HMRC-AS-AGENT")
+      .find(_.key.equals("HMRC-AS-AGENT"))
       .flatMap(_.getIdentifier("AgentReferenceNumber").map(x => Arn(x.value)))
 
   private def extractNino(enrolls: Set[Enrolment]): Option[Nino] =

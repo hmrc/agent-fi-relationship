@@ -16,26 +16,34 @@
 
 package uk.gov.hmrc.agentfirelationship.repository
 
+import java.time.LocalDateTime
+import java.time.ZoneId
+import javax.inject.Inject
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.IndexModel
+import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.Updates.{combine, set}
-import org.mongodb.scala.model.{IndexModel, IndexOptions}
+import org.mongodb.scala.model.Updates.combine
+import org.mongodb.scala.model.Updates.set
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.models.{Relationship, RelationshipStatus}
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
-
-import java.time.{LocalDateTime, ZoneId}
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class RelationshipMongoRepository @Inject()(appConfig: AppConfig, mongoComponent: MongoComponent)(implicit ec: ExecutionContext)
-    extends PlayMongoRepository[Relationship](
+class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponent: MongoComponent)(
+    implicit ec: ExecutionContext
+) extends PlayMongoRepository[Relationship](
       mongoComponent = mongoComponent,
       collectionName = "fi-relationship",
       domainFormat = Relationship.relationshipFormat,
@@ -73,9 +81,21 @@ class RelationshipMongoRepository @Inject()(appConfig: AppConfig, mongoComponent
     )
     with Logging {
 
-  def findRelationships(arn: String, service: String, clientId: String, status: RelationshipStatus = Active): Future[List[Relationship]] =
+  def findRelationships(
+      arn: String,
+      service: String,
+      clientId: String,
+      status: RelationshipStatus = Active
+  ): Future[List[Relationship]] =
     collection
-      .find(and(equal("arn", arn), equal("service", service), equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", status)))
+      .find(
+        and(
+          equal("arn", arn),
+          equal("service", service),
+          equal("clientId", clientId.replaceAll(" ", "")),
+          equal("relationshipStatus", status)
+        )
+      )
       .toFuture()
       .map(_.toList)
 
@@ -91,10 +111,24 @@ class RelationshipMongoRepository @Inject()(appConfig: AppConfig, mongoComponent
       .map(_ => ())
 
   def terminateRelationship(arn: String, service: String, clientId: String): Future[Boolean] =
-    updateStatusToTerminated(and(equal("arn", arn), equal("service", service), equal("clientId", clientId.replaceAll(" ", ""))))
+    updateStatusToTerminated(
+      and(equal("arn", arn), equal("service", service), equal("clientId", clientId.replaceAll(" ", "")))
+    )
 
-  def findClientRelationships(service: String, clientId: String, status: RelationshipStatus = Active): Future[Seq[Relationship]] =
-    collection.find(and(equal("service", service), equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", status))).toFuture()
+  def findClientRelationships(
+      service: String,
+      clientId: String,
+      status: RelationshipStatus = Active
+  ): Future[Seq[Relationship]] =
+    collection
+      .find(
+        and(
+          equal("service", service),
+          equal("clientId", clientId.replaceAll(" ", "")),
+          equal("relationshipStatus", status)
+        )
+      )
+      .toFuture()
 
   def deleteAllClientIdRelationships(service: String, clientId: String): Future[Boolean] =
     updateStatusToTerminated(and(equal("service", service), equal("clientId", clientId.replaceAll(" ", ""))))
@@ -113,10 +147,14 @@ class RelationshipMongoRepository @Inject()(appConfig: AppConfig, mongoComponent
       .toFuture()
 
   def findInactiveClientRelationships(clientId: String): Future[Seq[Relationship]] =
-    collection.find(and(equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", "TERMINATED"))).toFuture()
+    collection
+      .find(and(equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", "TERMINATED")))
+      .toFuture()
 
   def findActiveClientRelationships(clientId: String): Future[Seq[Relationship]] =
-    collection.find(and(equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", "ACTIVE"))).toFuture()
+    collection
+      .find(and(equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", "ACTIVE")))
+      .toFuture()
 
   def terminateAgentRelationship(arn: String): Future[Seq[Int]] =
     collection.deleteMany(equal("arn", arn)).map(_.getDeletedCount.toInt).toFuture()

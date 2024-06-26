@@ -16,36 +16,44 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
-import org.mockito.ArgumentMatchers.{eq => eqs}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import org.mockito.ArgumentMatchers.{ eq => eqs }
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
-import uk.gov.hmrc.agentfirelationship.connectors.{DesConnector, MappingConnector}
-import uk.gov.hmrc.agentfirelationship.support.{ResettingMockitoSugar, UnitSpec}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, MtdItId}
-import uk.gov.hmrc.domain.{AgentCode, Generator, Nino, SaAgentReference}
+import uk.gov.hmrc.agentfirelationship.audit.AuditData
+import uk.gov.hmrc.agentfirelationship.audit.AuditService
+import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
+import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
+import uk.gov.hmrc.agentfirelationship.support.ResettingMockitoSugar
+import uk.gov.hmrc.agentfirelationship.support.UnitSpec
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.MtdItId
+import uk.gov.hmrc.domain.AgentCode
+import uk.gov.hmrc.domain.Generator
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
 
 class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach with ResettingMockitoSugar {
 
   val testDataGenerator = new Generator()
-  val arn = Arn("AARN0000002")
-  val saAgentRef = SaAgentReference("T1113T")
-  val saAgentRef2 = SaAgentReference("T1123T")
-  val saAgentRef3 = SaAgentReference("T1133T")
-  val mtdItId = MtdItId("ABCDEF123456789")
-  val agentCode = AgentCode("ABC1234")
-  val nino: Nino = testDataGenerator.nextNino
+  val arn               = Arn("AARN0000002")
+  val saAgentRef        = SaAgentReference("T1113T")
+  val saAgentRef2       = SaAgentReference("T1123T")
+  val saAgentRef3       = SaAgentReference("T1133T")
+  val mtdItId           = MtdItId("ABCDEF123456789")
+  val agentCode         = AgentCode("ABC1234")
+  val nino: Nino        = testDataGenerator.nextNino
 
-  private val des = resettingMock[DesConnector]
-  private val mapping = resettingMock[MappingConnector]
+  private val des          = resettingMock[DesConnector]
+  private val mapping      = resettingMock[MappingConnector]
   private val auditService = resettingMock[AuditService]
 
-  val hc = HeaderCarrier()
+  val hc                   = HeaderCarrier()
   val ec: ExecutionContext = implicitly[ExecutionContext]
 
   "CesaRelationshipCopyService" should {
@@ -60,7 +68,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData))
+            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+        )
 
       agentRefs shouldBe Set(saAgentRef)
     }
@@ -73,7 +82,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData))
+            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+        )
 
       agentRefs shouldBe Set(saAgentRef)
     }
@@ -86,7 +96,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData))
+            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+        )
 
       agentRefs shouldBe Set.empty
     }
@@ -99,7 +110,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData))
+            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+        )
 
       agentRefs shouldBe Set.empty
     }
@@ -112,7 +124,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData))
+            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+        )
 
       agentRefs shouldBe Set.empty
     }
@@ -125,7 +138,8 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData))
+            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+        )
 
       agentRefs shouldBe Set.empty
     }
@@ -133,41 +147,41 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
 
   private def commonMultipleRelationshipExists(): Unit = {
     when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
-      .thenReturn(Future successful Seq(saAgentRef, saAgentRef3))
+      .thenReturn(Future.successful(Seq(saAgentRef, saAgentRef3)))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
-      .thenReturn(Future successful Seq(saAgentRef, saAgentRef2))
+      .thenReturn(Future.successful(Seq(saAgentRef, saAgentRef2)))
     ()
   }
 
   private def cesaAndMappingReturnEmptyRelationshipSets(): Unit = {
     when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
-      .thenReturn(Future successful Seq())
+      .thenReturn(Future.successful(Seq()))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
-      .thenReturn(Future successful Seq())
+      .thenReturn(Future.successful(Seq()))
     ()
   }
 
   private def commonRelationshipDoesNotExistInBothCesaAndMapping(): Unit = {
     when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
-      .thenReturn(Future successful Seq(saAgentRef))
+      .thenReturn(Future.successful(Seq(saAgentRef)))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
-      .thenReturn(Future successful Seq(saAgentRef2))
+      .thenReturn(Future.successful(Seq(saAgentRef2)))
     ()
   }
 
   private def commonRelationshipDoesNotExistInMapping(): Unit = {
     when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
-      .thenReturn(Future successful Seq(saAgentRef))
+      .thenReturn(Future.successful(Seq(saAgentRef)))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
-      .thenReturn(Future successful Seq())
+      .thenReturn(Future.successful(Seq()))
     ()
   }
 
   private def commonRelationshipDoesNotExistInCesa(): Unit = {
     when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
-      .thenReturn(Future successful Seq())
+      .thenReturn(Future.successful(Seq()))
     when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
-      .thenReturn(Future successful Seq(saAgentRef))
+      .thenReturn(Future.successful(Seq(saAgentRef)))
     ()
   }
 }

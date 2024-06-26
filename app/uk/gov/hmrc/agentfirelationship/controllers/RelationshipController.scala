@@ -16,41 +16,56 @@
 
 package uk.gov.hmrc.agentfirelationship.controllers
 
-import java.time.{LocalDateTime, ZoneId}
-import javax.inject.{Inject, Singleton}
-import play.api.Logging
+import java.time.LocalDateTime
+import java.time.ZoneId
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
+import play.api.libs.json.OFormat
 import play.api.mvc._
-import uk.gov.hmrc.agentfirelationship.audit.{AuditData, AuditService}
+import play.api.Logging
+import uk.gov.hmrc.agentfirelationship.audit.AuditData
+import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.connectors.{AgentClientAuthConnector, DesConnector}
-import uk.gov.hmrc.agentfirelationship.models.{DeletionCount, Relationship, RelationshipStatus, TerminationResponse}
+import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
+import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
+import uk.gov.hmrc.agentfirelationship.models.DeletionCount
+import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
+import uk.gov.hmrc.agentfirelationship.models.TerminationResponse
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-import uk.gov.hmrc.agentfirelationship.services.{AgentClientAuthorisationService, CesaRelationshipCopyService}
-import uk.gov.hmrc.agentmtdidentifiers.model.{Arn, Utr}
+import uk.gov.hmrc.agentfirelationship.services.AgentClientAuthorisationService
+import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
+import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.domain.{Nino, TaxIdentifier}
+import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
-class RelationshipController @Inject()(
-  auditService: AuditService,
-  mongoService: RelationshipMongoRepository,
-  authConnector: AgentClientAuthConnector,
-  checkCesaService: CesaRelationshipCopyService,
-  acaService: AgentClientAuthorisationService,
-  des: DesConnector,
-  appConfig: AppConfig,
-  cc: ControllerComponents
+class RelationshipController @Inject() (
+    auditService: AuditService,
+    mongoService: RelationshipMongoRepository,
+    authConnector: AgentClientAuthConnector,
+    checkCesaService: CesaRelationshipCopyService,
+    acaService: AgentClientAuthorisationService,
+    des: DesConnector,
+    appConfig: AppConfig,
+    cc: ControllerComponents
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  import appConfig.{newStrideRole, oldStrideRole}
+  import appConfig.newStrideRole
+  import appConfig.oldStrideRole
 
   val strideRoles: Seq[String] = Seq(oldStrideRole, newStrideRole)
 
@@ -58,44 +73,47 @@ class RelationshipController @Inject()(
     findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
 
   /* Tries to find existing client/agent relationships, and if none found, copies over from cesa */
-  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { implicit request =>
-    implicit val auditData: AuditData = new AuditData()
+  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      implicit val auditData: AuditData = new AuditData()
 
-    mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap { activeRelationships =>
-      if (activeRelationships.nonEmpty) {
-        Future.successful(Ok(toJson(activeRelationships)))
-      } else {
-        mongoService.findAnyRelationships(arn, service, clientId) flatMap { anyRelationships =>
-          if (anyRelationships.nonEmpty) {
-            Future successful NotFound
-          } else {
-            handleCesaRelationship(arn, service, clientId, activeRelationships)
+      mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap { activeRelationships =>
+        if (activeRelationships.nonEmpty) {
+          Future.successful(Ok(toJson(activeRelationships)))
+        } else {
+          mongoService.findAnyRelationships(arn, service, clientId).flatMap { anyRelationships =>
+            if (anyRelationships.nonEmpty) {
+              Future.successful(NotFound)
+            } else {
+              handleCesaRelationship(arn, service, clientId, activeRelationships)
+            }
           }
         }
       }
-    }
   }
 
-  private def handleCesaRelationship(arn: String, service: String, clientId: String, activeRelationships: List[Relationship])(
-    implicit auditData: AuditData,
-    hc: HeaderCarrier,
-    request: Request[Any]): Future[Result] =
+  private def handleCesaRelationship(
+      arn: String,
+      service: String,
+      clientId: String,
+      activeRelationships: List[Relationship]
+  )(implicit auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] =
     if (appConfig.checkCesaRelationshipFlag) {
       checkCesaService
         .lookupCesaForOldRelationship(Arn(arn), Nino(clientId))
         .flatMap { saAgentRefs =>
           if (saAgentRefs.isEmpty) {
-            Future successful NotFound
+            Future.successful(NotFound)
           } else {
             mongoService.findActiveClientRelationships(clientId).flatMap { activeRelationshipsAcrossAgents =>
               if (activeRelationshipsAcrossAgents.isEmpty) {
                 if (appConfig.copyCesaRelationshipFlag) {
                   copyCesaRelationship(arn, service, clientId, activeRelationships)
                 } else {
-                  Future successful Ok(toJson(activeRelationships))
+                  Future.successful(Ok(toJson(activeRelationships)))
                 }
               } else {
-                Future successful NotFound
+                Future.successful(NotFound)
               }
             }
 
@@ -105,10 +123,12 @@ class RelationshipController @Inject()(
       Future.successful(NotFound)
     }
 
-  private def copyCesaRelationship(arn: String, service: String, clientId: String, activeRelationships: List[Relationship])(
-    implicit auditData: AuditData,
-    hc: HeaderCarrier,
-    request: Request[Any]): Future[Result] = {
+  private def copyCesaRelationship(
+      arn: String,
+      service: String,
+      clientId: String,
+      activeRelationships: List[Relationship]
+  )(implicit auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] = {
 
     val activeRelationship = Relationship(
       arn = Arn(arn),
@@ -136,42 +156,54 @@ class RelationshipController @Inject()(
   }
 
   case class Invitation(startDate: LocalDateTime)
-  implicit val invitationFormat = Json.format[Invitation]
+  implicit val invitationFormat: OFormat[Invitation] = Json.format[Invitation]
 
-  def createRelationship(arn: String, service: String, clientId: String) =
+  def createRelationship(arn: String, service: String, clientId: String): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
         withJsonBody[Invitation] { invitation =>
           forThisUser(Arn(arn), Nino(clientId), strideRoles) {
-            mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active) flatMap {
+            mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
               case Nil =>
                 logger.info("Creating a relationship")
                 for {
                   similar <- mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active)
                   _ <- Future.sequence(
-                        similar.map(
-                          r =>
-                            mongoService
-                              .terminateRelationship(r.arn.value, service, clientId)
-                              .map(terminated => {
-                                if (terminated) {
-                                  logger.info(s"Terminated Relationship true")
-                                  acaService
-                                    .setRelationshipEnded(r.arn, clientId)
-                                    .map(ended =>
-                                      if (ended) logger.info("set relationship ended for other invitation succeeded")
-                                      else logger.warn("failed to set relationship ended for other invitation"))
-                                } else logger.warn("failed to end other relationship...leaving the status of the other invitation unchanged.")
-                              }))
-                      )
+                    similar.map(r =>
+                      mongoService
+                        .terminateRelationship(r.arn.value, service, clientId)
+                        .map(terminated => {
+                          if (terminated) {
+                            logger.info(s"Terminated Relationship true")
+                            acaService
+                              .setRelationshipEnded(r.arn, clientId)
+                              .map(ended =>
+                                if (ended) logger.info("set relationship ended for other invitation succeeded")
+                                else logger.warn("failed to set relationship ended for other invitation")
+                              )
+                          } else
+                            logger.warn(
+                              "failed to end other relationship...leaving the status of the other invitation unchanged."
+                            )
+                        })
+                    )
+                  )
                   _ <- mongoService.createRelationship(
-                        Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None))
+                    Relationship(
+                      Arn(arn),
+                      service,
+                      clientId,
+                      Some(RelationshipStatus.Active),
+                      invitation.startDate,
+                      None
+                    )
+                  )
                   auditData <- setAuditData(arn, clientId, credentials)
                   _         <- auditService.sendCreateRelationshipEvent(auditData)
                 } yield Created
               case _ =>
                 logger.info("Relationship already exists")
-                Future successful Created
+                Future.successful(Created)
             }
           }
         }
@@ -201,7 +233,7 @@ class RelationshipController @Inject()(
 
   def findClientRelationships(service: String, clientId: String): Action[AnyContent] =
     Action.async {
-      mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active) map { result =>
+      mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active).map { result =>
         if (result.nonEmpty) Ok(toJson(result)) else NotFound
       }
     }
@@ -227,7 +259,7 @@ class RelationshipController @Inject()(
           }
         case _ =>
           logger.error("Arn Not Found in Login")
-          Future successful NotFound
+          Future.successful(NotFound)
       }
     }
   }
@@ -253,7 +285,7 @@ class RelationshipController @Inject()(
           }
         case _ =>
           logger.error("Arn/Nino Not Found in Login")
-          Future successful NotFound
+          Future.successful(NotFound)
       }
     }
   }
@@ -271,15 +303,18 @@ class RelationshipController @Inject()(
         mongoService
           .terminateAgentRelationship(arn)
           .map { result =>
-            Ok(Json.toJson[TerminationResponse](TerminationResponse(result.map(count =>
-              (DeletionCount(appConfig.appName, "fi-relationship", count))))))
+            Ok(
+              Json.toJson[TerminationResponse](
+                TerminationResponse(result.map(count => DeletionCount(appConfig.appName, "fi-relationship", count)))
+              )
+            )
           }
           .recover {
             case e =>
               logger.warn(s"Something has gone for $arn due to: ${e.getMessage}")
               InternalServerError
           }
-      } else Future successful BadRequest
+      } else Future.successful(BadRequest)
     }
   }
 
@@ -292,22 +327,23 @@ class RelationshipController @Inject()(
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", clientId)
       auditData.set("clientIdType", "ni")
-      Future successful auditData
+      Future.successful(auditData)
     } else if (creds.providerType == "PrivilegedApplication") {
       auditData.set("authProviderId", creds.providerId)
       auditData.set("authProviderIdType", creds.providerType)
       auditData.set("agentReferenceNumber", arn)
       auditData.set("service", "personal-income-record")
       auditData.set("clientId", clientId)
-      Future successful auditData
+      Future.successful(auditData)
     } else
       throw new IllegalArgumentException("No providerType found in Credentials")
 
   }
 
-  private def sendAuditEventForThisUser(credentials: Credentials, auditData: AuditData)(
-    implicit hc: HeaderCarrier,
-    request: Request[Any]): Future[Unit] =
+  private def sendAuditEventForThisUser(
+      credentials: Credentials,
+      auditData: AuditData
+  )(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     if (credentials.providerType == "GovernmentGateway")
       auditService.sendTerminatedRelationshipEvent(auditData)
     else if (credentials.providerType == "PrivilegedApplication")
@@ -315,8 +351,9 @@ class RelationshipController @Inject()(
     else
       throw new IllegalArgumentException("No providerType found in Credentials")
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRoles: Seq[String])(action: => Future[Result])(
-    implicit taxIdentifier: Option[TaxIdentifier]) =
+  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRoles: Seq[String])(
+      action: => Future[Result]
+  )(implicit taxIdentifier: Option[TaxIdentifier]) =
     taxIdentifier match {
       case Some(t) =>
         t match {
@@ -337,12 +374,14 @@ class RelationshipController @Inject()(
           case roles if roles.contains(appConfig.oldStrideRole) || roles.contains(appConfig.newStrideRole) => action
           case _ =>
             logger.warn("Unsupported ProviderType / Role")
-            Future successful Forbidden
+            Future.successful(Forbidden)
         }
     }
 
   private def isDifferentIdentifier(taxIdentifier1: TaxIdentifier, taxIdentifier2: TaxIdentifier): Boolean =
-    taxIdentifier1.getClass != taxIdentifier2.getClass || normalized(taxIdentifier1.value) != normalized(taxIdentifier2.value)
+    taxIdentifier1.getClass != taxIdentifier2.getClass || normalized(taxIdentifier1.value) != normalized(
+      taxIdentifier2.value
+    )
 
   private def normalized(value: String) = value.toLowerCase.replace(" ", "")
 }

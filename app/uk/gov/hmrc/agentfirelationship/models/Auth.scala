@@ -16,11 +16,16 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, credentials}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, Enrolments}
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.affinityGroup
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.credentials
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve.Retrieval
+import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.Enrolments
 
 object Auth {
-  lazy val affinityGroupAllEnrollsCreds
-    : Retrieval[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] = affinityGroup and allEnrolments and credentials
+  lazy val affinityGroupAllEnrollsCreds: Retrieval[~[~[Option[AffinityGroup], Enrolments], Option[Credentials]]] =
+    affinityGroup.and(allEnrolments).and(credentials)
 }
