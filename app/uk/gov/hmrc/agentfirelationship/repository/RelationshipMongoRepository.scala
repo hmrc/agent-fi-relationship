@@ -135,9 +135,6 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       )
       .toFuture()
 
-  def deleteAllClientIdRelationships(service: String, clientId: String): Future[Boolean] =
-    updateStatusToTerminated(and(equal("service", service), equal("clientId", clientId.replaceAll(" ", ""))))
-
   def findInactiveAgentRelationships(arn: String): Future[Seq[Relationship]] = {
     val from = LocalDateTime.now().minusDays(appConfig.inactiveRelationshipsShowLastDays.toDays.toInt)
     collection
