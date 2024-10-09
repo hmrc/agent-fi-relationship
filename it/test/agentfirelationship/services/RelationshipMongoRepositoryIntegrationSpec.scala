@@ -48,16 +48,25 @@ class RelationshipMongoRepositoryIntegrationSpec
   override def arn                            = agentId
   override def nino                           = clientId
 
-  val testResponseDate: String = LocalDateTime.now.toString
-  val validTestRelationship: Relationship =
-    Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testResponseDate), None)
-  val invalidTestRelationship: Relationship = validTestRelationship.copy(relationshipStatus = Some(Terminated))
+  val now                                     = LocalDateTime.now
+  val testTerminatedRelationshipStartDate     = now.minusDays(10).toString
+  val testTerminatedRelationshipEndDate       = now.minusDays(6).toString
+  val testActiveRelationshipStartDate: String = LocalDateTime.now.minusDays(5).toString
+
+  val activeTestRelationship: Relationship =
+    Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testActiveRelationshipStartDate), None)
+
+  val terminatedTestRelationship: Relationship = activeTestRelationship.copy(
+    relationshipStatus = Some(Terminated),
+    endDate = Some(LocalDateTime.parse(testTerminatedRelationshipEndDate))
+  )
+
   val validTestRelationshipCesa: Relationship = Relationship(
     Arn(arn),
     service,
     nino,
     Some(Active),
-    LocalDateTime.parse(testResponseDate),
+    LocalDateTime.parse(testActiveRelationshipStartDate),
     None,
     fromCesa = Some(true)
   )
@@ -74,55 +83,73 @@ class RelationshipMongoRepositoryIntegrationSpec
 
   "RelationshipMongoRepository" should {
     "return active relationships for findRelationships" in {
-      await(repo.createRelationship(validTestRelationship))
+      await(repo.createRelationship(activeTestRelationship))
       await(repo.createRelationship(validTestRelationshipCesa))
-      await(repo.createRelationship(invalidTestRelationship))
+      await(repo.createRelationship(terminatedTestRelationship))
 
       await(
         repo.findAnyRelationships(
-          validTestRelationship.arn.value,
+          activeTestRelationship.arn.value,
           validTestRelationshipCesa.service,
-          invalidTestRelationship.clientId
+          terminatedTestRelationship.clientId
         )
       ).size shouldBe 3
 
       val result = await(repo.findRelationships(arn, service, nino, Active))
 
       result should not be empty
-      result.head shouldBe validTestRelationship
+      result.head shouldBe activeTestRelationship
     }
 
     "return empty results if no active relationships found" in {
-      await(repo.createRelationship(invalidTestRelationship))
+      await(repo.createRelationship(terminatedTestRelationship))
       val result = await(repo.findRelationships(arn, service, nino, Active))
 
       result shouldBe empty
     }
 
     "return TERMINATED relationships" in {
-      await(repo.createRelationship(validTestRelationship))
+      await(repo.createRelationship(activeTestRelationship))
       await(repo.createRelationship(validTestRelationshipCesa))
-      await(repo.createRelationship(invalidTestRelationship))
+      await(repo.createRelationship(terminatedTestRelationship))
 
       await(
         repo.findAnyRelationships(
-          validTestRelationship.arn.value,
+          activeTestRelationship.arn.value,
           validTestRelationshipCesa.service,
-          invalidTestRelationship.clientId
+          terminatedTestRelationship.clientId
         )
       ).size shouldBe 3
 
       val result = await(repo.findRelationships(arn, service, nino, Terminated))
 
       result should not be empty
-      result.head shouldBe invalidTestRelationship
+      result.head shouldBe terminatedTestRelationship
     }
 
     "return empty results if no TERMINATED relationships found" in {
-      await(repo.createRelationship(validTestRelationship))
+      await(repo.createRelationship(activeTestRelationship))
       val result = await(repo.findRelationships(arn, service, nino, Terminated))
 
       result shouldBe empty
+    }
+
+    "TERMINATE a relationship and set the end date to today" in {
+      await(repo.createRelationship(terminatedTestRelationship))
+      await(repo.createRelationship(activeTestRelationship))
+
+      val result = await(repo.terminateRelationship(arn, service, nino))
+
+      result shouldBe true
+
+      await(repo.findClientRelationships(service, nino, Active)) shouldBe Seq.empty
+
+      await(repo.findClientRelationships(service, nino, Terminated))
+        .map(_.endDate.get.toLocalDate.toString) shouldBe Seq(
+        now.minusDays(6).toLocalDate.toString,
+        now.toLocalDate.toString
+      )
+
     }
   }
 }

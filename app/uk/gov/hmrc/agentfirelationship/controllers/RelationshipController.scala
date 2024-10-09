@@ -226,7 +226,6 @@ class RelationshipController @Inject() (
             logger.warn("Relationship Not Found")
             NotFound
           })
-
         }
       }
     }

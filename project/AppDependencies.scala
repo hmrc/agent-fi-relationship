@@ -3,8 +3,8 @@ import sbt.*
 
 object AppDependencies {
 
-  private val mongoVer = "2.1.0"
-  private val bootstrapVer = "9.0.0"
+  private val mongoVer = "2.2.0"
+  private val bootstrapVer = "9.5.0"
 
   lazy val compile = Seq(
     ws,
