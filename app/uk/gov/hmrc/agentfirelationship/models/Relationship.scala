@@ -34,22 +34,4 @@ case class Relationship(
 
 object Relationship {
   implicit val relationshipFormat: OFormat[Relationship] = Json.format[Relationship]
-  def createNew(
-      arn: Arn,
-      service: String,
-      clientId: String,
-      relationshipStatus: Option[RelationshipStatus] = Some(RelationshipStatus.Active),
-      startDate: LocalDateTime,
-      endDate: Option[LocalDateTime],
-      fromCesa: Option[Boolean] = Some(false)
-  ): Relationship =
-    Relationship(
-      arn = arn,
-      clientId = clientId,
-      service = service,
-      startDate = startDate,
-      relationshipStatus = relationshipStatus,
-      endDate = endDate,
-      fromCesa = fromCesa
-    )
 }

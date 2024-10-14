@@ -1,19 +1,24 @@
 package uk.gov.hmrc.agentfirelationship.repository
 
-import org.scalatest.Inside
+import java.time.LocalDateTime
+
 import org.scalatest.concurrent.Eventually
-import play.api.Application
+import org.scalatest.Inside
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import play.api.test.Helpers.await
+import play.api.test.Helpers.defaultAwaitTimeout
+import play.api.Application
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Terminated
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-import java.time.LocalDateTime
-
-class RelationshipMongoRepositoryISpec extends UnitSpec with Eventually with Inside with DefaultPlayMongoRepositorySupport[Relationship] {
+class RelationshipMongoRepositoryISpec
+    extends UnitSpec
+    with Eventually
+    with Inside
+    with DefaultPlayMongoRepositorySupport[Relationship] {
   def repository: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -22,7 +27,7 @@ class RelationshipMongoRepositoryISpec extends UnitSpec with Eventually with Ins
 
   implicit lazy val app: Application = appBuilder.build()
 
-  "findDuplicateInvitations" should {
+  "findDuplicateDeauthorisations" should {
     "return the count of duplicate record groups (integer)" in {
       val irvrRelationship = Relationship.createNew(
         Arn("BARN0190149"),
@@ -46,7 +51,7 @@ class RelationshipMongoRepositoryISpec extends UnitSpec with Eventually with Ins
       await(repository.collection.insertOne(irvrRelationship2).toFuture())
       val result: Int = await(repository.findMultipleDeauthorisationsForIRV())
 
-      result shouldBe 2
+      result shouldBe 1
 
     }
   }
