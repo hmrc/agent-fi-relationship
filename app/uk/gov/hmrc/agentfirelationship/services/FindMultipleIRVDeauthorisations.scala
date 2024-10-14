@@ -16,21 +16,24 @@
 
 package uk.gov.hmrc.agentfirelationship.services
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
+import uk.gov.hmrc.mongo.lock.LockService
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
 
 @Singleton
-class FindMultipleIRVDeauthorisations @Inject()(
-  relationshipMongoRepository: RelationshipMongoRepository,
-  mongoLockRepository: MongoLockRepository,
-  appConfig: AppConfig)
-    extends Logging {
+class FindMultipleIRVDeauthorisations @Inject() (
+    relationshipMongoRepository: RelationshipMongoRepository,
+    mongoLockRepository: MongoLockRepository,
+    appConfig: AppConfig
+) extends Logging {
 
   private val LOCK_ID = "startup-lock"
 
