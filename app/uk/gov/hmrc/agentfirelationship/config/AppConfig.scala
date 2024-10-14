@@ -41,6 +41,7 @@ trait AppConfig {
   val newStrideRole: String
   val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
+  val startupMongoQueryEnabled: Boolean
   def expectedAuth: BasicAuthentication
   val acaBaseUrl: URL
 }
@@ -73,5 +74,7 @@ class AppConfigImpl @Inject() (config: ServicesConfig, configuration: Configurat
   }
 
   override val acaBaseUrl: URL = new URL(config.baseUrl("aca"))
+
+  val startupMongoQueryEnabled: Boolean = config.getBoolean("startupMongoQueryEnabled")
 
 }

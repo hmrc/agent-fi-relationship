@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import java.time.LocalDateTime
-
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+
+import java.time.LocalDateTime
 
 case class Relationship(
     arn: Arn,
@@ -34,4 +33,22 @@ case class Relationship(
 
 object Relationship {
   implicit val relationshipFormat: OFormat[Relationship] = Json.format[Relationship]
+  def createNew(
+    arn: Arn,
+    service: String,
+    clientId: String,
+    relationshipStatus: Option[RelationshipStatus] = Some(RelationshipStatus.Active),
+    startDate: LocalDateTime,
+    endDate: Option[LocalDateTime],
+    fromCesa: Option[Boolean] = Some(false)
+  ): Relationship =
+    Relationship(
+      arn = arn,
+      clientId = clientId,
+      service = service,
+      startDate = startDate,
+      relationshipStatus = relationshipStatus,
+      endDate = endDate,
+      fromCesa = fromCesa
+    )
 }
