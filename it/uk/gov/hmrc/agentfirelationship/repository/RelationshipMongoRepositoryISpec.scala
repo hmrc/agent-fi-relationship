@@ -23,7 +23,7 @@ class RelationshipMongoRepositoryISpec extends UnitSpec with Eventually with Ins
   implicit lazy val app: Application = appBuilder.build()
 
   "findDuplicateInvitations" should {
-    "return Seq[Relationship]" in {
+    "return the count of duplicate record groups (integer)" in {
       val irvrRelationship = Relationship.createNew(
         Arn("BARN0190149"),
         "PERSONAL-INCOME-RECORD",
