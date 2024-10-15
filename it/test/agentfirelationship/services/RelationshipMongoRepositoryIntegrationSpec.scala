@@ -45,13 +45,13 @@ class RelationshipMongoRepositoryIntegrationSpec
   def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   implicit override lazy val app: Application = appBuilder.build()
-  override def arn                            = agentId
-  override def nino                           = clientId
+  override def arn: String = agentId
+  override def nino: String = clientId
 
-  val now                                     = LocalDateTime.now
-  val testTerminatedRelationshipStartDate     = now.minusDays(10).toString
-  val testTerminatedRelationshipEndDate       = now.minusDays(6).toString
-  val testActiveRelationshipStartDate: String = LocalDateTime.now.minusDays(5).toString
+  val now: LocalDateTime                          = LocalDateTime.now
+  val testTerminatedRelationshipStartDate: String = now.minusDays(10).toString
+  val testTerminatedRelationshipEndDate: String   = now.minusDays(6).toString
+  val testActiveRelationshipStartDate: String     = LocalDateTime.now.minusDays(5).toString
 
   val activeTestRelationship: Relationship =
     Relationship(Arn(arn), service, nino, Some(Active), LocalDateTime.parse(testActiveRelationshipStartDate), None)
@@ -149,7 +149,33 @@ class RelationshipMongoRepositoryIntegrationSpec
         now.minusDays(6).toLocalDate.toString,
         now.toLocalDate.toString
       )
+    }
 
+    "return the count of duplicate record groups (integer)" in {
+      val irvrRelationship = Relationship(
+        Arn("BARN0190149"),
+        "PERSONAL-INCOME-RECORD",
+        "AB000001D",
+        Some(Terminated),
+        LocalDateTime.now(),
+        Some(LocalDateTime.now()),
+        None
+      )
+
+      val irvrRelationship2 = Relationship(
+        Arn("BARN0190149"),
+        "PERSONAL-INCOME-RECORD",
+        "AB000001D",
+        Some(Terminated),
+        LocalDateTime.now(),
+        Some(LocalDateTime.now()),
+        None
+      )
+      await(repo.collection.insertOne(irvrRelationship).toFuture())
+      await(repo.collection.insertOne(irvrRelationship2).toFuture())
+      val result: Int = await(repo.findMultipleDeauthorisationsForIRV())
+
+      result shouldBe 1
     }
   }
 }
