@@ -29,7 +29,7 @@ import uk.gov.hmrc.mongo.lock.LockService
 import uk.gov.hmrc.mongo.lock.MongoLockRepository
 
 @Singleton
-class FindMultipleIRVDeauthorisations @Inject() (
+class FindMultipleIRVDeauthorisationsService @Inject() (
     relationshipMongoRepository: RelationshipMongoRepository,
     mongoLockRepository: MongoLockRepository,
     appConfig: AppConfig

@@ -45,8 +45,8 @@ class RelationshipMongoRepositoryIntegrationSpec
   def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   implicit override lazy val app: Application = appBuilder.build()
-  override def arn: String = agentId
-  override def nino: String = clientId
+  override def arn: String                    = agentId
+  override def nino: String                   = clientId
 
   val now: LocalDateTime                          = LocalDateTime.now
   val testTerminatedRelationshipStartDate: String = now.minusDays(10).toString
