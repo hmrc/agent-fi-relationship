@@ -25,12 +25,15 @@ import scala.concurrent.Future
 
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model._
 import org.mongodb.scala.model.Filters._
-import org.mongodb.scala.model.IndexModel
-import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
+import org.mongodb.scala.model.Projections.excludeId
+import org.mongodb.scala.model.Projections.fields
+import org.mongodb.scala.model.Projections.include
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.Document
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.Relationship
@@ -175,4 +178,23 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         if (result.getModifiedCount < 1) false
         else true
       }
+
+  def findMultipleDeauthorisationsForIRV(): Future[Int] =
+    collection
+      .aggregate[Document](
+        List(
+          Aggregates.filter(equal("relationshipStatus", "TERMINATED")),
+          Aggregates
+            .group(
+              Document("""{_key: { arn: "$arn", service: "$service", clientId: "$clientId" } }""".stripMargin),
+              Accumulators.sum("counter", 1)
+            )
+            .toBsonDocument,
+          Aggregates.filter(Filters.gt("counter", 1)),
+          Aggregates.project(fields(include("clientId"), excludeId()))
+        )
+      )
+      .foldLeft(0)((v, i) => v + 1)
+      .toFuture()
+
 }
