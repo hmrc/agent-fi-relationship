@@ -562,7 +562,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         )
     }
 
-    "Do not send an audit event is the relationship was not deleted" in {
+    "Do not send an audit event if the relationship was not deleted" in {
       authStub(agentAffinityAndEnrolmentsCreds)
       when(
         mockMongoService
