@@ -214,18 +214,18 @@ class RelationshipController @Inject() (
     Action.async { implicit request =>
       authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
         forThisUser(Arn(arn), Nino(clientId), strideRoles) {
-          val relationshipDeleted: Future[Boolean] = for {
+          val relationshipDeleted: Future[(Boolean, AuditData)] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData     <- setAuditData(arn, clientId, credentials)
-            _             <- sendAuditEventForThisUser(credentials, auditData)
-          } yield successOrFail
-          relationshipDeleted.map(if (_) {
-            acaService.setRelationshipEnded(Arn(arn), clientId)
-            Ok
-          } else {
-            logger.warn("Relationship Not Found")
-            NotFound
-          })
+          } yield (successOrFail, auditData)
+          relationshipDeleted.map {
+            case (true, auditData: AuditData) =>
+              sendAuditEventForThisUser(credentials, auditData)
+              Ok
+            case (false, _) =>
+              logger.warn("Relationship Not Found")
+              NotFound
+          }
         }
       }
     }
