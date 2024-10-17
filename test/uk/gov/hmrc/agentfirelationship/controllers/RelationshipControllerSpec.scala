@@ -561,6 +561,25 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
         )
     }
 
+    "Do not send an audit event is the relationship was not deleted" in {
+      authStub(agentAffinityAndEnrolmentsCreds)
+      when(
+        mockMongoService
+          .terminateRelationship(eqs(validTestArn), eqs(testService), eqs(validTestNINO))
+      )
+        .thenReturn(Future.successful(false))
+
+      val response =
+        controller.terminateRelationship(validTestArn, testService, validTestNINO)(fakeRequest)
+      await(response)
+      verify(mockAuditService, never)
+        .sendTerminatedRelationshipEvent(any[AuditData]())(
+          any[HeaderCarrier](),
+          any[Request[Any]](),
+          any[ExecutionContext]()
+        )
+    }
+
     "return Status: NOT_FOUND for failing to delete a record as a client" in {
       authStub(clientAffinityAndEnrolments)
       when(
