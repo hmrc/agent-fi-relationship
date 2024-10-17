@@ -27,6 +27,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results._
@@ -67,7 +68,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val testIrvArn                                             = "TARN0000001"
   val mockAcaService: AgentClientAuthorisationService        = mock[AgentClientAuthorisationService]
   val mockAppConfig: AppConfig                               = mock[AppConfig]
-  val mockControllerComponents                               = Helpers.stubControllerComponents()
+  val mockControllerComponents: ControllerComponents         = Helpers.stubControllerComponents()
   val oldStrideRole                                          = "maintain agent relationships"
   val newStrideRole                                          = "maintain_agent_relationships"
   val strideRoles: Seq[String]                               = Seq(oldStrideRole, newStrideRole)
