@@ -220,6 +220,7 @@ class RelationshipController @Inject() (
           } yield (successOrFail, auditData)
           relationshipDeleted.map {
             case (true, auditData: AuditData) =>
+              acaService.setRelationshipEnded(Arn(arn), clientId)
               sendAuditEventForThisUser(credentials, auditData)
               Ok
             case (false, _) =>
@@ -356,17 +357,14 @@ class RelationshipController @Inject() (
     taxIdentifier match {
       case Some(t) =>
         t match {
-          case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) => {
+          case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) =>
             logger.warn("Arn does not match")
             Future.successful(Forbidden)
-          }
-          case nino @ Nino(_) if isDifferentIdentifier(requestedNino, nino) => {
+          case nino @ Nino(_) if isDifferentIdentifier(requestedNino, nino) =>
             logger.warn("Nino does not match")
             Future.successful(Forbidden)
-          }
-          case _ => {
+          case _ =>
             action
-          }
         }
       case _ =>
         strideRoles match {
