@@ -214,18 +214,19 @@ class RelationshipController @Inject() (
     Action.async { implicit request =>
       authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
         forThisUser(Arn(arn), Nino(clientId), strideRoles) {
-          val relationshipDeleted: Future[Boolean] = for {
+          val relationshipDeleted: Future[(Boolean, AuditData)] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData     <- setAuditData(arn, clientId, credentials)
-            _             <- sendAuditEventForThisUser(credentials, auditData)
-          } yield successOrFail
-          relationshipDeleted.map(if (_) {
-            acaService.setRelationshipEnded(Arn(arn), clientId)
-            Ok
-          } else {
-            logger.warn("Relationship Not Found")
-            NotFound
-          })
+          } yield (successOrFail, auditData)
+          relationshipDeleted.map {
+            case (true, auditData: AuditData) =>
+              acaService.setRelationshipEnded(Arn(arn), clientId)
+              sendAuditEventForThisUser(credentials, auditData)
+              Ok
+            case (false, _) =>
+              logger.warn("Relationship Not Found")
+              NotFound
+          }
         }
       }
     }
@@ -356,17 +357,14 @@ class RelationshipController @Inject() (
     taxIdentifier match {
       case Some(t) =>
         t match {
-          case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) => {
+          case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) =>
             logger.warn("Arn does not match")
             Future.successful(Forbidden)
-          }
-          case nino @ Nino(_) if isDifferentIdentifier(requestedNino, nino) => {
+          case nino @ Nino(_) if isDifferentIdentifier(requestedNino, nino) =>
             logger.warn("Nino does not match")
             Future.successful(Forbidden)
-          }
-          case _ => {
+          case _ =>
             action
-          }
         }
       case _ =>
         strideRoles match {
