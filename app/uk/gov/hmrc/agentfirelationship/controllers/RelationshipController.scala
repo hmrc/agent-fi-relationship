@@ -40,7 +40,6 @@ import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.TerminationResponse
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-import uk.gov.hmrc.agentfirelationship.services.AgentClientAuthorisationService
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.agentmtdidentifiers.model.Utr
@@ -56,7 +55,6 @@ class RelationshipController @Inject() (
     mongoService: RelationshipMongoRepository,
     authConnector: AgentClientAuthConnector,
     checkCesaService: CesaRelationshipCopyService,
-    acaService: AgentClientAuthorisationService,
     des: DesConnector,
     appConfig: AppConfig,
     cc: ControllerComponents
@@ -175,12 +173,6 @@ class RelationshipController @Inject() (
                         .map(terminated => {
                           if (terminated) {
                             logger.info(s"Terminated Relationship true")
-                            acaService
-                              .setRelationshipEnded(r.arn, clientId)
-                              .map(ended =>
-                                if (ended) logger.info("set relationship ended for other invitation succeeded")
-                                else logger.warn("failed to set relationship ended for other invitation")
-                              )
                           } else
                             logger.warn(
                               "failed to end other relationship...leaving the status of the other invitation unchanged."
@@ -220,7 +212,6 @@ class RelationshipController @Inject() (
           } yield (successOrFail, auditData)
           relationshipDeleted.map {
             case (true, auditData: AuditData) =>
-              acaService.setRelationshipEnded(Arn(arn), clientId)
               sendAuditEventForThisUser(credentials, auditData)
               Ok
             case (false, _) =>

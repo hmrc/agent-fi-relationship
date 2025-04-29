@@ -42,7 +42,6 @@ import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-import uk.gov.hmrc.agentfirelationship.services.AgentClientAuthorisationService
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -66,7 +65,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
   val mockDesConnector: DesConnector                         = mock[DesConnector]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
   val testIrvArn                                             = "TARN0000001"
-  val mockAcaService: AgentClientAuthorisationService        = mock[AgentClientAuthorisationService]
   val mockAppConfig: AppConfig                               = mock[AppConfig]
   val mockControllerComponents: ControllerComponents         = Helpers.stubControllerComponents()
   val oldStrideRole                                          = "maintain agent relationships"
@@ -80,7 +78,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     mockMongoService,
     mockAgentClientAuthConnector,
     mockCesaRelationship,
-    mockAcaService,
     mockDesConnector,
     mockAppConfig,
     mockControllerComponents
@@ -91,7 +88,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     reset(mockAuditService)
     reset(mockPlayAuthConnector)
     reset(mockCesaRelationship)
-    reset(mockAcaService)
   }
 
   private type AfiAction =
@@ -266,16 +262,6 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockMongoService
           .terminateRelationship(eqs(validTestArn2), eqs(testService), eqs(validTestNINO))
-      )
-        .thenReturn(Future.successful(true))
-
-      when(
-        mockAcaService
-          .setRelationshipEnded(eqs(Arn(validTestArn2)), eqs(validTestNINO))(
-            any[Option[Arn]](),
-            any[HeaderCarrier](),
-            any[ExecutionContext]()
-          )
       )
         .thenReturn(Future.successful(true))
 
