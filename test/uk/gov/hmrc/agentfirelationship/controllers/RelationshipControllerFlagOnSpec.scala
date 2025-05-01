@@ -31,6 +31,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.ControllerComponents
 import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
@@ -42,7 +43,6 @@ import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-import uk.gov.hmrc.agentfirelationship.services.AgentClientAuthorisationService
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
@@ -60,12 +60,10 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   val mockCesaRelationship: CesaRelationshipCopyService = {
     mock[CesaRelationshipCopyService]
   }
-  val mockAcaService: AgentClientAuthorisationService =
-    mock[AgentClientAuthorisationService]
   val mockDesConnector: DesConnector                         = mock[DesConnector]
   val mockEc: ExecutionContext                               = mock[ExecutionContext]
   val mockAgentClientAuthConnector: AgentClientAuthConnector = mock[AgentClientAuthConnector]
-  val testAppConfig = new AppConfig {
+  val testAppConfig: AppConfig = new AppConfig {
     override val appName: String                             = "agent-fi-relationship"
     override val agentMappingBaseUrl: URL                    = new URL("http://localhost:9999/agent-mapping")
     override val desBaseUrl: URL                             = new URL("http://localhost:9999/des")
@@ -79,19 +77,17 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     override val terminationStrideRole: String               = "caat"
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication           = BasicAuthentication("username", "password")
-    override val acaBaseUrl: URL                             = new URL("http://localhost:9999/aca")
     override val startupMongoQueryEnabled: Boolean           = true
   }
-  val mockControllerComponents = Helpers.stubControllerComponents()
-  val oldStrideRole            = "maintain agent relationships"
-  val newStrideRole            = "maintain_agent_relationships"
+  val mockControllerComponents: ControllerComponents = Helpers.stubControllerComponents()
+  val oldStrideRole                                  = "maintain agent relationships"
+  val newStrideRole                                  = "maintain_agent_relationships"
 
   override def afterEach(): Unit = {
     reset(mockMongoService)
     reset(mockAuditService)
     reset(mockPlayAuthConnector)
     reset(mockCesaRelationship)
-    reset(mockAcaService)
   }
 
   "RelationshipController (Both Flags On)" should {
@@ -101,7 +97,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       mockMongoService,
       mockAgentClientAuthConnector,
       mockCesaRelationship,
-      mockAcaService,
       mockDesConnector,
       testAppConfig,
       mockControllerComponents

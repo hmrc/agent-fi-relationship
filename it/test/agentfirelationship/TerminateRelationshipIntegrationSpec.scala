@@ -24,7 +24,6 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.language.postfixOps
 
-import agentfirelationship.stubs.AcaStubs
 import agentfirelationship.support.IntegrationSpec
 import agentfirelationship.support.RelationshipActions
 import agentfirelationship.support.UpstreamServicesStubs
@@ -37,7 +36,6 @@ import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 @Singleton
@@ -46,16 +44,15 @@ class TerminateRelationshipIntegrationSpec
     with UpstreamServicesStubs
     with RelationshipActions
     with GuiceOneServerPerSuite
-    with CleanMongoCollectionSupport
-    with AcaStubs {
+    with CleanMongoCollectionSupport {
 
   def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
   implicit override lazy val app: Application = appBuilder.build()
-  override def arn                            = agentId
-  override def nino                           = clientId
+  override def arn: String                    = agentId
+  override def nino: String                   = clientId
 
-  val testResponseDate                    = LocalDateTime.now
+  val testResponseDate: LocalDateTime     = LocalDateTime.now
   val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -65,8 +62,7 @@ class TerminateRelationshipIntegrationSpec
         "auditing.consumer.baseUri.port"    -> wireMockPort,
         "mongodb.uri"                       -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}",
         "features.copy-cesa-relationships"  -> false,
-        "features.check-cesa-relationships" -> false,
-        "microservice.services.aca.port"    -> wireMockPort
+        "features.check-cesa-relationships" -> false
       )
 
   Feature("Terminate a relationship between an agent and a client") {
@@ -77,7 +73,6 @@ class TerminateRelationshipIntegrationSpec
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
       isLoggedInAndIsSubscribedAsAgent
-      givenSetRelationshipEndedReturns(Arn(agentId), Nino(clientId), "Agent", 204)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the terminates relationship endpoint")
@@ -99,7 +94,6 @@ class TerminateRelationshipIntegrationSpec
       Given("a create-relationship request with basic string values for Agent ID, client ID and service")
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
-      givenSetRelationshipEndedReturns(Arn(agentId), Nino(clientId), "Agent", 204)
 
       When("I call the create-relationship endpoint")
       isLoggedInAndIsSubscribedAsAgent
@@ -219,7 +213,6 @@ class TerminateRelationshipIntegrationSpec
       givenCreatedAuditEventStub(auditDetails)
       givenEndedAuditEventStub(auditDetails)
       isLoggedInWithStride("maintain agent relationships")
-      givenSetRelationshipEndedReturns(Arn(agentId), Nino(clientId), "HMRC", 204)
       Await.result(createRelationship(agentId, clientId, service, testResponseDate), 10 seconds)
 
       When("I call the terminate relationship endpoint")

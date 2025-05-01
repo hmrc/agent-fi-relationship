@@ -23,7 +23,6 @@ import javax.inject.Inject
 import scala.concurrent.duration.Duration
 
 import com.google.inject.ImplementedBy
-import play.api.Configuration
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -43,12 +42,11 @@ trait AppConfig {
   val inactiveRelationshipsShowLastDays: Duration
   val startupMongoQueryEnabled: Boolean
   def expectedAuth: BasicAuthentication
-  val acaBaseUrl: URL
 }
 
-class AppConfigImpl @Inject() (config: ServicesConfig, configuration: Configuration) extends AppConfig {
+class AppConfigImpl @Inject() (config: ServicesConfig) extends AppConfig {
 
-  override val appName = config.getString("appName")
+  override val appName: String = config.getString("appName")
 
   override val agentMappingBaseUrl = new URL(config.baseUrl("agent-mapping"))
   override val desBaseUrl: URL     = new URL(config.baseUrl("des"))
@@ -72,8 +70,6 @@ class AppConfigImpl @Inject() (config: ServicesConfig, configuration: Configurat
 
     BasicAuthentication(username, password)
   }
-
-  override val acaBaseUrl: URL = new URL(config.baseUrl("aca"))
 
   val startupMongoQueryEnabled: Boolean = config.getBoolean("startupMongoQueryEnabled")
 
