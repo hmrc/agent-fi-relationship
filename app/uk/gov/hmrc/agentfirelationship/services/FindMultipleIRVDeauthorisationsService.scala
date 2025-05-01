@@ -20,7 +20,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
@@ -33,7 +33,8 @@ class FindMultipleIRVDeauthorisationsService @Inject() (
     relationshipMongoRepository: RelationshipMongoRepository,
     mongoLockRepository: MongoLockRepository,
     appConfig: AppConfig
-) extends Logging {
+)(implicit ec: ExecutionContext)
+    extends Logging {
 
   private val LOCK_ID = "startup-lock"
 
