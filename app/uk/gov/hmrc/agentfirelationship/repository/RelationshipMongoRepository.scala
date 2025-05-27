@@ -209,7 +209,6 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
             )
           ),
           group("$clientId", sum("count", 1)),
-          filter(Filters.gt("count", 1)),
           group("$count", sum("count", 1))
         )
       )
