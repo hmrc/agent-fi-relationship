@@ -40,7 +40,6 @@ trait AppConfig {
   val newStrideRole: String
   val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
-  val startupMongoQueryEnabled: Boolean
   def expectedAuth: BasicAuthentication
 }
 
@@ -70,7 +69,5 @@ class AppConfigImpl @Inject() (config: ServicesConfig) extends AppConfig {
 
     BasicAuthentication(username, password)
   }
-
-  val startupMongoQueryEnabled: Boolean = config.getBoolean("startupMongoQueryEnabled")
 
 }
