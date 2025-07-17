@@ -25,16 +25,10 @@ import scala.concurrent.Future
 
 import com.google.inject.Singleton
 import org.mongodb.scala._
-import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
-import org.mongodb.scala.model.Accumulators._
-import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.Projections.excludeId
-import org.mongodb.scala.model.Projections.fields
-import org.mongodb.scala.model.Projections.include
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
 import play.api.Logging
@@ -181,38 +175,4 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         if (result.getModifiedCount < 1) false
         else true
       }
-
-  def findMultipleDeauthorisationsForIRV(): Future[Int] =
-    collection
-      .aggregate[Document](
-        List(
-          filter(equal("relationshipStatus", "TERMINATED")),
-          group(
-            Document("""{_key: { arn: "$arn", service: "$service", clientId: "$clientId" } }""".stripMargin),
-            Accumulators.sum("counter", 1)
-          ).toBsonDocument,
-          filter(Filters.gt("counter", 1)),
-          project(fields(include("clientId"), excludeId()))
-        )
-      )
-      .foldLeft(0)((v, i) => v + 1)
-      .toFuture()
-
-  def countMultipleAgents(): Future[Seq[Document]] =
-    collection
-      .aggregate[Document](
-        List(
-          filter(
-            and(
-              equal("relationshipStatus", Active),
-              equal("service", "PERSONAL-INCOME-RECORD")
-            )
-          ),
-          group("$clientId", sum("count", 1)),
-          filter(Filters.gt("count", 1)),
-          group("$count", sum("count", 1))
-        )
-      )
-      .toFuture()
-
 }

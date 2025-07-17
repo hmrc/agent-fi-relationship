@@ -150,32 +150,5 @@ class RelationshipMongoRepositoryIntegrationSpec
         now.toLocalDate.toString
       )
     }
-
-    "return the count of duplicate record groups (integer)" in {
-      val irvrRelationship = Relationship(
-        Arn("BARN0190149"),
-        "PERSONAL-INCOME-RECORD",
-        "AB000001D",
-        Some(Terminated),
-        LocalDateTime.now(),
-        Some(LocalDateTime.now()),
-        None
-      )
-
-      val irvrRelationship2 = Relationship(
-        Arn("BARN0190149"),
-        "PERSONAL-INCOME-RECORD",
-        "AB000001D",
-        Some(Terminated),
-        LocalDateTime.now(),
-        Some(LocalDateTime.now()),
-        None
-      )
-      await(repo.collection.insertOne(irvrRelationship).toFuture())
-      await(repo.collection.insertOne(irvrRelationship2).toFuture())
-      val result: Int = await(repo.findMultipleDeauthorisationsForIRV())
-
-      result shouldBe 1
-    }
   }
 }

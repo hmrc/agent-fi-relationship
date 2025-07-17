@@ -77,7 +77,6 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     override val terminationStrideRole: String               = "caat"
     override val inactiveRelationshipsShowLastDays: Duration = Duration.create("30 days")
     override def expectedAuth: BasicAuthentication           = BasicAuthentication("username", "password")
-    override val startupMongoQueryEnabled: Boolean           = true
   }
   val mockControllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   val oldStrideRole                                  = "maintain agent relationships"
