@@ -18,6 +18,10 @@ sbt run
 
 ```sm --start AGENT_FI_ALL```
 
+### Automated testing
+This service is tested by the following automated test repositories:
+- [agent-helpdesk-ui-tests](https://github.com/hmrc/agent-helpdesk-ui-tests)
+- [agent-services-account-ui-tests](https://github.com/hmrc/agent-services-account-ui-tests)
 
 ## Endpoints <a name="endpoints"></a>
 
