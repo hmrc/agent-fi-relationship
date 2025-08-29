@@ -16,12 +16,23 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentfirelationship.models.Arn
+import uk.gov.hmrc.agentfirelationship.utils.UtrCheck
+import uk.gov.hmrc.domain.SimpleObjectReads
+import uk.gov.hmrc.domain.SimpleObjectWrites
+import uk.gov.hmrc.domain.TaxIdentifier
 
-case class SetRelationshipEndedPayload(arn: Arn, clientId: String, service: String, endedBy: Option[String])
+case class Utr(value: String) extends TaxIdentifier with TrustTaxIdentifier
 
-object SetRelationshipEndedPayload {
-  implicit val jsonFormat: OFormat[SetRelationshipEndedPayload] = Json.format[SetRelationshipEndedPayload]
+object Utr {
+
+  private val utrPattern = "^\\d{10}$".r
+
+  def isValid(utr: String): Boolean =
+    utr match {
+      case utrPattern(_*) => UtrCheck.isValid(utr)
+      case _              => false
+    }
+
+  implicit val utrReads: SimpleObjectReads[Utr]   = new SimpleObjectReads[Utr]("value", Utr.apply)
+  implicit val utrWrites: SimpleObjectWrites[Utr] = new SimpleObjectWrites[Utr](_.value)
 }

@@ -21,7 +21,6 @@ import scala.concurrent.ExecutionContextExecutor
 
 import agentfirelationship.stubs.DataStreamStub
 import agentfirelationship.stubs.DesStubs
-import agentfirelationship.support.MetricTestSupport
 import agentfirelationship.support.WireMockSupport
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -29,9 +28,9 @@ import play.api.test.Helpers._
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
+import uk.gov.hmrc.agentfirelationship.models.Arn
+import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -43,8 +42,7 @@ class DesConnectorSpec
     with GuiceOneAppPerSuite
     with WireMockSupport
     with DesStubs
-    with DataStreamStub
-    with MetricTestSupport {
+    with DataStreamStub {
 
   implicit override lazy val app: Application = appBuilder
     .build()
@@ -133,14 +131,6 @@ class DesConnectorSpec
       givenDesReturnsServerError()
       givenAuditConnector()
       an[Exception] should be thrownBy await(desConnector.getClientSaAgentSaReferences(nino))
-    }
-
-    "record metrics for GetStatusAgentRelationship" in {
-      givenClientHasRelationshipWithAgentInCESA(nino, "bar")
-      givenCleanMetricRegistry()
-      givenAuditConnector()
-      await(desConnector.getClientSaAgentSaReferences(nino))
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-DES-GetStatusAgentRelationship-GET")
     }
 
     "return a CESA identifier when client has an active agent using Utr" in {

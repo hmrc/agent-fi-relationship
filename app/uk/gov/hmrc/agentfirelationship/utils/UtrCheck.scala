@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.agentfirelationship.models
+package uk.gov.hmrc.agentfirelationship.utils
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentfirelationship.models.Arn
+import uk.gov.hmrc.domain.Modulus11Check
 
-case class SetRelationshipEndedPayload(arn: Arn, clientId: String, service: String, endedBy: Option[String])
+object UtrCheck extends Modulus11Check {
 
-object SetRelationshipEndedPayload {
-  implicit val jsonFormat: OFormat[SetRelationshipEndedPayload] = Json.format[SetRelationshipEndedPayload]
+  def isValid(utr: String): Boolean = {
+    val suffix: String = utr.substring(1)
+    calculateCheckCharacter(suffix) == utr.charAt(0)
+  }
 }

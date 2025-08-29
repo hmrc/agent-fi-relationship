@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.binders
 
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
+import uk.gov.hmrc.agentfirelationship.models.Utr
 
 object PathBinders {
   implicit object UtrBinder

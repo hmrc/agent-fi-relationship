@@ -27,9 +27,8 @@ import scala.concurrent.Future
 import play.api.http.Status._
 import play.api.libs.json._
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.utils.HttpAPIMonitor
+import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.agentmtdidentifiers.model.Utr
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
@@ -59,7 +58,7 @@ object ClientRelationship {
 @Singleton
 class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metrics: Metrics)(
     implicit val ec: ExecutionContext
-) extends HttpAPIMonitor {
+) {
 
   private val Environment: String     = "Environment"
   private val CorrelationId: String   = "CorrelationId"
@@ -106,11 +105,11 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
       authorization = Some(Authorization(s"Bearer ${appConfig.desAuthToken}")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment
     )
-    monitor(s"ConsumedAPI-DES-$apiName-GET") {
-      http
-        .get(url)(desHeaderCarrier)
-        .transform(_.addHttpHeaders(explicitHeaders: _*))
-        .execute(implicitly[HttpReads[A]], ec)
-    }
+
+    http
+      .get(url)(desHeaderCarrier)
+      .transform(_.addHttpHeaders(explicitHeaders: _*))
+      .execute(implicitly[HttpReads[A]], ec)
+
   }
 }

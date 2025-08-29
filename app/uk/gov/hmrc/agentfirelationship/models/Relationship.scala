@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentfirelationship.models.Arn
 
 case class Relationship(
     arn: Arn,

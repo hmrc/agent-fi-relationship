@@ -26,8 +26,7 @@ import scala.concurrent.Future
 import play.api.http.Status._
 import play.api.libs.json._
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.utils.HttpAPIMonitor
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
+import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -47,21 +46,20 @@ object Mappings {
 @Singleton
 class MappingConnector @Inject() (appConfig: AppConfig, httpGet: HttpClientV2, val metrics: Metrics)(
     implicit val ec: ExecutionContext
-) extends HttpAPIMonitor {
+) {
 
   def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val url = new URL(appConfig.agentMappingBaseUrl, s"/agent-mapping/mappings/sa/${arn.value}")
-    monitor(s"ConsumedAPI-Digital-Mappings-GET") {
-      httpGet
-        .get(url)
-        .execute[HttpResponse]
-        .map { response =>
-          response.status match {
-            case s if is2xx(s) => response.json.as[Mappings].mappings.map(_.saAgentReference)
-            case NOT_FOUND     => Seq.empty
-            case s             => throw UpstreamErrorResponse(s"Error calling: ${url.toString}", s)
-          }
+    httpGet
+      .get(url)
+      .execute[HttpResponse]
+      .map { response =>
+        response.status match {
+          case s if is2xx(s) => response.json.as[Mappings].mappings.map(_.saAgentReference)
+          case NOT_FOUND     => Seq.empty
+          case s             => throw UpstreamErrorResponse(s"Error calling: ${url.toString}", s)
         }
-    }
+
+      }
   }
 }

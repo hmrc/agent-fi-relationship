@@ -28,9 +28,9 @@ import scala.util.matching.Regex
 import play.api.mvc._
 import play.api.mvc.Results._
 import play.api.Logging
+import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments

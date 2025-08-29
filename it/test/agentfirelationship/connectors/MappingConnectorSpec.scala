@@ -21,7 +21,6 @@ import scala.concurrent.ExecutionContextExecutor
 
 import agentfirelationship.stubs.DataStreamStub
 import agentfirelationship.stubs.MappingStubs
-import agentfirelationship.support.MetricTestSupport
 import agentfirelationship.support.WireMockSupport
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -30,8 +29,8 @@ import play.api.test.Helpers._
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
+import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
@@ -43,7 +42,6 @@ class MappingConnectorSpec
     with WireMockSupport
     with MappingStubs
     with DataStreamStub
-    with MetricTestSupport
     with MockitoSugar {
 
   implicit override lazy val app: Application = appBuilder
@@ -101,12 +99,5 @@ class MappingConnectorSpec
       an[Exception] should be thrownBy await(mappingConnector.getSaAgentReferencesFor(arn))
     }
 
-    "record metrics for Mappings" in {
-      givenArnIsKnownFor(arn, SaAgentReference("foo"))
-      givenCleanMetricRegistry()
-      givenAuditConnector()
-      await(mappingConnector.getSaAgentReferencesFor(arn))
-      timerShouldExistsAndBeenUpdated("ConsumedAPI-Digital-Mappings-GET")
-    }
   }
 }
