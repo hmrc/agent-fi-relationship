@@ -28,10 +28,10 @@ import uk.gov.hmrc.agentfirelationship.audit.AuditData
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
+import uk.gov.hmrc.agentfirelationship.models.Arn
+import uk.gov.hmrc.agentfirelationship.models.MtdItId
 import uk.gov.hmrc.agentfirelationship.support.ResettingMockitoSugar
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
-import uk.gov.hmrc.agentmtdidentifiers.model.Arn
-import uk.gov.hmrc.agentmtdidentifiers.model.MtdItId
 import uk.gov.hmrc.domain.AgentCode
 import uk.gov.hmrc.domain.Generator
 import uk.gov.hmrc.domain.Nino
