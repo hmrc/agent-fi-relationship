@@ -87,7 +87,7 @@ class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec
     }
 
     Scenario("Agent views a non-existent relationship") {
-
+      givenUserAuthorised()
       Given("no relationship exists for a combination of agent, client and service")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
       givenClientHasNoActiveRelationshipWithAgentInCESA(Nino(clientId))
@@ -100,7 +100,7 @@ class ViewRelationshipWhenOnlyCheckCesaFlagOnIntegrationSpec
     }
 
     Scenario("Agent views a relationship existing only in CESA") {
-
+      givenUserAuthorised()
       Given("relationship exists in CESA and has been mapped for a combination of agent and client")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
       givenClientHasRelationshipWithAgentInCESA(Nino(clientId), "foo")

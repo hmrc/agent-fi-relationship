@@ -25,6 +25,7 @@ import scala.concurrent.Future
 
 import org.mockito.ArgumentMatchers.{ eq => eqs }
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -46,6 +47,8 @@ import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
+import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
@@ -62,7 +65,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
   }
   val mockDesConnector: DesConnector                         = mock[DesConnector]
   val mockEc: ExecutionContext                               = mock[ExecutionContext]
-  val mockAgentClientAuthConnector: AgentClientAuthConnector = mock[AgentClientAuthConnector]
+  val mockAgentClientAuthConnector: AgentClientAuthConnector = new AgentClientAuthConnector(mockPlayAuthConnector)
   val testAppConfig: AppConfig = new AppConfig {
     override val appName: String                             = "agent-fi-relationship"
     override val agentMappingBaseUrl: URL                    = new URL("http://localhost:9999/agent-mapping")
@@ -89,6 +92,15 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     reset(mockCesaRelationship)
   }
 
+  private def givenUserAuthorised() = {
+    val _ = when(
+      mockPlayAuthConnector.authorise(
+        any[Predicate](),
+        argThat[Retrieval[Unit]](_.propertyNames.isEmpty)
+      )(any[HeaderCarrier](), any[ExecutionContext]())
+    ).thenReturn(Future.successful(()))
+  }
+
   "RelationshipController (Both Flags On)" should {
 
     val controller = new RelationshipController(
@@ -102,6 +114,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     )
 
     "return Status: OK when successfully finding a relationship in Cesa and Agent Mapping" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))
@@ -117,6 +130,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     }
 
     "return Status: NOT_FOUND if any previous relationships are found" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))
@@ -139,6 +153,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     }
 
     "return Status: NOT FOUND when no relationship in Cesa and Agent Mapping is found" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))
@@ -175,6 +190,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     }
 
     "return Status: NOT FOUND when failed to copy relationship from Cesa " in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))
@@ -220,6 +236,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     }
 
     "return Status: OK when relationship in Cesa and Agent Mapping is found, but active relationships already exist" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))
@@ -262,6 +279,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
     }
 
     "return Status: OK when relationship in Cesa and Agent Mapping is found, and active relationships don't already exist" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))

@@ -33,8 +33,8 @@ trait RelationshipActions extends ScalaFutures {
 
   this: GuiceOneServerPerSuite =>
 
-  val baseUrl = s"http://localhost:$port/agent-fi-relationship"
-  val url     = s"$baseUrl/relationships"
+  val baseUrl            = s"http://localhost:$port/agent-fi-relationship"
+  val url                = s"$baseUrl/relationships"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
@@ -84,5 +84,6 @@ trait RelationshipActions extends ScalaFutures {
   def hasActiveLegacySaRelationship(utr: String): Future[WSResponse] =
     wsClient
       .url(s"$url/active-legacy-sa/utr/$utr")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .get()
 }
