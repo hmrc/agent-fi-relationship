@@ -83,7 +83,7 @@ class ViewRelationshipIntegrationSpec
     }
 
     Scenario("Agent views a non-existent relationship") {
-
+      givenUserAuthorised()
       Given("no relationship exists for a combination of agent, client and service")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
 
@@ -97,6 +97,7 @@ class ViewRelationshipIntegrationSpec
 
   Feature("Check legacy SA relationship for a client") {
     Scenario("Client has an active legacy SA relationship with an agent") {
+      givenUserAuthorised()
       Given("There exists a relationship between an agent and client for IR-SA")
       givenClientHasRelationshipWithAgentInCESA(Utr(clientUtr), "foo")
 
@@ -108,6 +109,7 @@ class ViewRelationshipIntegrationSpec
     }
 
     Scenario("Client no longer has an active relationship with an agent") {
+      givenUserAuthorised()
       Given("There does not exist an active relationship between an agent and client for IR-SA")
       givenClientRelationshipWithAgentCeasedInCESA(Utr(clientUtr), "foo")
 
@@ -119,6 +121,7 @@ class ViewRelationshipIntegrationSpec
     }
 
     Scenario("Client does not have any relationship with any agent") {
+      givenUserAuthorised()
       Given("There does not exist an active relationship between an agent and client for IR-SA")
       givenClientHasNoRelationshipWithAnyAgentInCESA(Utr(clientUtr))
 

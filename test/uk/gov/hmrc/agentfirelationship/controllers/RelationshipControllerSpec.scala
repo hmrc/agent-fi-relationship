@@ -22,9 +22,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+import org.mockito.ArgumentMatchers._
 import org.mockito.ArgumentMatchers.{ eq => eqs }
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
+import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.ControllerComponents
@@ -103,10 +105,19 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     )
       .thenReturn(returnValue)
 
+  private def givenUserAuthorised() = {
+    when(
+      mockPlayAuthConnector.authorise(
+        any[Predicate](),
+        argThat[Retrieval[Unit]](_.propertyNames.isEmpty)
+      )(any[HeaderCarrier](), any[ExecutionContext]())
+    ).thenReturn(Future.successful(()))
+  }
+
   "RelationshipController" should {
 
     "return Status: OK when successfully finding a relationship" in {
-
+      givenUserAuthorised()
       when(mockMongoService.findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active)))
         .thenReturn(Future.successful(List(validTestRelationship)))
 
@@ -118,7 +129,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: NOT_FOUND for not finding data" in {
-
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(Active))
@@ -667,6 +678,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: OK for finding data via access control endpoint" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))
@@ -682,6 +694,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     }
 
     "return Status: NOT_FOUND for not finding data via access control endpoint" in {
+      givenUserAuthorised()
       when(
         mockMongoService
           .findRelationships(eqs(validTestArn), eqs(testService), eqs(validTestNINO), eqs(RelationshipStatus.Active))

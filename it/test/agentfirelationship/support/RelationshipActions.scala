@@ -84,5 +84,6 @@ trait RelationshipActions extends ScalaFutures {
   def hasActiveLegacySaRelationship(utr: String): Future[WSResponse] =
     wsClient
       .url(s"$url/active-legacy-sa/utr/$utr")
+      .withHttpHeaders("Authorization" -> "Bearer XYZ")
       .get()
 }

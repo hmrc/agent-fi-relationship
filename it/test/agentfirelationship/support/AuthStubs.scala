@@ -35,6 +35,27 @@ trait BasicUserAuthStubs { WiremockAware =>
     )
     this
   }
+
+  def givenUserAuthorised() = {
+    stubFor(
+      post(urlEqualTo("/auth/authorise")).willReturn(
+        aResponse()
+          .withStatus(200)
+          .withBody(
+            // language=JSON
+            s"""
+                      {
+               |  "optionalCredentials": {
+               |    "providerId": "ANYCRED",
+               |    "providerType": "GovernmentGateway"
+               |  }
+               |}
+       """.stripMargin
+          )
+      )
+    )
+    this
+  }
 }
 
 trait ClientUserAuthStubs extends BasicUserAuthStubs { WiremockAware =>

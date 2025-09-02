@@ -73,19 +73,22 @@ class RelationshipController @Inject() (
   /* Tries to find existing client/agent relationships, and if none found, copies over from cesa */
   def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit val auditData: AuditData = new AuditData()
+      authConnector.authorised() {
+        implicit val auditData: AuditData = new AuditData()
 
-      mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap { activeRelationships =>
-        if (activeRelationships.nonEmpty) {
-          Future.successful(Ok(toJson(activeRelationships)))
-        } else {
-          mongoService.findAnyRelationships(arn, service, clientId).flatMap { anyRelationships =>
-            if (anyRelationships.nonEmpty) {
-              Future.successful(NotFound)
+        mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
+          activeRelationships =>
+            if (activeRelationships.nonEmpty) {
+              Future.successful(Ok(toJson(activeRelationships)))
             } else {
-              handleCesaRelationship(arn, service, clientId, activeRelationships)
+              mongoService.findAnyRelationships(arn, service, clientId).flatMap { anyRelationships =>
+                if (anyRelationships.nonEmpty) {
+                  Future.successful(NotFound)
+                } else {
+                  handleCesaRelationship(arn, service, clientId, activeRelationships)
+                }
+              }
             }
-          }
         }
       }
   }
@@ -222,12 +225,14 @@ class RelationshipController @Inject() (
       }
     }
 
-  def findClientRelationships(service: String, clientId: String): Action[AnyContent] =
-    Action.async {
-      mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active).map { result =>
-        if (result.nonEmpty) Ok(toJson(result)) else NotFound
+  def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authConnector.authorised() {
+        mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active).map { result =>
+          if (result.nonEmpty) Ok(toJson(result)) else NotFound
+        }
       }
-    }
+  }
 
   val findInactiveRelationships: Action[AnyContent] = Action.async { implicit request =>
     authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => credentials =>
@@ -282,9 +287,11 @@ class RelationshipController @Inject() (
   }
 
   def hasLegacySaRelationship(utr: Utr): Action[AnyContent] = Action.async { implicit request =>
-    des.getClientSaAgentSaReferences(utr).map {
-      case Nil => NotFound
-      case _   => Ok
+    authConnector.authorised() {
+      des.getClientSaAgentSaReferences(utr).map {
+        case Nil => NotFound
+        case _   => Ok
+      }
     }
   }
 
