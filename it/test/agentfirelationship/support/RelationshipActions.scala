@@ -33,8 +33,8 @@ trait RelationshipActions extends ScalaFutures {
 
   this: GuiceOneServerPerSuite =>
 
-  val baseUrl            = s"http://localhost:$port/agent-fi-relationship"
-  val url                = s"$baseUrl/relationships"
+  val baseUrl = s"http://localhost:$port/agent-fi-relationship"
+  val url     = s"$baseUrl/relationships"
 
   val wsClient: WSClient = app.injector.instanceOf[WSClient]
 

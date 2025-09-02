@@ -41,14 +41,17 @@ trait BasicUserAuthStubs { WiremockAware =>
       post(urlEqualTo("/auth/authorise")).willReturn(
         aResponse()
           .withStatus(200)
-          .withBody(s"""
+          .withBody(
+            // language=JSON
+            s"""
                       {
-                       |  "optionalCredentials": {
-                       |    "providerId": "ANYCRED",
-                       |    "providerType": "GovernmentGateway"
-                       |  }
-                       |}
-       """.stripMargin)
+               |  "optionalCredentials": {
+               |    "providerId": "ANYCRED",
+               |    "providerType": "GovernmentGateway"
+               |  }
+               |}
+       """.stripMargin
+          )
       )
     )
     this

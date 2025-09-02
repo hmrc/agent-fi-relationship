@@ -106,7 +106,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       .thenReturn(returnValue)
 
   private def givenUserAuthorised() = {
-    val _ = when(
+    when(
       mockPlayAuthConnector.authorise(
         any[Predicate](),
         argThat[Retrieval[Unit]](_.propertyNames.isEmpty)
