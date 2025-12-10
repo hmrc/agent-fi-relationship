@@ -31,12 +31,12 @@ import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Auth._
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HeaderNames
@@ -139,10 +139,10 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(impl
       .find(_.key.equals("HMRC-AS-AGENT"))
       .flatMap(_.getIdentifier("AgentReferenceNumber").map(x => Arn(x.value)))
 
-  private def extractNino(enrolls: Set[Enrolment]): Option[Nino] =
+  private def extractNino(enrolls: Set[Enrolment]): Option[NinoWithoutSuffix] =
     enrolls
       .find(_.key == "HMRC-NI")
       .flatMap(_.getIdentifier("NINO"))
-      .map(x => Nino(x.value))
+      .map(x => NinoWithoutSuffix(x.value))
 
 }

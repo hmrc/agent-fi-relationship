@@ -28,7 +28,7 @@ import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
-import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -38,7 +38,7 @@ class CesaRelationshipCopyService @Inject() (des: DesConnector, mapping: Mapping
 
   def lookupCesaForOldRelationship(
       arn: Arn,
-      nino: Nino
+      nino: NinoWithoutSuffix
   )(implicit ec: ExecutionContext, hc: HeaderCarrier, auditData: AuditData): Future[Set[SaAgentReference]] = {
     auditData.set("clientId", nino)
     for {
