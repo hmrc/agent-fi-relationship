@@ -42,6 +42,7 @@ import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
@@ -50,7 +51,6 @@ import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.PlayAuthConnector
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -163,7 +163,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .thenReturn(Future.successful(List()))
       when(
         mockCesaRelationship
-          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
+          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
             any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
@@ -182,7 +182,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .findAnyRelationships(any[String](), any[String](), any[String]())
 
       verify(mockCesaRelationship, times(1))
-        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(
+        .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
           any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
@@ -203,7 +203,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .thenReturn(Future.successful(List()))
       when(
         mockCesaRelationship
-          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
+          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
             any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
@@ -228,7 +228,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .findAnyRelationships(any[String](), any[String](), any[String]())
 
       verify(mockCesaRelationship, times(1))
-        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(
+        .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
           any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
@@ -246,7 +246,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .thenReturn(Future.successful(List()))
       when(
         mockCesaRelationship
-          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
+          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
             any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
@@ -268,7 +268,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .findAnyRelationships(any[String](), any[String](), any[String]())
 
       verify(mockCesaRelationship, times(1))
-        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(
+        .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
           any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
@@ -289,7 +289,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .thenReturn(Future.successful(List()))
       when(
         mockCesaRelationship
-          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(Nino(validTestNINO)))(
+          .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
             any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
@@ -313,7 +313,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
         .findAnyRelationships(any[String](), any[String](), any[String]())
 
       verify(mockCesaRelationship, times(1))
-        .lookupCesaForOldRelationship(any[Arn](), any[Nino]())(
+        .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
           any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()

@@ -29,9 +29,9 @@ import play.api.Application
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
@@ -66,7 +66,7 @@ class DesConnectorSpec
 
   "DesConnector GetStatusAgentRelationship" should {
 
-    val nino = Nino("AB123456C")
+    val nino = NinoWithoutSuffix("AB123456C")
     val utr  = Utr("1307171695")
 
     "return a CESA identifier when client has an active agent" in {
