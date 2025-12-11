@@ -37,9 +37,9 @@ import play.api.libs.ws.WSResponse
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.Arn
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 import uk.gov.hmrc.mongo.MongoComponent
@@ -92,7 +92,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec
       givenUserAuthorised()
       Given("no relationship exists for a combination of agent, client and service")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
-      givenClientHasNoActiveRelationshipWithAgentInCESA(Nino(clientId))
+      givenClientHasNoActiveRelationshipWithAgentInCESA(NinoWithoutSuffix(clientId))
 
       When("I call the View Relationship endpoint")
       val viewRelationshipResponse: WSResponse = Await.result(getRelationship(agentId, clientId, service), 10 seconds)
@@ -105,7 +105,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec
       givenUserAuthorised()
       Given("relationship exists in CESA and has been mapped for a combination of agent and client")
       Await.result(repo.findRelationships(agentId, service, clientId), 10 seconds) shouldBe empty
-      givenClientHasRelationshipWithAgentInCESA(Nino(clientId), "foo")
+      givenClientHasRelationshipWithAgentInCESA(NinoWithoutSuffix(clientId), "foo")
       givenArnIsKnownFor(Arn(agentId), SaAgentReference("foo"))
       givenCesaCopyAuditEventStub(
         Map(

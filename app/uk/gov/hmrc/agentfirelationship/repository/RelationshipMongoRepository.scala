@@ -32,6 +32,7 @@ import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
@@ -91,7 +92,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         and(
           equal("arn", arn),
           equal("service", service),
-          equal("clientId", clientId.replaceAll(" ", "")),
+          in("clientId", NinoWithoutSuffix(clientId).variations: _*),
           equal("relationshipStatus", status)
         )
       )
@@ -100,12 +101,14 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
 
   def findAnyRelationships(arn: String, service: String, clientId: String): Future[Seq[Relationship]] =
     collection
-      .find(and(equal("arn", arn), equal("service", service), equal("clientId", clientId.replaceAll(" ", ""))))
+      .find(
+        and(equal("arn", arn), equal("service", service), in("clientId", NinoWithoutSuffix(clientId).variations: _*))
+      )
       .toFuture()
 
   def createRelationship(relationship: Relationship): Future[Unit] =
     collection
-      .insertOne(relationship.copy(clientId = relationship.clientId.replaceAll(" ", "")))
+      .insertOne(relationship.copy(clientId = NinoWithoutSuffix(relationship.clientId).value))
       .toFuture()
       .map(_ => ())
 
@@ -114,7 +117,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       and(
         equal("arn", arn),
         equal("service", service),
-        equal("clientId", clientId.replaceAll(" ", "")),
+        in("clientId", NinoWithoutSuffix(clientId).variations: _*),
         equal("relationshipStatus", Active)
       )
     )
@@ -128,7 +131,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       .find(
         and(
           equal("service", service),
-          equal("clientId", clientId.replaceAll(" ", "")),
+          in("clientId", NinoWithoutSuffix(clientId).variations: _*),
           equal("relationshipStatus", status)
         )
       )
@@ -149,12 +152,12 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
 
   def findInactiveClientRelationships(clientId: String): Future[Seq[Relationship]] =
     collection
-      .find(and(equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", "TERMINATED")))
+      .find(and(in("clientId", NinoWithoutSuffix(clientId).variations: _*), equal("relationshipStatus", "TERMINATED")))
       .toFuture()
 
   def findActiveClientRelationships(clientId: String): Future[Seq[Relationship]] =
     collection
-      .find(and(equal("clientId", clientId.replaceAll(" ", "")), equal("relationshipStatus", "ACTIVE")))
+      .find(and(in("clientId", NinoWithoutSuffix(clientId).variations: _*), equal("relationshipStatus", "ACTIVE")))
       .toFuture()
 
   def terminateAgentRelationship(arn: String): Future[Seq[Int]] =

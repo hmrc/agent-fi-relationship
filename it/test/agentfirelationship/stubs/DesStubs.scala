@@ -18,8 +18,8 @@ package agentfirelationship.stubs
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Utr
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.TaxIdentifier
 
 trait DesStubs {
@@ -109,7 +109,7 @@ trait DesStubs {
     )
   }
 
-  def givenClientHasNoNinoInCESA(nino: Nino): StubMapping = {
+  def givenClientHasNoNinoInCESA(nino: NinoWithoutSuffix): StubMapping = {
     stubFor(
       get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
         .willReturn(
@@ -123,7 +123,7 @@ trait DesStubs {
     )
   }
 
-  def givenClientIsUnknownInCESAFor(nino: Nino): StubMapping = {
+  def givenClientIsUnknownInCESAFor(nino: NinoWithoutSuffix): StubMapping = {
     stubFor(
       get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
         .willReturn(aResponse().withStatus(404))
@@ -145,8 +145,8 @@ trait DesStubs {
   }
 
   private val desUrlForTaxIdentifier: TaxIdentifier => String = {
-    case Utr(utr)   => s"/registration/relationship/utr/$utr"
-    case Nino(nino) => s"/registration/relationship/nino/$nino"
-    case e          => throw new RuntimeException(s"$e Not supported tax identifier")
+    case utr: Utr                => s"/registration/relationship/utr/${utr.value}"
+    case nino: NinoWithoutSuffix => s"/registration/relationship/nino/${nino.value}"
+    case e                       => throw new RuntimeException(s"$e Not supported tax identifier")
   }
 }

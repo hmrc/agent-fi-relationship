@@ -27,9 +27,9 @@ import scala.concurrent.Future
 import play.api.http.Status._
 import play.api.libs.json._
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -76,9 +76,11 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val url = {
       saTaxIdentifier match {
-        case Nino(nino) => new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino)}")
-        case Utr(utr)   => new URL(appConfig.desBaseUrl, s"/registration/relationship/utr/${encodePathSegment(utr)}")
-        case _          => throw new RuntimeException("Unexpected TaxIdentifier")
+        case nino: NinoWithoutSuffix =>
+          new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
+        case utr: Utr =>
+          new URL(appConfig.desBaseUrl, s"/registration/relationship/utr/${encodePathSegment(utr.value)}")
+        case _ => throw new RuntimeException("Unexpected TaxIdentifier")
       }
     }
     getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map { response =>

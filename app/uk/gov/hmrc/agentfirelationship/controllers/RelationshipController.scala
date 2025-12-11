@@ -37,6 +37,7 @@ import uk.gov.hmrc.agentfirelationship.connectors.AgentClientAuthConnector
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.DeletionCount
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.TerminationResponse
@@ -44,7 +45,6 @@ import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -101,7 +101,7 @@ class RelationshipController @Inject() (
   )(implicit auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] =
     if (appConfig.checkCesaRelationshipFlag) {
       checkCesaService
-        .lookupCesaForOldRelationship(Arn(arn), Nino(clientId))
+        .lookupCesaForOldRelationship(Arn(arn), NinoWithoutSuffix(clientId))
         .flatMap { saAgentRefs =>
           if (saAgentRefs.isEmpty) {
             Future.successful(NotFound)
@@ -163,7 +163,7 @@ class RelationshipController @Inject() (
     Action.async(parse.json) { implicit request =>
       authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
         withJsonBody[Invitation] { invitation =>
-          forThisUser(Arn(arn), Nino(clientId), strideRoles) {
+          forThisUser(Arn(arn), NinoWithoutSuffix(clientId), strideRoles) {
             mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
               case Nil =>
                 logger.info("Creating a relationship")
@@ -208,7 +208,7 @@ class RelationshipController @Inject() (
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] =
     Action.async { implicit request =>
       authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
-        forThisUser(Arn(arn), Nino(clientId), strideRoles) {
+        forThisUser(Arn(arn), NinoWithoutSuffix(clientId), strideRoles) {
           val relationshipDeleted: Future[(Boolean, AuditData)] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
             auditData     <- setAuditData(arn, clientId, credentials)
@@ -245,7 +245,7 @@ class RelationshipController @Inject() (
               NotFound
             }
           }
-        case Some(Nino(nino)) if Nino.isValid(nino) =>
+        case Some(NinoWithoutSuffix(nino)) if NinoWithoutSuffix.isValid(nino) =>
           mongoService.findInactiveClientRelationships(nino).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
@@ -271,7 +271,7 @@ class RelationshipController @Inject() (
               NotFound
             }
           }
-        case Some(Nino(nino)) if Nino.isValid(nino) =>
+        case Some(NinoWithoutSuffix(nino)) if NinoWithoutSuffix.isValid(nino) =>
           mongoService.findActiveClientRelationships(nino).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
@@ -349,7 +349,7 @@ class RelationshipController @Inject() (
     else
       throw new IllegalArgumentException("No providerType found in Credentials")
 
-  private def forThisUser(requestedArn: Arn, requestedNino: Nino, strideRoles: Seq[String])(
+  private def forThisUser(requestedArn: Arn, requestedNino: NinoWithoutSuffix, strideRoles: Seq[String])(
       action: => Future[Result]
   )(implicit taxIdentifier: Option[TaxIdentifier]) =
     taxIdentifier match {
@@ -358,7 +358,7 @@ class RelationshipController @Inject() (
           case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) =>
             logger.warn("Arn does not match")
             Future.successful(Forbidden)
-          case nino @ Nino(_) if isDifferentIdentifier(requestedNino, nino) =>
+          case nino @ NinoWithoutSuffix(_) if isDifferentIdentifier(requestedNino, nino) =>
             logger.warn("Nino does not match")
             Future.successful(Forbidden)
           case _ =>

@@ -30,24 +30,24 @@ import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.MtdItId
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.support.ResettingMockitoSugar
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.domain.AgentCode
 import uk.gov.hmrc.domain.Generator
-import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
 class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach with ResettingMockitoSugar {
 
-  val testDataGenerator = new Generator()
-  val arn               = Arn("AARN0000002")
-  val saAgentRef        = SaAgentReference("T1113T")
-  val saAgentRef2       = SaAgentReference("T1123T")
-  val saAgentRef3       = SaAgentReference("T1133T")
-  val mtdItId           = MtdItId("ABCDEF123456789")
-  val agentCode         = AgentCode("ABC1234")
-  val nino: Nino        = testDataGenerator.nextNino
+  val testDataGenerator       = new Generator()
+  val arn                     = Arn("AARN0000002")
+  val saAgentRef              = SaAgentReference("T1113T")
+  val saAgentRef2             = SaAgentReference("T1123T")
+  val saAgentRef3             = SaAgentReference("T1133T")
+  val mtdItId                 = MtdItId("ABCDEF123456789")
+  val agentCode               = AgentCode("ABC1234")
+  val nino: NinoWithoutSuffix = NinoWithoutSuffix(testDataGenerator.nextNino.value)
 
   private val des          = resettingMock[DesConnector]
   private val mapping      = resettingMock[MappingConnector]
