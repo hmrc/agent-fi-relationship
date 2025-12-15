@@ -358,7 +358,7 @@ class RelationshipController @Inject() (
           case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) =>
             logger.warn("Arn does not match")
             Future.successful(Forbidden)
-          case nino @ NinoWithoutSuffix(_) if isDifferentIdentifier(requestedNino, nino) =>
+          case nino @ NinoWithoutSuffix(_) if !(nino == requestedNino) =>
             logger.warn("Nino does not match")
             Future.successful(Forbidden)
           case _ =>
