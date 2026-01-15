@@ -111,7 +111,7 @@ trait DesStubs {
 
   def givenClientHasNoNinoInCESA(nino: NinoWithoutSuffix): StubMapping = {
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.suffixlessValue}"))
+      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
         .willReturn(
           aResponse()
             .withStatus(404)
@@ -125,7 +125,7 @@ trait DesStubs {
 
   def givenClientIsUnknownInCESAFor(nino: NinoWithoutSuffix): StubMapping = {
     stubFor(
-      get(urlEqualTo(s"/registration/relationship/nino/${nino.suffixlessValue}"))
+      get(urlEqualTo(s"/registration/relationship/nino/${nino.value}"))
         .willReturn(aResponse().withStatus(404))
     )
   }
@@ -146,7 +146,7 @@ trait DesStubs {
 
   private val desUrlForTaxIdentifier: TaxIdentifier => String = {
     case utr: Utr                => s"/registration/relationship/utr/${utr.value}"
-    case nino: NinoWithoutSuffix => s"/registration/relationship/nino/${nino.suffixlessValue}"
+    case nino: NinoWithoutSuffix => s"/registration/relationship/nino/${nino.value}"
     case e                       => throw new RuntimeException(s"$e Not supported tax identifier")
   }
 }
