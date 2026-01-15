@@ -66,7 +66,7 @@ class DesConnectorSpec
 
   "DesConnector GetStatusAgentRelationship" should {
 
-    val nino = NinoWithoutSuffix("AB123456C")
+    val nino = NinoWithoutSuffix("AB123456")
     val utr  = Utr("1307171695")
 
     "return a CESA identifier when client has an active agent" in {
