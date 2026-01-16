@@ -77,7 +77,7 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
     val url = {
       saTaxIdentifier match {
         case nino: NinoWithoutSuffix =>
-          new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.value)}")
+          new URL(appConfig.desBaseUrl, s"/registration/relationship/nino/${encodePathSegment(nino.anySuffixValue)}")
         case utr: Utr =>
           new URL(appConfig.desBaseUrl, s"/registration/relationship/utr/${encodePathSegment(utr.value)}")
         case _ => throw new RuntimeException("Unexpected TaxIdentifier")
