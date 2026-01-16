@@ -27,6 +27,13 @@ case class NinoWithoutSuffix(nino: String) extends TaxIdentifier with SimpleName
   private val suffixlessNinoLength = 8
   override def value: String       = nino.replace(" ", "").take(suffixlessNinoLength)
 
+  // When using this make sure whatever uses the nino does not actually care about the suffix
+  def anySuffixValue: String =
+    nino.length match {
+      case len if len > suffixlessNinoLength => nino
+      case _                                 => value + "A"
+    }
+
   override def toString: String = nino
 
   override val name: String = "nino-without-suffix"

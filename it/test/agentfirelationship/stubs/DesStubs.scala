@@ -146,7 +146,7 @@ trait DesStubs {
 
   private val desUrlForTaxIdentifier: TaxIdentifier => String = {
     case utr: Utr                => s"/registration/relationship/utr/${utr.value}"
-    case nino: NinoWithoutSuffix => s"/registration/relationship/nino/${nino.value}"
+    case nino: NinoWithoutSuffix => s"/registration/relationship/nino/${nino.anySuffixValue}"
     case e                       => throw new RuntimeException(s"$e Not supported tax identifier")
   }
 }
