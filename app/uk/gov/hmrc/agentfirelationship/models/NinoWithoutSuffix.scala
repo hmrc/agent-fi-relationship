@@ -25,12 +25,14 @@ case class NinoWithoutSuffix(nino: String) extends TaxIdentifier with SimpleName
   require(NinoWithoutSuffix.isValid(nino), s"$nino is not a valid nino.")
 
   private val suffixlessNinoLength = 8
-  override def value: String       = nino.replace(" ", "").take(suffixlessNinoLength)
+
+  private val ninoWithoutSpace = nino.replace(" ", "")
+  override def value: String   = ninoWithoutSpace.take(suffixlessNinoLength)
 
   // When using this make sure whatever uses the nino does not actually care about the suffix
   def anySuffixValue: String =
-    nino.length match {
-      case len if len > suffixlessNinoLength => nino
+    ninoWithoutSpace.length match {
+      case len if len > suffixlessNinoLength => ninoWithoutSpace
       case _                                 => value + "A"
     }
 
