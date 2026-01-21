@@ -177,4 +177,13 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         if (result.getModifiedCount < 1) false
         else true
       }
+
+  def getDuplicateNinoRecords: Future[Int] = {
+    collection
+      .find(equal("relationshipStatus", RelationshipStatus.Active.key))
+      .foldLeft(0)((acc, r) =>
+        if (r.clientId.length > 8) acc + 1 else acc
+      ) // NB This is the mongo driver version of foldLeft
+      .toFuture()
+  }
 }
