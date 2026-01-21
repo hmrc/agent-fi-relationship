@@ -16,11 +16,13 @@
 
 package uk.gov.hmrc.agentfirelationship.utils
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
+import scala.concurrent.ExecutionContext
+
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
 
 @Singleton
 class RelationshipStartupChecks @Inject() (

@@ -80,7 +80,11 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         IndexModel(
           ascending("service", "clientId"),
           IndexOptions().name("Service_ClientId")
-        )
+        ),
+        IndexModel(
+          ascending("relationshipStatus", "clientId"),
+          IndexOptions().name("RelationshipStatus_ClientId")
+        ),
       )
     )
     with Logging {
