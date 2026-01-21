@@ -26,10 +26,14 @@ import scala.concurrent.Future
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
+import org.mongodb.scala.model.Accumulators._
+import org.mongodb.scala.model.Aggregates._
+import org.mongodb.scala.model.Aggregates.count
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.Document
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
@@ -179,11 +183,17 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       }
 
   def getDuplicateNinoRecords: Future[Int] = {
+    val pipeline: Seq[Bson] = Seq(
+      `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
+      group("$clientId", sum("count", 1)),
+      `match`(gt("count", 1)),
+      count("duplicateCount")
+    )
+
     collection
-      .find(equal("relationshipStatus", RelationshipStatus.Active.key))
-      .foldLeft(0)((acc, r) =>
-        if (r.clientId.length > 8) acc + 1 else acc
-      ) // NB This is the mongo driver version of foldLeft
-      .toFuture()
+      .aggregate[Document](pipeline)
+      .map(doc => doc.getInteger("duplicateCount", 0))
+      .headOption()
+      .map(_.getOrElse(0))
   }
 }
