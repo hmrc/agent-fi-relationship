@@ -26,12 +26,14 @@ import agentfirelationship.agentId
 import agentfirelationship.clientId
 import agentfirelationship.service
 import agentfirelationship.support.UpstreamServicesStubs
+import org.mongodb.scala.Document
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Terminated
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
@@ -155,19 +157,30 @@ class RelationshipMongoRepositoryIntegrationSpec
     }
 
     "getDuplicateNinoRecords" should {
-      def insertAll(relationships: Relationship*): Unit =
-        await(Future.sequence(relationships.map(repo.createRelationship)))
+
+      def insertRawRelationship(
+          clientId: String,
+          status: RelationshipStatus = Active
+      ): Unit =
+        await(
+          repo.collection
+            .insertOne(
+              Relationship(
+                Arn(arn),
+                service,
+                clientId,
+                Some(status),
+                LocalDateTime.parse(testActiveRelationshipStartDate),
+                None
+              )
+            )
+            .toFuture()
+        )
 
       "Find duplicate nino entries for 1 group of duplicates" in {
-        val duplicateTestRelationship: Relationship    = activeTestRelationship.copy(clientId = "AB123456A")
-        val duplicateTestRelationship2: Relationship   = activeTestRelationship.copy(clientId = "AB123456B")
-        val nonduplicateTestRelationship: Relationship = activeTestRelationship.copy(clientId = "BA654321A")
-
-        insertAll(
-          duplicateTestRelationship,
-          duplicateTestRelationship2,
-          nonduplicateTestRelationship
-        )
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("AB123456B")
+        insertRawRelationship("BA654321A")
 
         val result = await(repo.getDuplicateNinoRecords)
 
@@ -175,23 +188,15 @@ class RelationshipMongoRepositoryIntegrationSpec
       }
 
       "Find duplicate nino entries for more than 1 group of duplicates" in {
-        val duplicateTestRelationship: Relationship      = activeTestRelationship.copy(clientId = "AB123456A")
-        val duplicateTestRelationship2: Relationship     = activeTestRelationship.copy(clientId = "AB123456B")
-        val duplicateTestRelationship3: Relationship     = activeTestRelationship.copy(clientId = "AB123456C")
-        val duplicateTestRelationship4: Relationship     = activeTestRelationship.copy(clientId = "AB123456D")
-        val nextDuplicateTestRelationship: Relationship  = activeTestRelationship.copy(clientId = "BA654321A")
-        val nextDuplicateTestRelationship2: Relationship = activeTestRelationship.copy(clientId = "BA654321B")
-        val nonduplicateTestRelationship: Relationship   = activeTestRelationship.copy(clientId = "CE987654B")
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("AB123456B")
+        insertRawRelationship("AB123456C")
+        insertRawRelationship("AB123456D")
 
-        insertAll(
-          duplicateTestRelationship,
-          duplicateTestRelationship2,
-          duplicateTestRelationship3,
-          duplicateTestRelationship4,
-          nextDuplicateTestRelationship,
-          nextDuplicateTestRelationship2,
-          nonduplicateTestRelationship
-        )
+        insertRawRelationship("BA654321A")
+        insertRawRelationship("BA654321B")
+
+        insertRawRelationship("CE987654B")
 
         val result = await(repo.getDuplicateNinoRecords)
 
@@ -199,29 +204,15 @@ class RelationshipMongoRepositoryIntegrationSpec
       }
 
       "Find duplicate nino entries for only active relationships" in {
-        val duplicateTestRelationship: Relationship =
-          activeTestRelationship.copy(clientId = "AB123456A", relationshipStatus = Some(Active))
-        val duplicateTestRelationship2: Relationship =
-          activeTestRelationship.copy(clientId = "AB123456B", relationshipStatus = Some(Active))
-        val duplicateTestRelationship3: Relationship =
-          activeTestRelationship.copy(clientId = "AB123456C", relationshipStatus = Some(Active))
-        val duplicateTestRelationship4: Relationship =
-          activeTestRelationship.copy(clientId = "AB123456D", relationshipStatus = Some(Active))
-        val nextDuplicateTestRelationship: Relationship =
-          activeTestRelationship.copy(clientId = "BA654321A", relationshipStatus = Some(Active))
-        val nextDuplicateTestRelationship2: Relationship =
-          activeTestRelationship.copy(clientId = "BA654321B", relationshipStatus = Some(Terminated))
-        val nonduplicateTestRelationship: Relationship = activeTestRelationship.copy(clientId = "CE987654B")
+        insertRawRelationship("AB123456A", Active)
+        insertRawRelationship("AB123456B", Active)
+        insertRawRelationship("AB123456C", Active)
+        insertRawRelationship("AB123456D", Active)
 
-        insertAll(
-          duplicateTestRelationship,
-          duplicateTestRelationship2,
-          duplicateTestRelationship3,
-          duplicateTestRelationship4,
-          nextDuplicateTestRelationship,
-          nextDuplicateTestRelationship2,
-          nonduplicateTestRelationship
-        )
+        insertRawRelationship("BA654321A", Active)
+        insertRawRelationship("BA654321B", Terminated)
+
+        insertRawRelationship("CE987654B", Active)
 
         val result = await(repo.getDuplicateNinoRecords)
 
@@ -229,15 +220,9 @@ class RelationshipMongoRepositoryIntegrationSpec
       }
 
       "Find no duplicate nino entries if none exist" in {
-        val testRelationship: Relationship  = activeTestRelationship.copy(clientId = "AB123456A")
-        val testRelationship2: Relationship = activeTestRelationship.copy(clientId = "BA654321A")
-        val testRelationship3: Relationship = activeTestRelationship.copy(clientId = "CE987654B")
-
-        insertAll(
-          testRelationship,
-          testRelationship2,
-          testRelationship3
-        )
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("BA654321A")
+        insertRawRelationship("CE987654B")
 
         val result = await(repo.getDuplicateNinoRecords)
 

@@ -25,10 +25,10 @@ import scala.concurrent.Future
 
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.bson.BsonArray
 import org.mongodb.scala.model._
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
-import org.mongodb.scala.model.Aggregates.count
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.Updates.combine
@@ -189,7 +189,18 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
   def getDuplicateNinoRecords: Future[Int] = {
     val pipeline: Seq[Bson] = Seq(
       `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
-      group("$clientId", sum("count", 1)),
+      group(
+        Document(
+          "_id" -> Document(
+            "$substrBytes" -> BsonArray(
+              "$clientId",
+              0,
+              8
+            )
+          )
+        ),
+        sum("count", 1)
+      ),
       `match`(gt("count", 1)),
       count("duplicateCount")
     )
