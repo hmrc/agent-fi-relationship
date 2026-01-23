@@ -19,16 +19,21 @@ package agentfirelationship.services
 import java.time.LocalDateTime
 import javax.inject.Singleton
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import agentfirelationship.agentId
 import agentfirelationship.clientId
 import agentfirelationship.service
 import agentfirelationship.support.UpstreamServicesStubs
+import org.mongodb.scala.Document
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Terminated
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
@@ -149,6 +154,80 @@ class RelationshipMongoRepositoryIntegrationSpec
         now.minusDays(6).toLocalDate.toString,
         now.toLocalDate.toString
       )
+    }
+
+    "getDuplicateNinoRecords" should {
+
+      def insertRawRelationship(
+          clientId: String,
+          status: RelationshipStatus = Active
+      ): Unit =
+        await(
+          repo.collection
+            .insertOne(
+              Relationship(
+                Arn(arn),
+                service,
+                clientId,
+                Some(status),
+                LocalDateTime.parse(testActiveRelationshipStartDate),
+                None
+              )
+            )
+            .toFuture()
+        )
+
+      "Find duplicate nino entries for 1 group of duplicates" in {
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("AB123456B")
+        insertRawRelationship("BA654321A")
+
+        val result = await(repo.getDuplicateNinoRecords)
+
+        result shouldBe 1
+      }
+
+      "Find duplicate nino entries for more than 1 group of duplicates" in {
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("AB123456B")
+        insertRawRelationship("AB123456C")
+        insertRawRelationship("AB123456D")
+
+        insertRawRelationship("BA654321A")
+        insertRawRelationship("BA654321B")
+
+        insertRawRelationship("CE987654B")
+
+        val result = await(repo.getDuplicateNinoRecords)
+
+        result shouldBe 2
+      }
+
+      "Find duplicate nino entries for only active relationships" in {
+        insertRawRelationship("AB123456A", Active)
+        insertRawRelationship("AB123456B", Active)
+        insertRawRelationship("AB123456C", Active)
+        insertRawRelationship("AB123456D", Active)
+
+        insertRawRelationship("BA654321A", Active)
+        insertRawRelationship("BA654321B", Terminated)
+
+        insertRawRelationship("CE987654B", Active)
+
+        val result = await(repo.getDuplicateNinoRecords)
+
+        result shouldBe 1
+      }
+
+      "Find no duplicate nino entries if none exist" in {
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("BA654321A")
+        insertRawRelationship("CE987654B")
+
+        val result = await(repo.getDuplicateNinoRecords)
+
+        result shouldBe 0
+      }
     }
   }
 }
