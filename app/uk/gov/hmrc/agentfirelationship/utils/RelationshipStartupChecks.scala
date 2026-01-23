@@ -30,17 +30,14 @@ class RelationshipStartupChecks @Inject() (
 )(implicit ec: ExecutionContext)
     extends Logging {
 
-  repository.getDuplicateNinoRecords
-    .map { count =>
-      logger.warn(
-        s"[RelationshipStartupChecks] Duplicate relationship ninos: $count"
-      )
-    }
-    .recover {
-      case ex =>
-        logger.warn(
-          "[RelationshipStartupChecks] Failed to fetch duplicate nino records.",
-          ex
-        )
-    }
+  for {
+    allDuplicates      <- repository.getAllDuplicateNinoRecords
+    duplicateSuffixes  <- repository.getDuplicateNinoWoSuffixRecords
+    getLatestDuplicate <- repository.getLastCreatedDuplicateNinoRecord
+  } yield logger.warn(
+    s"""
+       |[RelationshipStartupChecks] All duplicate ninos: $allDuplicates
+       | ---- Duplicate ninos without suffixes: $duplicateSuffixes
+       | ---- Latest duplicate relationship: $getLatestDuplicate""".stripMargin
+  )
 }

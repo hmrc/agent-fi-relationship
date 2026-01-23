@@ -26,6 +26,8 @@ import scala.concurrent.Future
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.BsonArray
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.model._
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
@@ -36,6 +38,7 @@ import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.Document
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.models.DuplicateNinoStartDates
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
@@ -186,7 +189,22 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         else true
       }
 
-  def getDuplicateNinoRecords: Future[Int] = {
+  def getAllDuplicateNinoRecords: Future[Int] = {
+    val pipeline: Seq[Bson] = Seq(
+      `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
+      group("$clientId", sum("count", 1)),
+      `match`(gt("count", 1)),
+      count("duplicateCount")
+    )
+
+    collection
+      .aggregate[Document](pipeline)
+      .map(doc => doc.getInteger("duplicateCount", 0))
+      .headOption()
+      .map(_.getOrElse(0))
+  }
+
+  def getDuplicateNinoWoSuffixRecords: Future[Int] = {
     val pipeline: Seq[Bson] = Seq(
       `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
       group(
@@ -210,5 +228,29 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       .map(doc => doc.getInteger("duplicateCount", 0))
       .headOption()
       .map(_.getOrElse(0))
+  }
+
+  def getLastCreatedDuplicateNinoRecord: Future[LocalDateTime] = {
+    val pipeline: Seq[Bson] = Seq(
+      `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
+      group(
+        "$clientId",
+        sum("count", 1),
+        push("startDates", "$startDate")
+      ),
+      `match`(gt("count", 1)),
+      project(
+        BsonDocument("startDates" -> 1, "_id" -> 0)
+      )
+    )
+
+    collection
+      .aggregate[BsonValue](pipeline)
+      .map(Codecs.fromBson[DuplicateNinoStartDates])
+      .toFuture()
+      .map { r =>
+        val allDates = r.flatMap(_.startDates)
+        allDates.max
+      }
   }
 }
