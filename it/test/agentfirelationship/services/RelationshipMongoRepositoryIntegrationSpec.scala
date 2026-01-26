@@ -250,6 +250,26 @@ class RelationshipMongoRepositoryIntegrationSpec
 
         result shouldBe LocalDateTime.parse("2026-01-23T12:00:00")
       }
+
+      "Not return a record which is not a duplicate" in {
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2023-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2025-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2026-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2024-01-01T00:00:00"))
+
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2023-01-01T00:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2025-01-22T12:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2026-01-23T12:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2024-01-23T00:00:00"))
+
+        insertRawRelationship("BA654322A", startDate = LocalDateTime.parse("2026-01-26T00:00:00"))
+
+        insertRawRelationship("CE987654B")
+
+        val result = await(repo.getLastCreatedDuplicateNinoRecord)
+
+        result shouldBe LocalDateTime.parse("2026-01-23T12:00:00")
+      }
     }
   }
 }

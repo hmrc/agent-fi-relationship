@@ -16,36 +16,26 @@
 
 package uk.gov.hmrc.agentfirelationship.repository
 
-import java.time.LocalDateTime
-import java.time.ZoneId
-import javax.inject.Inject
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import com.google.inject.Singleton
+import org.mongodb.scala.Document
+import org.mongodb.scala.bson.{BsonArray, BsonDocument}
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.bson.BsonArray
-import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.bson.BsonValue
-import org.mongodb.scala.model._
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.Updates.combine
-import org.mongodb.scala.model.Updates.set
-import org.mongodb.scala.Document
+import org.mongodb.scala.model.Updates.{combine, set}
+import org.mongodb.scala.model._
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.models.DuplicateNinoStartDates
-import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
-import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
+import uk.gov.hmrc.agentfirelationship.models.{NinoWithoutSuffix, Relationship, RelationshipStatus}
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.mongo.play.json.Codecs
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+
+import java.time.{LocalDateTime, ZoneId}
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponent: MongoComponent)(
@@ -236,21 +226,21 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       group(
         "$clientId",
         sum("count", 1),
-        push("startDates", "$startDate")
+        max("latestStartDate", "$startDate")
       ),
       `match`(gt("count", 1)),
       project(
-        BsonDocument("startDates" -> 1, "_id" -> 0)
+        BsonDocument("latestStartDate" -> 1, "_id" -> 0)
       )
     )
 
     collection
-      .aggregate[BsonValue](pipeline)
-      .map(Codecs.fromBson[DuplicateNinoStartDates])
+      .aggregate[Document](pipeline)
       .toFuture()
       .map { r =>
-        val allDates = r.flatMap(_.startDates)
-        allDates.max
+        r.map(_.getString("latestStartDate"))
+          .map(LocalDateTime.parse)
+          .max
       }
   }
 }
