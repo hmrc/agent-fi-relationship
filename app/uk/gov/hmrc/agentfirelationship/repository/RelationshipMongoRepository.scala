@@ -26,6 +26,7 @@ import scala.concurrent.Future
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.BsonArray
+import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model._
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
@@ -186,7 +187,22 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         else true
       }
 
-  def getDuplicateNinoRecords: Future[Int] = {
+  def getAllDuplicateNinoRecords: Future[Int] = {
+    val pipeline: Seq[Bson] = Seq(
+      `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
+      group("$clientId", sum("count", 1)),
+      `match`(gt("count", 1)),
+      count("duplicateCount")
+    )
+
+    collection
+      .aggregate[Document](pipeline)
+      .map(doc => doc.getInteger("duplicateCount", 0))
+      .headOption()
+      .map(_.getOrElse(0))
+  }
+
+  def getDuplicateNinoWoSuffixRecords: Future[Int] = {
     val pipeline: Seq[Bson] = Seq(
       `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
       group(
@@ -210,5 +226,33 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       .map(doc => doc.getInteger("duplicateCount", 0))
       .headOption()
       .map(_.getOrElse(0))
+  }
+
+  def getLastCreatedDuplicateNinoRecord: Future[LocalDateTime] = {
+    val pipeline: Seq[Bson] = Seq(
+      `match`(equal("relationshipStatus", RelationshipStatus.Active.key)),
+      group(
+        "$clientId",
+        sum("count", 1),
+        max("latestStartDate", "$startDate")
+      ),
+      `match`(gt("count", 1)),
+      group(
+        null,
+        max("overallLatestStartDate", "$latestStartDate")
+      ),
+      project(
+        BsonDocument("overallLatestStartDate" -> 1, "_id" -> 0)
+      )
+    )
+
+    collection
+      .aggregate[Document](pipeline)
+      .headOption()
+      .map {
+        _.map { doc =>
+          LocalDateTime.parse(doc.getString("overallLatestStartDate"))
+        }.get
+      }
   }
 }

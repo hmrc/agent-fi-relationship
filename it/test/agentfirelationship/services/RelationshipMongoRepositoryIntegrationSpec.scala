@@ -86,6 +86,26 @@ class RelationshipMongoRepositoryIntegrationSpec
         "features.check-cesa-relationships" -> false
       )
 
+  def insertRawRelationship(
+      clientId: String,
+      status: RelationshipStatus = Active,
+      startDate: LocalDateTime = LocalDateTime.parse(testActiveRelationshipStartDate)
+  ): Unit =
+    await(
+      repo.collection
+        .insertOne(
+          Relationship(
+            Arn(arn),
+            service,
+            clientId,
+            Some(status),
+            startDate,
+            None
+          )
+        )
+        .toFuture()
+    )
+
   "RelationshipMongoRepository" should {
     "return active relationships for findRelationships" in {
       await(repo.createRelationship(activeTestRelationship))
@@ -156,33 +176,14 @@ class RelationshipMongoRepositoryIntegrationSpec
       )
     }
 
-    "getDuplicateNinoRecords" should {
-
-      def insertRawRelationship(
-          clientId: String,
-          status: RelationshipStatus = Active
-      ): Unit =
-        await(
-          repo.collection
-            .insertOne(
-              Relationship(
-                Arn(arn),
-                service,
-                clientId,
-                Some(status),
-                LocalDateTime.parse(testActiveRelationshipStartDate),
-                None
-              )
-            )
-            .toFuture()
-        )
+    "getDuplicateNinoWoSuffixRecords" should {
 
       "Find duplicate nino entries for 1 group of duplicates" in {
         insertRawRelationship("AB123456A")
         insertRawRelationship("AB123456B")
         insertRawRelationship("BA654321A")
 
-        val result = await(repo.getDuplicateNinoRecords)
+        val result = await(repo.getDuplicateNinoWoSuffixRecords)
 
         result shouldBe 1
       }
@@ -198,7 +199,7 @@ class RelationshipMongoRepositoryIntegrationSpec
 
         insertRawRelationship("CE987654B")
 
-        val result = await(repo.getDuplicateNinoRecords)
+        val result = await(repo.getDuplicateNinoWoSuffixRecords)
 
         result shouldBe 2
       }
@@ -214,7 +215,7 @@ class RelationshipMongoRepositoryIntegrationSpec
 
         insertRawRelationship("CE987654B", Active)
 
-        val result = await(repo.getDuplicateNinoRecords)
+        val result = await(repo.getDuplicateNinoWoSuffixRecords)
 
         result shouldBe 1
       }
@@ -224,9 +225,50 @@ class RelationshipMongoRepositoryIntegrationSpec
         insertRawRelationship("BA654321A")
         insertRawRelationship("CE987654B")
 
-        val result = await(repo.getDuplicateNinoRecords)
+        val result = await(repo.getDuplicateNinoWoSuffixRecords)
 
         result shouldBe 0
+      }
+    }
+
+    "getLastCreatedDuplicateNinoRecord" should {
+
+      "Return latest record LocalDateTime" in {
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2023-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2025-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2026-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2024-01-01T00:00:00"))
+
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2023-01-01T00:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2025-01-22T12:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2026-01-23T12:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2024-01-23T00:00:00"))
+
+        insertRawRelationship("CE987654B")
+
+        val result = await(repo.getLastCreatedDuplicateNinoRecord)
+
+        result shouldBe LocalDateTime.parse("2026-01-23T12:00:00")
+      }
+
+      "Not return a record which is not a duplicate" in {
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2023-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2025-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2026-01-01T00:00:00"))
+        insertRawRelationship("AB123456A", startDate = LocalDateTime.parse("2024-01-01T00:00:00"))
+
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2023-01-01T00:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2025-01-22T12:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2026-01-23T12:00:00"))
+        insertRawRelationship("BA654321A", startDate = LocalDateTime.parse("2024-01-23T00:00:00"))
+
+        insertRawRelationship("BA654322A", startDate = LocalDateTime.parse("2026-01-26T00:00:00"))
+
+        insertRawRelationship("CE987654B")
+
+        val result = await(repo.getLastCreatedDuplicateNinoRecord)
+
+        result shouldBe LocalDateTime.parse("2026-01-23T12:00:00")
       }
     }
   }
