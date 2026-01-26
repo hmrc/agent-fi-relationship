@@ -35,6 +35,7 @@ import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
 import org.mongodb.scala.Document
+import org.mongodb.scala.Observable
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
@@ -254,5 +255,23 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
           LocalDateTime.parse(doc.getString("overallLatestStartDate"))
         }.get
       }
+  }
+
+  def findWithNinoSuffix: Observable[Relationship] = collection
+    .find()
+    .filter { case r: Relationship => r.clientId.length > 8 }
+
+  def removeNinoSuffix(
+      clientId: String
+  ): Future[Long] = {
+    val ninoWithoutSuffix = clientId.take(8)
+
+    collection
+      .updateOne(
+        equal("clientId", clientId),
+        set("clientId", ninoWithoutSuffix)
+      )
+      .toFuture()
+      .map(_.getModifiedCount)
   }
 }

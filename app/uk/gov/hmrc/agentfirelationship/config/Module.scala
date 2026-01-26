@@ -17,11 +17,13 @@
 package uk.gov.hmrc.agentfirelationship.config
 
 import com.google.inject.AbstractModule
+import uk.gov.hmrc.agentfirelationship.utils.RelationshipRemoveNinoSuffix
 import uk.gov.hmrc.agentfirelationship.utils.RelationshipStartupChecks
 
 class Module extends AbstractModule {
 
   override def configure(): Unit = {
     bind(classOf[RelationshipStartupChecks]).asEagerSingleton()
+    bind(classOf[RelationshipRemoveNinoSuffix]).asEagerSingleton()
   }
 }
