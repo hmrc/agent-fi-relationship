@@ -16,29 +16,23 @@
 
 package agentfirelationship.services
 
-import java.time.LocalDateTime
-import javax.inject.Singleton
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
-import agentfirelationship.agentId
-import agentfirelationship.clientId
-import agentfirelationship.service
+import agentfirelationship.{agentId, clientId, service}
 import agentfirelationship.support.UpstreamServicesStubs
-import org.mongodb.scala.Document
+import org.mongodb.scala.model.Filters.{and, equal => mongoEqual}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import play.api.Application
-import uk.gov.hmrc.agentfirelationship.models.Arn
-import uk.gov.hmrc.agentfirelationship.models.Relationship
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
-import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Terminated
+import uk.gov.hmrc.agentfirelationship.models.{Arn, Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.{Active, Terminated}
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+
+import java.time.LocalDateTime
+import javax.inject.Singleton
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @Singleton
 class RelationshipMongoRepositoryIntegrationSpec
@@ -269,6 +263,202 @@ class RelationshipMongoRepositoryIntegrationSpec
         val result = await(repo.getLastCreatedDuplicateNinoRecord)
 
         result shouldBe LocalDateTime.parse("2026-01-23T12:00:00")
+      }
+    }
+
+    "findWithNinoSuffix" should {
+
+      "retrieve records for a given nino" in {
+        val recordWoNinoSuffix   = activeTestRelationship.copy(clientId = "AB123456")
+        val recordWithNinoSuffix = activeTestRelationship.copy(clientId = "BA654321A")
+        await(
+          repo.collection
+            .insertMany(
+              Seq(
+                recordWoNinoSuffix,
+                recordWithNinoSuffix
+              )
+            )
+            .toFuture()
+        )
+        val result: Seq[Relationship] = await(repo.findWithNinoSuffix.toFuture)
+        result shouldBe Seq(
+          activeTestRelationship.copy(clientId = "BA654321A"),
+        )
+      }
+
+      "fail to retrieve records when none are found for the given nino" in {
+        val recordWoNinoSuffix  = activeTestRelationship.copy(clientId = "AB123456")
+        val recordWoNinoSuffix2 = activeTestRelationship.copy(clientId = "BA654321")
+        await(
+          repo.collection
+            .insertMany(
+              Seq(
+                recordWoNinoSuffix,
+                recordWoNinoSuffix2
+              )
+            )
+            .toFuture()
+        )
+        await(repo.findWithNinoSuffix.toFuture) shouldBe Seq.empty
+      }
+    }
+
+    "removeNinoSuffix" should {
+
+      "remove suffix from nino for active record" in {
+        val ninoWithSuffix    = "SX579189D"
+        val ninoWithoutSuffix = "SX579189"
+
+        val inserted = activeTestRelationship.copy(clientId = ninoWithSuffix)
+        val arn      = inserted.arn
+        val service  = inserted.service
+
+        await(
+          repo.collection
+            .insertOne(inserted)
+            .toFuture()
+        )
+
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+
+        await(
+          repo.removeNinoSuffix(
+            clientId = ninoWithSuffix
+          )
+        )
+
+        val updatedOpt = await(
+          repo.collection
+            .find(
+              and(
+                mongoEqual("arn", arn.value),
+                mongoEqual("service", service)
+              )
+            )
+            .headOption()
+        )
+
+        val updated = updatedOpt.getOrElse(fail(s"Expected updated record not found for arn=$arn service=$service"))
+        updated.clientId shouldBe ninoWithoutSuffix
+      }
+
+      "removeNinoSuffix should remove suffix from nino for inactive record" in {
+        val ninoWithSuffix    = "SX579189D"
+        val ninoWithoutSuffix = "SX579189"
+
+        val inserted = activeTestRelationship.copy(clientId = ninoWithSuffix, relationshipStatus = Some(Terminated))
+        val arn      = inserted.arn
+        val service  = inserted.service
+
+        await(
+          repo.collection
+            .insertOne(inserted)
+            .toFuture()
+        )
+
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+
+        await(
+          repo.removeNinoSuffix(
+            clientId = ninoWithSuffix
+          )
+        )
+
+        val updatedOpt = await(
+          repo.collection
+            .find(
+              and(
+                mongoEqual("arn", arn.value),
+                mongoEqual("service", service)
+              )
+            )
+            .headOption()
+        )
+
+        val updated = updatedOpt.getOrElse(fail(s"Expected updated record not found for arn=$arn service=$service"))
+        updated.clientId shouldBe ninoWithoutSuffix
+      }
+
+      "removeNinoSuffix should not create extra documents" in {
+        val ninoWithSuffix = "SX579189D"
+
+        await(
+          repo.collection
+            .insertOne(
+              activeTestRelationship.copy(clientId = ninoWithSuffix)
+            )
+            .toFuture()
+        )
+
+        await(
+          repo.removeNinoSuffix(
+            clientId = ninoWithSuffix
+          )
+        )
+
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+      }
+
+      "removeNinoSuffix should be idempotent when no suffix exists" in {
+        val ninoWithoutSuffix = "SX579189"
+
+        val inserted = activeTestRelationship.copy(clientId = ninoWithoutSuffix)
+        val arn      = inserted.arn
+        val service  = inserted.service
+
+        await(
+          repo.collection
+            .insertOne(inserted)
+            .toFuture()
+        )
+
+        await(
+          repo.removeNinoSuffix(
+            clientId = ninoWithoutSuffix
+          )
+        )
+
+        val resultOpt = await(
+          repo.collection
+            .find(
+              and(
+                mongoEqual("arn", arn.value),
+                mongoEqual("service", service)
+              )
+            )
+            .headOption()
+        )
+
+        val result = resultOpt.getOrElse(fail(s"Expected record not found for arn=$arn service=$service"))
+        result.clientId shouldBe ninoWithoutSuffix
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+      }
+
+      "removeNinoSuffix should return number of records updated for duplicated records" in {
+        val ninoWithSuffix = "SX579189D"
+
+        val relationships = Seq(
+          activeTestRelationship.copy(clientId = ninoWithSuffix),
+          activeTestRelationship.copy(clientId = ninoWithSuffix),
+          activeTestRelationship.copy(clientId = ninoWithSuffix)
+        )
+
+        await(repo.collection.insertMany(relationships).toFuture())
+        await(repo.collection.countDocuments().toFuture()) shouldBe 3
+
+        val updatedCounts =
+          await(
+            Future.sequence(
+              relationships.map { _ =>
+                repo.removeNinoSuffix(
+                  clientId = ninoWithSuffix
+                )
+              }
+            )
+          )
+
+        updatedCounts.sum shouldBe 3
       }
     }
   }
