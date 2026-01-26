@@ -16,26 +16,34 @@
 
 package uk.gov.hmrc.agentfirelationship.repository
 
+import java.time.LocalDateTime
+import java.time.ZoneId
+import javax.inject.Inject
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import com.google.inject.Singleton
-import org.mongodb.scala.Document
-import org.mongodb.scala.bson.{BsonArray, BsonDocument}
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.bson.BsonArray
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.model._
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.Updates.{combine, set}
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.Updates.combine
+import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.Document
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.models.{NinoWithoutSuffix, Relationship, RelationshipStatus}
+import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
+import uk.gov.hmrc.agentfirelationship.models.Relationship
+import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
-
-import java.time.{LocalDateTime, ZoneId}
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponent: MongoComponent)(
@@ -229,18 +237,22 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         max("latestStartDate", "$startDate")
       ),
       `match`(gt("count", 1)),
+      group(
+        null,
+        max("overallLatestStartDate", "$latestStartDate")
+      ),
       project(
-        BsonDocument("latestStartDate" -> 1, "_id" -> 0)
+        BsonDocument("overallLatestStartDate" -> 1, "_id" -> 0)
       )
     )
 
     collection
       .aggregate[Document](pipeline)
-      .toFuture()
-      .map { r =>
-        r.map(_.getString("latestStartDate"))
-          .map(LocalDateTime.parse)
-          .max
+      .headOption()
+      .map {
+        _.map { doc =>
+          LocalDateTime.parse(doc.getString("overallLatestStartDate"))
+        }.get
       }
   }
 }
