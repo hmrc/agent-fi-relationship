@@ -37,12 +37,12 @@ class RelationshipRemoveNinoSuffix @Inject() (
 
     mongoLockService.relationshipLock("RelationshipRemoveNinoSuffix") {
 
-      logger.info("[RelationshipRemoveNinoSuffix] Bulk NINO suffix removal job started")
+      logger.warn("[RelationshipRemoveNinoSuffix] Bulk NINO suffix removal job started")
 
       repository
         .removeNinoSuffixBulk()
         .map { totalUpdated =>
-          logger.info(
+          logger.warn(
             s"[RelationshipRemoveNinoSuffix] Job completed. Total records updated: $totalUpdated"
           )
         }
@@ -55,6 +55,6 @@ class RelationshipRemoveNinoSuffix @Inject() (
         }
     }
   } else {
-    logger.info("[RelationshipRemoveNinoSuffix] removeNinoSuffixEnabled is disabled")
+    logger.warn("[RelationshipRemoveNinoSuffix] removeNinoSuffixEnabled is disabled")
   }
 }
