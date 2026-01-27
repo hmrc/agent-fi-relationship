@@ -18,15 +18,13 @@ package agentfirelationship.services
 
 import java.time.LocalDateTime
 import javax.inject.Singleton
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import agentfirelationship.agentId
 import agentfirelationship.clientId
 import agentfirelationship.service
 import agentfirelationship.support.UpstreamServicesStubs
-import org.mongodb.scala.model.Filters.{ equal => mongoEqual }
+import org.mongodb.scala.model.Filters.{equal => mongoEqual}
 import org.mongodb.scala.model.Filters.and
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -40,6 +38,8 @@ import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Terminated
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+
+import scala.concurrent.duration.DurationInt
 
 @Singleton
 class RelationshipMongoRepositoryIntegrationSpec
@@ -296,7 +296,7 @@ class RelationshipMongoRepositoryIntegrationSpec
 
         await(
           repo.removeNinoSuffixBulk()
-        )
+        )(60.seconds)
 
         val updatedOpt = await(
           repo.collection
