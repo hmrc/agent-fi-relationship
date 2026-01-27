@@ -19,11 +19,8 @@ package uk.gov.hmrc.agentfirelationship.utils
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
 
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.stream.Materializer
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
@@ -33,38 +30,28 @@ import uk.gov.hmrc.agentfirelationship.services.MongoLockService
 class RelationshipRemoveNinoSuffix @Inject() (
     repository: RelationshipMongoRepository,
     mongoLockService: MongoLockService
-)(implicit ec: ExecutionContext, materializer: Materializer, appConfig: AppConfig)
+)(implicit ec: ExecutionContext, appConfig: AppConfig)
     extends Logging {
 
   if (appConfig.removeNinoSuffixEnabled) {
 
     mongoLockService.relationshipLock("RelationshipRemoveNinoSuffix") {
 
-      logger.info("[RelationshipRemoveNinoSuffix] Remove nino suffix job is running")
+      logger.info("[RelationshipRemoveNinoSuffix] Bulk NINO suffix removal job started")
 
-      Source
-        .fromPublisher(repository.findWithNinoSuffix)
-        .throttle(10, 1.second)
-        .mapAsync(1) { r =>
-          repository
-            .removeNinoSuffix(
-              clientId = r.clientId
-            )
-            .recover {
-              case ex =>
-                logger.error(
-                  s"Failed to remove NINO suffix for arn=${r.arn}",
-                  ex
-                )
-                0L
-            }
-        }
-        .runFold(0L)(_ + _)
+      repository
+        .removeNinoSuffixBulk()
         .map { totalUpdated =>
           logger.info(
             s"[RelationshipRemoveNinoSuffix] Job completed. Total records updated: $totalUpdated"
           )
-          ()
+        }
+        .recover {
+          case ex =>
+            logger.error(
+              "[RelationshipRemoveNinoSuffix] Bulk NINO suffix removal job failed",
+              ex
+            )
         }
     }
   } else {

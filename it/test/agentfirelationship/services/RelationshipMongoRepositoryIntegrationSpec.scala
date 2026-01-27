@@ -273,103 +273,29 @@ class RelationshipMongoRepositoryIntegrationSpec
       }
     }
 
-    "findWithNinoSuffix" should {
-
-      "retrieve records for a given nino" in {
-        val recordWoNinoSuffix   = activeTestRelationship.copy(clientId = "AB123456")
-        val recordWithNinoSuffix = activeTestRelationship.copy(clientId = "BA654321A")
-        await(
-          repo.collection
-            .insertMany(
-              Seq(
-                recordWoNinoSuffix,
-                recordWithNinoSuffix
-              )
-            )
-            .toFuture()
-        )
-        val result: Seq[Relationship] = await(repo.findWithNinoSuffix.toFuture)
-        result shouldBe Seq(
-          activeTestRelationship.copy(clientId = "BA654321A"),
-        )
-      }
-
-      "fail to retrieve records when none are found for the given nino" in {
-        val recordWoNinoSuffix  = activeTestRelationship.copy(clientId = "AB123456")
-        val recordWoNinoSuffix2 = activeTestRelationship.copy(clientId = "BA654321")
-        await(
-          repo.collection
-            .insertMany(
-              Seq(
-                recordWoNinoSuffix,
-                recordWoNinoSuffix2
-              )
-            )
-            .toFuture()
-        )
-        await(repo.findWithNinoSuffix.toFuture) shouldBe Seq.empty
-      }
-    }
-
-    "removeNinoSuffix" should {
-
-      "remove suffix from nino for active record" in {
+    "removeNinoSuffixBulk" should {
+      "bulk remove suffix from nino for active and inactive records" in {
         val ninoWithSuffix    = "SX579189D"
         val ninoWithoutSuffix = "SX579189"
 
-        val inserted = activeTestRelationship.copy(clientId = ninoWithSuffix)
-        val arn      = inserted.arn
-        val service  = inserted.service
+        val inserted         = activeTestRelationship.copy(clientId = ninoWithSuffix)
+        val insertedWoSuffix = activeTestRelationship.copy(clientId = ninoWithoutSuffix)
+        val arn              = inserted.arn
+        val service          = inserted.service
 
+        val bulkActive   = for (_ <- 1 to 500000) yield inserted
+        val bulkInactive = for (_ <- 1 to 500000) yield inserted.copy(relationshipStatus = Some(Terminated))
+        val bulkBoth     = bulkActive ++ bulkInactive
         await(
           repo.collection
-            .insertOne(inserted)
+            .insertMany(insertedWoSuffix +: bulkBoth)
             .toFuture()
         )
 
-        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1000001
 
         await(
-          repo.removeNinoSuffix(
-            clientId = ninoWithSuffix
-          )
-        )
-
-        val updatedOpt = await(
-          repo.collection
-            .find(
-              and(
-                mongoEqual("arn", arn.value),
-                mongoEqual("service", service)
-              )
-            )
-            .headOption()
-        )
-
-        val updated = updatedOpt.getOrElse(fail(s"Expected updated record not found for arn=$arn service=$service"))
-        updated.clientId shouldBe ninoWithoutSuffix
-      }
-
-      "removeNinoSuffix should remove suffix from nino for inactive record" in {
-        val ninoWithSuffix    = "SX579189D"
-        val ninoWithoutSuffix = "SX579189"
-
-        val inserted = activeTestRelationship.copy(clientId = ninoWithSuffix, relationshipStatus = Some(Terminated))
-        val arn      = inserted.arn
-        val service  = inserted.service
-
-        await(
-          repo.collection
-            .insertOne(inserted)
-            .toFuture()
-        )
-
-        await(repo.collection.countDocuments().toFuture()) shouldBe 1
-
-        await(
-          repo.removeNinoSuffix(
-            clientId = ninoWithSuffix
-          )
+          repo.removeNinoSuffixBulk()
         )
 
         val updatedOpt = await(
@@ -399,9 +325,7 @@ class RelationshipMongoRepositoryIntegrationSpec
         )
 
         await(
-          repo.removeNinoSuffix(
-            clientId = ninoWithSuffix
-          )
+          repo.removeNinoSuffixBulk()
         )
 
         await(repo.collection.countDocuments().toFuture()) shouldBe 1
@@ -421,9 +345,7 @@ class RelationshipMongoRepositoryIntegrationSpec
         )
 
         await(
-          repo.removeNinoSuffix(
-            clientId = ninoWithoutSuffix
-          )
+          repo.removeNinoSuffixBulk()
         )
 
         val resultOpt = await(
@@ -458,9 +380,7 @@ class RelationshipMongoRepositoryIntegrationSpec
           await(
             Future.sequence(
               relationships.map { _ =>
-                repo.removeNinoSuffix(
-                  clientId = ninoWithSuffix
-                )
+                repo.removeNinoSuffixBulk()
               }
             )
           )
