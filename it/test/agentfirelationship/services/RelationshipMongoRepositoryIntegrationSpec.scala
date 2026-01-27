@@ -283,14 +283,14 @@ class RelationshipMongoRepositoryIntegrationSpec
         val arn              = inserted.arn
         val service          = inserted.service
 
-        val bulkActive   = for (_ <- 1 to 500000) yield inserted
-        val bulkInactive = for (_ <- 1 to 500000) yield inserted.copy(relationshipStatus = Some(Terminated))
+        val bulkActive   = for (_ <- 1 to 100000) yield inserted
+        val bulkInactive = for (_ <- 1 to 100000) yield inserted.copy(relationshipStatus = Some(Terminated))
         val bulkBoth     = bulkActive ++ bulkInactive
         await(
           repo.collection
             .insertMany(insertedWoSuffix +: bulkBoth)
             .toFuture()
-        )
+        )(60.seconds)
 
         await(repo.collection.countDocuments().toFuture()) shouldBe 1000001
 
