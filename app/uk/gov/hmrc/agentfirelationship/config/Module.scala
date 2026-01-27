@@ -17,8 +17,7 @@
 package uk.gov.hmrc.agentfirelationship.config
 
 import com.google.inject.AbstractModule
-import uk.gov.hmrc.agentfirelationship.utils.RelationshipRemoveNinoSuffix
-import uk.gov.hmrc.agentfirelationship.utils.RelationshipStartupChecks
+import uk.gov.hmrc.agentfirelationship.utils.{RelationshipRemoveNinoSuffix, RelationshipStartupChecks}
 
 class Module extends AbstractModule {
 

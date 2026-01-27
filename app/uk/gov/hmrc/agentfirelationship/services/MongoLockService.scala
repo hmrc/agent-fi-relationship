@@ -25,9 +25,9 @@ import scala.concurrent.Future
 
 import com.google.inject.ImplementedBy
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
-import uk.gov.hmrc.agentfirelationship.repository.MongoLockRepositoryWithMdc
 import uk.gov.hmrc.mdc.Mdc
 import uk.gov.hmrc.mongo.lock.LockService
+import uk.gov.hmrc.mongo.lock.MongoLockRepository
 
 @ImplementedBy(classOf[MongoLockServiceImpl])
 trait MongoLockService {
@@ -39,7 +39,7 @@ trait MongoLockService {
 }
 
 @Singleton
-class MongoLockServiceImpl @Inject() (lockRepository: MongoLockRepositoryWithMdc) extends MongoLockService {
+class MongoLockServiceImpl @Inject() (lockRepository: MongoLockRepository) extends MongoLockService {
 
   def relationshipLock[T](
       jobName: String
