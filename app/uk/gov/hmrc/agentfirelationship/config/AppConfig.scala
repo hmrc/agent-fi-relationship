@@ -41,6 +41,8 @@ trait AppConfig {
   val terminationStrideRole: String
   val inactiveRelationshipsShowLastDays: Duration
   def expectedAuth: BasicAuthentication
+  val removeNinoSuffixEnabled: Boolean
+  val relationshipLockTTL: Int
 }
 
 class AppConfigImpl @Inject() (config: ServicesConfig) extends AppConfig {
@@ -70,4 +72,7 @@ class AppConfigImpl @Inject() (config: ServicesConfig) extends AppConfig {
     BasicAuthentication(username, password)
   }
 
+  val removeNinoSuffixEnabled: Boolean = config.getBoolean("features.remove-nino-suffix")
+
+  val relationshipLockTTL: Int = config.getInt("relationship-lock-repo.lock-duration-in-seconds")
 }

@@ -255,4 +255,29 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         }.get
       }
   }
+
+  def removeNinoSuffixBulk(): Future[Long] = {
+    collection
+      .updateMany(
+        expr(
+          BsonDocument(
+            "$gt" -> BsonArray(
+              BsonDocument("$strLenBytes" -> "$clientId"),
+              8
+            )
+          )
+        ),
+        Seq(
+          BsonDocument(
+            "$set" -> BsonDocument(
+              "clientId" -> BsonDocument(
+                "$substrBytes" -> BsonArray("$clientId", 0, 8)
+              )
+            )
+          )
+        )
+      )
+      .toFuture()
+      .map(_.getModifiedCount)
+  }
 }

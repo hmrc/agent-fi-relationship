@@ -19,6 +19,7 @@ package agentfirelationship.services
 import java.time.LocalDateTime
 import javax.inject.Singleton
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -26,7 +27,8 @@ import agentfirelationship.agentId
 import agentfirelationship.clientId
 import agentfirelationship.service
 import agentfirelationship.support.UpstreamServicesStubs
-import org.mongodb.scala.Document
+import org.mongodb.scala.model.Filters.{ equal => mongoEqual }
+import org.mongodb.scala.model.Filters.and
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
@@ -269,6 +271,122 @@ class RelationshipMongoRepositoryIntegrationSpec
         val result = await(repo.getLastCreatedDuplicateNinoRecord)
 
         result shouldBe LocalDateTime.parse("2026-01-23T12:00:00")
+      }
+    }
+
+    "removeNinoSuffixBulk" should {
+      "bulk remove suffix from nino for active and inactive records" in {
+        val ninoWithSuffix    = "SX579189D"
+        val ninoWithoutSuffix = "SX579189"
+
+        val inserted         = activeTestRelationship.copy(clientId = ninoWithSuffix)
+        val insertedWoSuffix = activeTestRelationship.copy(clientId = ninoWithoutSuffix)
+        val arn              = inserted.arn
+        val service          = inserted.service
+
+        val bulkActive   = for (_ <- 1 to 100000) yield inserted
+        val bulkInactive = for (_ <- 1 to 100000) yield inserted.copy(relationshipStatus = Some(Terminated))
+        val bulkBoth     = bulkActive ++ bulkInactive
+        await(
+          repo.collection
+            .insertMany(insertedWoSuffix +: bulkBoth)
+            .toFuture()
+        )(60.seconds)
+
+        await(repo.collection.countDocuments().toFuture()) shouldBe 200001
+
+        await(
+          repo.removeNinoSuffixBulk()
+        )(60.seconds)
+
+        val updatedOpt = await(
+          repo.collection
+            .find(
+              and(
+                mongoEqual("arn", arn.value),
+                mongoEqual("service", service)
+              )
+            )
+            .headOption()
+        )
+
+        val updated = updatedOpt.getOrElse(fail(s"Expected updated record not found for arn=$arn service=$service"))
+        updated.clientId shouldBe ninoWithoutSuffix
+      }
+
+      "removeNinoSuffix should not create extra documents" in {
+        val ninoWithSuffix = "SX579189D"
+
+        await(
+          repo.collection
+            .insertOne(
+              activeTestRelationship.copy(clientId = ninoWithSuffix)
+            )
+            .toFuture()
+        )
+
+        await(
+          repo.removeNinoSuffixBulk()
+        )
+
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+      }
+
+      "removeNinoSuffix should be idempotent when no suffix exists" in {
+        val ninoWithoutSuffix = "SX579189"
+
+        val inserted = activeTestRelationship.copy(clientId = ninoWithoutSuffix)
+        val arn      = inserted.arn
+        val service  = inserted.service
+
+        await(
+          repo.collection
+            .insertOne(inserted)
+            .toFuture()
+        )
+
+        await(
+          repo.removeNinoSuffixBulk()
+        )
+
+        val resultOpt = await(
+          repo.collection
+            .find(
+              and(
+                mongoEqual("arn", arn.value),
+                mongoEqual("service", service)
+              )
+            )
+            .headOption()
+        )
+
+        val result = resultOpt.getOrElse(fail(s"Expected record not found for arn=$arn service=$service"))
+        result.clientId shouldBe ninoWithoutSuffix
+        await(repo.collection.countDocuments().toFuture()) shouldBe 1
+      }
+
+      "removeNinoSuffix should return number of records updated for duplicated records" in {
+        val ninoWithSuffix = "SX579189D"
+
+        val relationships = Seq(
+          activeTestRelationship.copy(clientId = ninoWithSuffix),
+          activeTestRelationship.copy(clientId = ninoWithSuffix),
+          activeTestRelationship.copy(clientId = ninoWithSuffix)
+        )
+
+        await(repo.collection.insertMany(relationships).toFuture())
+        await(repo.collection.countDocuments().toFuture()) shouldBe 3
+
+        val updatedCounts =
+          await(
+            Future.sequence(
+              relationships.map { _ =>
+                repo.removeNinoSuffixBulk()
+              }
+            )
+          )
+
+        updatedCounts.sum shouldBe 3
       }
     }
   }
