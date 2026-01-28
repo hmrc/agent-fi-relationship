@@ -280,4 +280,25 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       .toFuture()
       .map(_.getModifiedCount)
   }
+
+  def getAllNinosWithSuffixes: Future[Int] = {
+    val pipeline: Seq[Bson] = Seq(
+      `match`(
+        expr(
+          Document(
+            "$gt" -> BsonArray(
+              Document("$strLenBytes" -> "$clientId"),
+              8
+            )
+          )
+        )
+      ),
+      count("ninosWithSuffix")
+    )
+
+    collection
+      .aggregate[Document](pipeline)
+      .toFuture()
+      .map(_.headOption.map(_.getInteger("ninosWithSuffix").toInt).getOrElse(0))
+  }
 }
