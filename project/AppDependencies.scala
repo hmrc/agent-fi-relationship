@@ -4,7 +4,7 @@ import play.sbt.PlayImport.ws
 
 object AppDependencies {
 
-  private val mongoVer     = "2.11.0"
+  private val mongoVer     = "2.12.0"
   private val bootstrapVer = "10.5.0"
 
   lazy val compile: Seq[ModuleID] = Seq(
@@ -17,7 +17,7 @@ object AppDependencies {
   lazy val test: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"       %% "bootstrap-test-play-30"  % bootstrapVer % Test,
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-30" % mongoVer     % Test,
-    "org.scalacheck"    %% "scalacheck"              % "1.18.1"     % Test
+    "org.scalacheck"    %% "scalacheck"              % "1.19.0"     % Test
   )
 
 }
