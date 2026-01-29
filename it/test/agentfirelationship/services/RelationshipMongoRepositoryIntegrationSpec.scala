@@ -389,5 +389,25 @@ class RelationshipMongoRepositoryIntegrationSpec
         updatedCounts.sum shouldBe 3
       }
     }
+
+    "getAllNinosWithSuffixes" should {
+      "return number of records with suffixes" in {
+        insertRawRelationship("AB123456A")
+        insertRawRelationship("BA654321A")
+        insertRawRelationship("CE987654B")
+        insertRawRelationship("AB123456")
+
+        await(repo.getAllNinosWithSuffixes) shouldBe 3
+      }
+
+      "return no records with suffixes if none exist" in {
+        insertRawRelationship("AB123456")
+        insertRawRelationship("BA654321")
+        insertRawRelationship("CE987654")
+        insertRawRelationship("AB123456")
+
+        await(repo.getAllNinosWithSuffixes) shouldBe 0
+      }
+    }
   }
 }

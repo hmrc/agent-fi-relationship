@@ -31,13 +31,9 @@ class RelationshipStartupChecks @Inject() (
     extends Logging {
 
   for {
-    allDuplicates      <- repository.getAllDuplicateNinoRecords
-    duplicateSuffixes  <- repository.getDuplicateNinoWoSuffixRecords
-    getLatestDuplicate <- repository.getLastCreatedDuplicateNinoRecord
+    ninosWithSuffixes <- repository.getAllNinosWithSuffixes
   } yield logger.warn(
     s"""
-       |[RelationshipStartupChecks] All duplicate ninos: $allDuplicates
-       | ---- Duplicate ninos without suffixes: $duplicateSuffixes
-       | ---- Latest duplicate relationship: $getLatestDuplicate""".stripMargin
+       |[RelationshipStartupChecks] All ninos with suffixes: $ninosWithSuffixes""".stripMargin
   )
 }
