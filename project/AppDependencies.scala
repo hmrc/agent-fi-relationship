@@ -12,7 +12,7 @@ object AppDependencies {
     ws,
     "uk.gov.hmrc"       %% s"bootstrap-backend-$playVer" % bootstrapVer,
     "uk.gov.hmrc.mongo" %% s"hmrc-mongo-$playVer"        % mongoVer,
-    "uk.gov.hmrc"       %% "domain-play-30"              % "11.0.0"
+    "uk.gov.hmrc"       %% s"domain-$playVer"            % "11.0.0"
   )
 
   lazy val test: Seq[ModuleID] = Seq(
