@@ -92,7 +92,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         and(
           equal("arn", arn),
           equal("service", service),
-          in("clientId", NinoWithoutSuffix(clientId).variations: _*),
+          equal("clientId", NinoWithoutSuffix(clientId).value),
           equal("relationshipStatus", status)
         )
       )
@@ -102,7 +102,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
   def findAnyRelationships(arn: String, service: String, clientId: String): Future[Seq[Relationship]] =
     collection
       .find(
-        and(equal("arn", arn), equal("service", service), in("clientId", NinoWithoutSuffix(clientId).variations: _*))
+        and(equal("arn", arn), equal("service", service), equal("clientId", NinoWithoutSuffix(clientId).value))
       )
       .toFuture()
 
@@ -117,7 +117,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       and(
         equal("arn", arn),
         equal("service", service),
-        in("clientId", NinoWithoutSuffix(clientId).variations: _*),
+        equal("clientId", NinoWithoutSuffix(clientId).value),
         equal("relationshipStatus", Active)
       )
     )
@@ -131,7 +131,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
       .find(
         and(
           equal("service", service),
-          in("clientId", NinoWithoutSuffix(clientId).variations: _*),
+          equal("clientId", NinoWithoutSuffix(clientId).value),
           equal("relationshipStatus", status)
         )
       )
@@ -152,12 +152,12 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
 
   def findInactiveClientRelationships(clientId: String): Future[Seq[Relationship]] =
     collection
-      .find(and(in("clientId", NinoWithoutSuffix(clientId).variations: _*), equal("relationshipStatus", "TERMINATED")))
+      .find(and(equal("clientId", NinoWithoutSuffix(clientId).value), equal("relationshipStatus", "TERMINATED")))
       .toFuture()
 
   def findActiveClientRelationships(clientId: String): Future[Seq[Relationship]] =
     collection
-      .find(and(in("clientId", NinoWithoutSuffix(clientId).variations: _*), equal("relationshipStatus", "ACTIVE")))
+      .find(and(equal("clientId", NinoWithoutSuffix(clientId).value), equal("relationshipStatus", "ACTIVE")))
       .toFuture()
 
   def terminateAgentRelationship(arn: String): Future[Seq[Int]] =
