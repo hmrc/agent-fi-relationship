@@ -24,7 +24,7 @@ import agentfirelationship.stubs.DesStubs
 import agentfirelationship.support.WireMockSupport
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
@@ -44,7 +44,7 @@ class DesConnectorSpec
     with DesStubs
     with DataStreamStub {
 
-  implicit override lazy val app: Application = appBuilder
+  override given app: Application = appBuilder
     .build()
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -56,8 +56,8 @@ class DesConnectorSpec
         "metrics.enabled"                -> true
       )
 
-  private implicit val hc: HeaderCarrier            = HeaderCarrier()
-  private implicit val ec: ExecutionContextExecutor = ExecutionContext.global
+  private given hc: HeaderCarrier            = HeaderCarrier()
+  private given ec: ExecutionContextExecutor = ExecutionContext.global
 
   private val httpClient = app.injector.instanceOf[HttpClientV2]
   private val appConfig  = app.injector.instanceOf[AppConfig]

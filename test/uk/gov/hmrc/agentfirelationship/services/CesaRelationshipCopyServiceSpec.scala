@@ -21,11 +21,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import org.mockito.ArgumentMatchers.{ eq => eqs }
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
-import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
@@ -49,16 +48,15 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
   val agentCode               = AgentCode("ABC1234")
   val nino: NinoWithoutSuffix = NinoWithoutSuffix(testDataGenerator.nextNino.value)
 
-  private val des          = resettingMock[DesConnector]
-  private val mapping      = resettingMock[MappingConnector]
-  private val auditService = resettingMock[AuditService]
+  private val des     = resettingMock[DesConnector]
+  private val mapping = resettingMock[MappingConnector]
 
   val hc                   = HeaderCarrier()
-  val ec: ExecutionContext = implicitly[ExecutionContext]
+  val ec: ExecutionContext = summon[ExecutionContext]
 
   "CesaRelationshipCopyService" should {
 
-    val service = new CesaRelationshipCopyService(des, mapping, auditService)
+    val service = new CesaRelationshipCopyService(des, mapping)
 
     "return an existing relationship in Cesa and Agent Mapping if it exists" in {
       val auditData = new AuditData()
@@ -68,7 +66,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+            .lookupCesaForOldRelationship(arn, nino)(using ec, hc, auditData)
         )
 
       agentRefs shouldBe Set(saAgentRef)
@@ -82,7 +80,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+            .lookupCesaForOldRelationship(arn, nino)(using ec, hc, auditData)
         )
 
       agentRefs shouldBe Set(saAgentRef)
@@ -96,7 +94,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+            .lookupCesaForOldRelationship(arn, nino)(using ec, hc, auditData)
         )
 
       agentRefs shouldBe Set.empty
@@ -110,7 +108,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+            .lookupCesaForOldRelationship(arn, nino)(using ec, hc, auditData)
         )
 
       agentRefs shouldBe Set.empty
@@ -124,7 +122,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+            .lookupCesaForOldRelationship(arn, nino)(using ec, hc, auditData)
         )
 
       agentRefs shouldBe Set.empty
@@ -138,7 +136,7 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
       val agentRefs: Set[SaAgentReference] =
         await(
           service
-            .lookupCesaForOldRelationship(arn, nino)(ec, hc, auditData)
+            .lookupCesaForOldRelationship(arn, nino)(using ec, hc, auditData)
         )
 
       agentRefs shouldBe Set.empty
@@ -146,41 +144,41 @@ class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach w
   }
 
   private def commonMultipleRelationshipExists(): Unit = {
-    when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
+    when(des.getClientSaAgentSaReferences(eqs(nino))(using eqs(hc), eqs(ec)))
       .thenReturn(Future.successful(Seq(saAgentRef, saAgentRef3)))
-    when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
+    when(mapping.getSaAgentReferencesFor(eqs(arn))(using eqs(hc)))
       .thenReturn(Future.successful(Seq(saAgentRef, saAgentRef2)))
     ()
   }
 
   private def cesaAndMappingReturnEmptyRelationshipSets(): Unit = {
-    when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
+    when(des.getClientSaAgentSaReferences(eqs(nino))(using eqs(hc), eqs(ec)))
       .thenReturn(Future.successful(Seq()))
-    when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
+    when(mapping.getSaAgentReferencesFor(eqs(arn))(using eqs(hc)))
       .thenReturn(Future.successful(Seq()))
     ()
   }
 
   private def commonRelationshipDoesNotExistInBothCesaAndMapping(): Unit = {
-    when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
+    when(des.getClientSaAgentSaReferences(eqs(nino))(using eqs(hc), eqs(ec)))
       .thenReturn(Future.successful(Seq(saAgentRef)))
-    when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
+    when(mapping.getSaAgentReferencesFor(eqs(arn))(using eqs(hc)))
       .thenReturn(Future.successful(Seq(saAgentRef2)))
     ()
   }
 
   private def commonRelationshipDoesNotExistInMapping(): Unit = {
-    when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
+    when(des.getClientSaAgentSaReferences(eqs(nino))(using eqs(hc), eqs(ec)))
       .thenReturn(Future.successful(Seq(saAgentRef)))
-    when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
+    when(mapping.getSaAgentReferencesFor(eqs(arn))(using eqs(hc)))
       .thenReturn(Future.successful(Seq()))
     ()
   }
 
   private def commonRelationshipDoesNotExistInCesa(): Unit = {
-    when(des.getClientSaAgentSaReferences(eqs(nino))(eqs(hc), eqs(ec)))
+    when(des.getClientSaAgentSaReferences(eqs(nino))(using eqs(hc), eqs(ec)))
       .thenReturn(Future.successful(Seq()))
-    when(mapping.getSaAgentReferencesFor(eqs(arn))(eqs(hc)))
+    when(mapping.getSaAgentReferencesFor(eqs(arn))(using eqs(hc)))
       .thenReturn(Future.successful(Seq(saAgentRef)))
     ()
   }

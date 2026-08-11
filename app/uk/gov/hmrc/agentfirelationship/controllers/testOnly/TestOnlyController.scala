@@ -29,6 +29,7 @@ import play.api.libs.json.OFormat
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import play.api.mvc.Request
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Relationship
@@ -38,16 +39,17 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class TestOnlyController @Inject() (mongoService: RelationshipMongoRepository, cc: ControllerComponents)(
-    implicit ec: ExecutionContext
+    using ec: ExecutionContext
 ) extends BackendController(cc)
     with Logging {
 
   case class Invitation(startDate: LocalDateTime)
 
-  implicit val invitationFormat: OFormat[Invitation] = Json.format[Invitation]
+  given invitationFormat: OFormat[Invitation] = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+    Action.async(parse.json) { request =>
+      given Request[JsValue] = request
       withJsonBody[Invitation] { invitation =>
         mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
           case Nil =>

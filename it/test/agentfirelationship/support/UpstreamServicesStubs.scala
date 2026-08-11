@@ -20,8 +20,8 @@ import java.net.URL
 
 import agentfirelationship.stubs.DesStubs
 import agentfirelationship.stubs.MappingStubs
-import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import com.github.tomakehurst.wiremock.WireMockServer
 import org.scalatest.concurrent.Eventually
@@ -29,7 +29,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
 import play.api.libs.json.Json
-import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent._
+import uk.gov.hmrc.agentfirelationship.audit.AgentClientRelationshipEvent.*
 
 trait UpstreamServicesStubs
     extends BeforeAndAfterAll

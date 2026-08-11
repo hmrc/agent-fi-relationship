@@ -32,6 +32,5 @@ case class Relationship(
     fromCesa: Option[Boolean] = Some(false)
 )
 
-object Relationship {
-  implicit val relationshipFormat: OFormat[Relationship] = Json.format[Relationship]
-}
+object Relationship:
+  given relationshipFormat: OFormat[Relationship] = Json.format[Relationship]

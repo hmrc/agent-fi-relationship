@@ -23,15 +23,15 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.domain.SaAgentReference
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HttpErrorFunctions._
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpErrorFunctions.*
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 case class Mappings(mappings: Seq[Mapping])
@@ -39,16 +39,16 @@ case class Mappings(mappings: Seq[Mapping])
 case class Mapping(arn: Arn, saAgentReference: SaAgentReference)
 
 object Mappings {
-  implicit val mappingReads: Reads[Mapping] = Json.reads[Mapping]
-  implicit val reads: Reads[Mappings]       = Json.reads[Mappings]
+  given mappingReads: Reads[Mapping] = Json.reads[Mapping]
+  given reads: Reads[Mappings]       = Json.reads[Mappings]
 }
 
 @Singleton
 class MappingConnector @Inject() (appConfig: AppConfig, httpGet: HttpClientV2, val metrics: Metrics)(
-    implicit val ec: ExecutionContext
+    using ec: ExecutionContext
 ) {
 
-  def getSaAgentReferencesFor(arn: Arn)(implicit hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
+  def getSaAgentReferencesFor(arn: Arn)(using hc: HeaderCarrier): Future[Seq[SaAgentReference]] = {
     val url = new URL(appConfig.agentMappingBaseUrl, s"/agent-mapping/mappings/sa/${arn.value}")
     httpGet
       .get(url)

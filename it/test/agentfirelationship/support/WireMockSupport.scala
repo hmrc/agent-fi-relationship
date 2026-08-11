@@ -24,7 +24,7 @@ import scala.annotation.tailrec
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
 import com.github.tomakehurst.wiremock.client.WireMock.reset
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.*
 import com.github.tomakehurst.wiremock.WireMockServer
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
@@ -43,11 +43,11 @@ object WireMockSupport {
 trait WireMockSupport extends BeforeAndAfterAll with BeforeAndAfterEach {
   me: Suite =>
 
-  val wireMockPort: Int                                           = WireMockSupport.wireMockPort
-  val wireMockHost                                                = "localhost"
-  val wireMockBaseUrlAsString                                     = s"http://$wireMockHost:$wireMockPort"
-  val wireMockBaseUrl                                             = new URL(wireMockBaseUrlAsString)
-  protected implicit val implicitWireMockBaseUrl: WireMockBaseUrl = WireMockBaseUrl(wireMockBaseUrl)
+  val wireMockPort: Int                                   = WireMockSupport.wireMockPort
+  val wireMockHost                                        = "localhost"
+  val wireMockBaseUrlAsString                             = s"http://$wireMockHost:$wireMockPort"
+  val wireMockBaseUrl                                     = new URL(wireMockBaseUrlAsString)
+  protected given wireMockBaseUrlContext: WireMockBaseUrl = WireMockBaseUrl(wireMockBaseUrl)
 
   protected def basicWireMockConfig(): WireMockConfiguration = wireMockConfig()
 
@@ -107,7 +107,7 @@ object Port extends Logging {
         false
       }
     } catch {
-      case t: Throwable => false
+      case _: Throwable => false
     } finally {
       if (socket != null) socket.close()
     }

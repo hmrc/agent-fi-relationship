@@ -19,7 +19,7 @@ package agentfirelationship
 import java.time.LocalDateTime
 import javax.inject.Singleton
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.language.postfixOps
 
@@ -49,9 +49,9 @@ class RemoveAgentRelationshipsISpec
 
   def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
-  implicit override lazy val app: Application = appBuilder.build()
-  override def arn                            = agentId
-  override def nino                           = clientId
+  override given app: Application = appBuilder.build()
+  override def arn                = agentId
+  override def nino               = clientId
 
   val testResponseDate                    = LocalDateTime.now
   val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)

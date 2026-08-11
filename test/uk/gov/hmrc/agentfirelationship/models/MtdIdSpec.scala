@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.models
 
-import org.scalacheck._
+import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

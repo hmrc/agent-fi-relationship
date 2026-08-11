@@ -19,7 +19,7 @@ package agentfirelationship
 import java.time.LocalDateTime
 import javax.inject.Singleton
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.language.postfixOps
@@ -48,9 +48,9 @@ class TerminateRelationshipIntegrationSpec
 
   def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
-  implicit override lazy val app: Application = appBuilder.build()
-  override def arn: String                    = agentId
-  override def nino: String                   = clientId
+  override given app: Application = appBuilder.build()
+  override def arn: String        = agentId
+  override def nino: String       = clientId
 
   val testResponseDate: LocalDateTime     = LocalDateTime.now
   val validTestRelationship: Relationship = Relationship(Arn(arn), service, nino, Some(Active), testResponseDate, None)

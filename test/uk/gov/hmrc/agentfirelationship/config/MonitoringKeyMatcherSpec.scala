@@ -25,7 +25,7 @@ import uk.gov.hmrc.agentfirelationship.wiring.MonitoringKeyMatcher
 
 class MonitoringKeyMatcherSpec extends UnitSpec {
 
-  implicit lazy val app: Application = appBuilder
+  given app: Application = appBuilder
     .build()
 
   protected def appBuilder: GuiceApplicationBuilder =

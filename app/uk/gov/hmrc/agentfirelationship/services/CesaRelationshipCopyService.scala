@@ -24,7 +24,6 @@ import scala.concurrent.Future
 
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
-import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.connectors.DesConnector
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
 import uk.gov.hmrc.agentfirelationship.models.Arn
@@ -33,13 +32,12 @@ import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class CesaRelationshipCopyService @Inject() (des: DesConnector, mapping: MappingConnector, auditService: AuditService)
-    extends Logging {
+class CesaRelationshipCopyService @Inject() (des: DesConnector, mapping: MappingConnector) extends Logging {
 
   def lookupCesaForOldRelationship(
       arn: Arn,
       nino: NinoWithoutSuffix
-  )(implicit ec: ExecutionContext, hc: HeaderCarrier, auditData: AuditData): Future[Set[SaAgentReference]] = {
+  )(using ec: ExecutionContext, hc: HeaderCarrier, auditData: AuditData): Future[Set[SaAgentReference]] = {
     auditData.set("clientId", nino)
     for {
       references <- des.getClientSaAgentSaReferences(nino)
@@ -54,7 +52,7 @@ class CesaRelationshipCopyService @Inject() (des: DesConnector, mapping: Mapping
 
   private def intersection[A](
       cesaIds: Seq[A]
-  )(mappingServiceCall: => Future[Seq[A]])(implicit ec: ExecutionContext): Future[Set[A]] = {
+  )(mappingServiceCall: => Future[Seq[A]])(using ec: ExecutionContext): Future[Set[A]] = {
     val cesaIdSet = cesaIds.toSet
 
     if (cesaIdSet.isEmpty) {

@@ -16,7 +16,7 @@
 
 package agentfirelationship
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.language.postfixOps
 
@@ -53,7 +53,7 @@ class ViewInActiveRelationshipsISpec
         "features.check-cesa-relationships" -> false
       )
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override given app: Application = appBuilder.build()
 
   Feature("View inactive relationships for an agent") {
 

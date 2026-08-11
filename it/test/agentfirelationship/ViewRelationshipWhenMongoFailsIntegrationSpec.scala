@@ -18,7 +18,7 @@ package agentfirelationship
 
 import javax.inject.Inject
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -66,7 +66,7 @@ class ViewRelationshipWhenMongoFailsIntegrationSpec
 
   override def nino = clientId
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override given app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
