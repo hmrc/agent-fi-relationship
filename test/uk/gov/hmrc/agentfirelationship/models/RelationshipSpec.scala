@@ -18,9 +18,9 @@ package uk.gov.hmrc.agentfirelationship.models
 
 import java.time.LocalDateTime
 
-import play.api.libs.json.Json
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import play.api.libs.json.Json
 
 class RelationshipSpec extends AnyFlatSpec with Matchers {
 
