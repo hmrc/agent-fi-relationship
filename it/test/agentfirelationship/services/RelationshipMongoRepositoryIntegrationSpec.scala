@@ -25,7 +25,7 @@ import agentfirelationship.service
 import agentfirelationship.support.UpstreamServicesStubs
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Relationship
@@ -44,9 +44,9 @@ class RelationshipMongoRepositoryIntegrationSpec
 
   def repo: RelationshipMongoRepository = app.injector.instanceOf[RelationshipMongoRepository]
 
-  implicit override lazy val app: Application = appBuilder.build()
-  override def arn: String                    = agentId
-  override def nino: String                   = clientId
+  override given app: Application = appBuilder.build()
+  override def arn: String        = agentId
+  override def nino: String       = clientId
 
   val now: LocalDateTime                          = LocalDateTime.now
   val testTerminatedRelationshipStartDate: String = now.minusDays(10).toString

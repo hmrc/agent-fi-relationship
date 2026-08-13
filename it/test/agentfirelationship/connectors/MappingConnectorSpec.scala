@@ -25,7 +25,7 @@ import agentfirelationship.support.WireMockSupport
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.Application
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.connectors.MappingConnector
@@ -44,7 +44,7 @@ class MappingConnectorSpec
     with DataStreamStub
     with MockitoSugar {
 
-  implicit override lazy val app: Application = appBuilder
+  override given app: Application = appBuilder
     .build()
 
   protected def appBuilder: GuiceApplicationBuilder =
@@ -56,8 +56,8 @@ class MappingConnectorSpec
         "metrics.enabled"                          -> true
       )
 
-  private implicit val hc: HeaderCarrier            = HeaderCarrier()
-  private implicit val ec: ExecutionContextExecutor = ExecutionContext.global
+  private given hc: HeaderCarrier            = HeaderCarrier()
+  private given ec: ExecutionContextExecutor = ExecutionContext.global
 
   val httpClient: HttpClientV2 = app.injector.instanceOf[HttpClientV2]
   val appConfig: AppConfig     = app.injector.instanceOf[AppConfig]

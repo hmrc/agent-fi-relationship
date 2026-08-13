@@ -22,19 +22,19 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.*
 import org.mockito.ArgumentMatchers.{ eq => eqs }
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import play.api.mvc.Result
-import play.api.mvc.Results._
+import play.api.mvc.Results.*
 import play.api.test.Helpers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
@@ -156,7 +156,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendCreateRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -196,7 +196,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendCreateRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -236,12 +236,11 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
     "return Status: CREATED for creating new record as an agent and terminate similar relationship with any other agent" in {
 
       authStub(agentAffinityAndEnrolmentsCreds)
-      // implicit val taxIdentifier = Some(Arn(""))
 
       when(
         mockAuditService
           .sendCreateRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -297,7 +296,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendCreateRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -328,7 +327,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
       verify(mockAuditService, times(1))
         .sendCreateRelationshipEvent(any[AuditData]())(
-          any[HeaderCarrier](),
+          using any[HeaderCarrier](),
           any[Request[Any]](),
           any[ExecutionContext]()
         )
@@ -461,7 +460,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendTerminatedRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -486,7 +485,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
       when(
         mockAuditService.sendTerminatedRelationshipEvent(any[AuditData]())(
-          any[HeaderCarrier](),
+          using any[HeaderCarrier](),
           any[Request[Any]](),
           any[ExecutionContext]()
         )
@@ -515,7 +514,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendHmrcLedDeleteRelationshipAuditEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -541,7 +540,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendTerminatedRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -553,7 +552,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       await(response)
       verify(mockAuditService, times(1))
         .sendTerminatedRelationshipEvent(any[AuditData]())(
-          any[HeaderCarrier](),
+          using any[HeaderCarrier](),
           any[Request[Any]](),
           any[ExecutionContext]()
         )
@@ -572,7 +571,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       await(response)
       verify(mockAuditService, never)
         .sendTerminatedRelationshipEvent(any[AuditData]())(
-          any[HeaderCarrier](),
+          using any[HeaderCarrier](),
           any[Request[Any]](),
           any[ExecutionContext]()
         )
@@ -589,7 +588,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendTerminatedRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -615,7 +614,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendTerminatedRelationshipEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -641,7 +640,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
       when(
         mockAuditService
           .sendHmrcLedDeleteRelationshipAuditEvent(any[AuditData]())(
-            any[HeaderCarrier](),
+            using any[HeaderCarrier](),
             any[Request[Any]](),
             any[ExecutionContext]()
           )
@@ -716,7 +715,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
     "return Status: OK with json body of all agent invitations with TERMINATED status" in {
 
-      val agentAction: AfiAction = { arn => credentials =>
+      val agentAction: AfiAction = { _ => _ =>
         Future.successful(Ok)
       }
 
@@ -740,7 +739,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
     "return Status: OK with json body of all agent invitations with ACTIVE status" in {
 
-      val agentAction: AfiAction = { arn => credentials =>
+      val agentAction: AfiAction = { _ => _ =>
         Future.successful(Ok)
       }
 
@@ -764,7 +763,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
     "return Status: OK with json body of all client invitations with TERMINATED status" in {
 
-      val action: AfiAction = { arn => credentials =>
+      val action: AfiAction = { _ => _ =>
         Future.successful(Ok)
       }
 
@@ -788,7 +787,7 @@ class RelationshipControllerSpec extends UnitSpec with MockitoSugar with BeforeA
 
     "return Status: OK with json body of all client invitations with ACTIVE status" in {
 
-      val action: AfiAction = { arn => credentials =>
+      val action: AfiAction = { _ => _ =>
         Future.successful(Ok)
       }
 

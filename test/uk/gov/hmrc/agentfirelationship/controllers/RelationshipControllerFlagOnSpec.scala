@@ -34,7 +34,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
@@ -164,7 +164,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       when(
         mockCesaRelationship
           .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
-            any[ExecutionContext](),
+            using any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
           )
@@ -183,7 +183,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       verify(mockCesaRelationship, times(1))
         .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
-          any[ExecutionContext](),
+          using any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
         )
@@ -204,7 +204,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       when(
         mockCesaRelationship
           .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
-            any[ExecutionContext](),
+            using any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
           )
@@ -229,7 +229,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       verify(mockCesaRelationship, times(1))
         .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
-          any[ExecutionContext](),
+          using any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
         )
@@ -247,7 +247,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       when(
         mockCesaRelationship
           .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
-            any[ExecutionContext](),
+            using any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
           )
@@ -269,7 +269,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       verify(mockCesaRelationship, times(1))
         .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
-          any[ExecutionContext](),
+          using any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
         )
@@ -290,7 +290,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
       when(
         mockCesaRelationship
           .lookupCesaForOldRelationship(eqs(Arn(validTestArn)), eqs(NinoWithoutSuffix(validTestNINO)))(
-            any[ExecutionContext](),
+            using any[ExecutionContext](),
             any[HeaderCarrier](),
             any[AuditData]()
           )
@@ -314,7 +314,7 @@ class RelationshipControllerFlagOnSpec extends UnitSpec with MockitoSugar with B
 
       verify(mockCesaRelationship, times(1))
         .lookupCesaForOldRelationship(any[Arn](), any[NinoWithoutSuffix]())(
-          any[ExecutionContext](),
+          using any[ExecutionContext](),
           any[HeaderCarrier](),
           any[AuditData]()
         )

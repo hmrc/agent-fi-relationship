@@ -25,8 +25,8 @@ import scala.concurrent.Future
 
 import com.google.inject.Singleton
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model._
-import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.*
+import org.mongodb.scala.model.Filters.*
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
@@ -42,15 +42,14 @@ import uk.gov.hmrc.mongo.MongoComponent
 
 @Singleton
 class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponent: MongoComponent)(
-    implicit ec: ExecutionContext
+    using ec: ExecutionContext
 ) extends PlayMongoRepository[Relationship](
       mongoComponent = mongoComponent,
       collectionName = "fi-relationship",
       domainFormat = Relationship.relationshipFormat,
       extraCodecs = Codecs
         .playFormatCodecsBuilder(RelationshipStatus.relationshipStatusFormat)
-        .forType[RelationshipStatus.Active.type]
-        .forType[RelationshipStatus.Terminated.type]
+        .forType[RelationshipStatus]
         .build,
       indexes = Seq(
         IndexModel(
@@ -93,7 +92,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
           equal("arn", arn),
           equal("service", service),
           equal("clientId", NinoWithoutSuffix(clientId).value),
-          equal("relationshipStatus", status)
+          equal("relationshipStatus", status.key)
         )
       )
       .toFuture()
@@ -118,7 +117,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         equal("arn", arn),
         equal("service", service),
         equal("clientId", NinoWithoutSuffix(clientId).value),
-        equal("relationshipStatus", Active)
+        equal("relationshipStatus", Active.key)
       )
     )
 
@@ -132,7 +131,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         and(
           equal("service", service),
           equal("clientId", NinoWithoutSuffix(clientId).value),
-          equal("relationshipStatus", status)
+          equal("relationshipStatus", status.key)
         )
       )
       .toFuture()
@@ -163,7 +162,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
   def terminateAgentRelationship(arn: String): Future[Seq[Int]] =
     collection.deleteMany(equal("arn", arn)).map(_.getDeletedCount.toInt).toFuture()
 
-  private def updateStatusToTerminated(selector: Bson)(implicit ec: ExecutionContext): Future[Boolean] =
+  private def updateStatusToTerminated(selector: Bson)(using ec: ExecutionContext): Future[Boolean] =
     collection
       .updateMany(
         selector,

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.agentfirelationship.support
 
-import scala.reflect.Manifest
+import scala.reflect.ClassTag
 
 import org.mockito.Mockito
 import org.scalatest.BeforeAndAfterEach
@@ -28,14 +28,12 @@ trait ResettingMockitoSugar extends MockitoSugar with BeforeAndAfterEach {
 
   var mocksToReset = Seq.empty[Any]
 
-  def resettingMock[T <: AnyRef](implicit manifest: Manifest[T]): T = {
-    val m = mock[T](manifest)
+  def resettingMock[T <: AnyRef](using classTag: ClassTag[T]): T =
+    val m = mock[T]
     mocksToReset = mocksToReset :+ m
     m
-  }
 
-  protected override def beforeEach(): Unit = {
+  protected override def beforeEach(): Unit =
     super.beforeEach()
-    Mockito.reset(mocksToReset: _*)
-  }
+    Mockito.reset(mocksToReset*)
 }

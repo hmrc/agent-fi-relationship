@@ -28,7 +28,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.OFormat
-import play.api.mvc._
+import play.api.mvc.*
 import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
@@ -58,7 +58,7 @@ class RelationshipController @Inject() (
     des: DesConnector,
     appConfig: AppConfig,
     cc: ControllerComponents
-)(implicit ec: ExecutionContext)
+)(using ec: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
@@ -71,26 +71,25 @@ class RelationshipController @Inject() (
     findRelationship(arn, "PERSONAL-INCOME-RECORD", clientId)
 
   /* Tries to find existing client/agent relationships, and if none found, copies over from cesa */
-  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authConnector.authorised() {
-        implicit val auditData: AuditData = new AuditData()
+  def findRelationship(arn: String, service: String, clientId: String): Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
+    authConnector.authorised() {
+      given auditData: AuditData = new AuditData()
 
-        mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
-          activeRelationships =>
-            if (activeRelationships.nonEmpty) {
-              Future.successful(Ok(toJson(activeRelationships)))
+      mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap { activeRelationships =>
+        if (activeRelationships.nonEmpty) {
+          Future.successful(Ok(toJson(activeRelationships)))
+        } else {
+          mongoService.findAnyRelationships(arn, service, clientId).flatMap { anyRelationships =>
+            if (anyRelationships.nonEmpty) {
+              Future.successful(NotFound)
             } else {
-              mongoService.findAnyRelationships(arn, service, clientId).flatMap { anyRelationships =>
-                if (anyRelationships.nonEmpty) {
-                  Future.successful(NotFound)
-                } else {
-                  handleCesaRelationship(arn, service, clientId, activeRelationships)
-                }
-              }
+              handleCesaRelationship(arn, service, clientId, activeRelationships)
             }
+          }
         }
       }
+    }
   }
 
   private def handleCesaRelationship(
@@ -98,7 +97,7 @@ class RelationshipController @Inject() (
       service: String,
       clientId: String,
       activeRelationships: List[Relationship]
-  )(implicit auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] =
+  )(using auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] =
     if (appConfig.checkCesaRelationshipFlag) {
       checkCesaService
         .lookupCesaForOldRelationship(Arn(arn), NinoWithoutSuffix(clientId))
@@ -129,7 +128,7 @@ class RelationshipController @Inject() (
       service: String,
       clientId: String,
       activeRelationships: List[Relationship]
-  )(implicit auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] = {
+  )(using auditData: AuditData, hc: HeaderCarrier, request: Request[Any]): Future[Result] = {
 
     val activeRelationship = Relationship(
       arn = Arn(arn),
@@ -157,11 +156,13 @@ class RelationshipController @Inject() (
   }
 
   case class Invitation(startDate: LocalDateTime)
-  implicit val invitationFormat: OFormat[Invitation] = Json.format[Invitation]
+  given invitationFormat: OFormat[Invitation] = Json.format[Invitation]
 
   def createRelationship(arn: String, service: String, clientId: String): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
-      authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
+    Action.async(parse.json) { request =>
+      given Request[JsValue] = request
+      authConnector.authorisedForAfi(strideRoles) { taxIdentifier => credentials =>
+        given Option[TaxIdentifier] = taxIdentifier
         withJsonBody[Invitation] { invitation =>
           forThisUser(Arn(arn), NinoWithoutSuffix(clientId), strideRoles) {
             mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
@@ -206,8 +207,10 @@ class RelationshipController @Inject() (
     }
 
   def terminateRelationship(arn: String, service: String, clientId: String): Action[AnyContent] =
-    Action.async { implicit request =>
-      authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => implicit credentials =>
+    Action.async { request =>
+      given Request[AnyContent] = request
+      authConnector.authorisedForAfi(strideRoles) { taxIdentifier => credentials =>
+        given Option[TaxIdentifier] = taxIdentifier
         forThisUser(Arn(arn), NinoWithoutSuffix(clientId), strideRoles) {
           val relationshipDeleted: Future[(Boolean, AuditData)] = for {
             successOrFail <- mongoService.terminateRelationship(arn, service, clientId)
@@ -225,17 +228,18 @@ class RelationshipController @Inject() (
       }
     }
 
-  def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authConnector.authorised() {
-        mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active).map { result =>
-          if (result.nonEmpty) Ok(toJson(result)) else NotFound
-        }
+  def findClientRelationships(service: String, clientId: String): Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
+    authConnector.authorised() {
+      mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active).map { result =>
+        if (result.nonEmpty) Ok(toJson(result)) else NotFound
       }
+    }
   }
 
-  val findInactiveRelationships: Action[AnyContent] = Action.async { implicit request =>
-    authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => credentials =>
+  val findInactiveRelationships: Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
+    authConnector.authorisedForAfi(strideRoles) { taxIdentifier => _ =>
       taxIdentifier match {
         case Some(Arn(arn)) if Arn.isValid(arn) =>
           mongoService.findInactiveAgentRelationships(arn).map { result =>
@@ -260,8 +264,9 @@ class RelationshipController @Inject() (
     }
   }
 
-  val findActiveRelationships: Action[AnyContent] = Action.async { implicit request =>
-    authConnector.authorisedForAfi(strideRoles) { implicit taxIdentifier => credentials =>
+  val findActiveRelationships: Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
+    authConnector.authorisedForAfi(strideRoles) { taxIdentifier => _ =>
       taxIdentifier match {
         case Some(Arn(arn)) if Arn.isValid(arn) =>
           mongoService.findActiveAgentRelationships(arn).map { result =>
@@ -286,7 +291,8 @@ class RelationshipController @Inject() (
     }
   }
 
-  def hasLegacySaRelationship(utr: Utr): Action[AnyContent] = Action.async { implicit request =>
+  def hasLegacySaRelationship(utr: Utr): Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
     authConnector.authorised() {
       des.getClientSaAgentSaReferences(utr).map {
         case Nil => NotFound
@@ -295,7 +301,8 @@ class RelationshipController @Inject() (
     }
   }
 
-  def removeAFIRelationshipsForAgent(arn: String): Action[AnyContent] = Action.async { implicit request =>
+  def removeAFIRelationshipsForAgent(arn: String): Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
     authConnector.withBasicAuth(appConfig.expectedAuth) {
       if (Arn.isValid(arn)) {
         mongoService
@@ -341,7 +348,7 @@ class RelationshipController @Inject() (
   private def sendAuditEventForThisUser(
       credentials: Credentials,
       auditData: AuditData
-  )(implicit hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
+  )(using hc: HeaderCarrier, request: Request[Any]): Future[Unit] =
     if (credentials.providerType == "GovernmentGateway")
       auditService.sendTerminatedRelationshipEvent(auditData)
     else if (credentials.providerType == "PrivilegedApplication")
@@ -351,7 +358,7 @@ class RelationshipController @Inject() (
 
   private def forThisUser(requestedArn: Arn, requestedNino: NinoWithoutSuffix, strideRoles: Seq[String])(
       action: => Future[Result]
-  )(implicit taxIdentifier: Option[TaxIdentifier]) =
+  )(using taxIdentifier: Option[TaxIdentifier]) =
     taxIdentifier match {
       case Some(t) =>
         t match {

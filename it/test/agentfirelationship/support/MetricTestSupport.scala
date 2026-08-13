@@ -16,7 +16,7 @@
 
 package agentfirelationship.support
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.matchers.should.Matchers

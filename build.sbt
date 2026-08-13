@@ -1,7 +1,15 @@
 import uk.gov.hmrc.DefaultBuildSettings
+import CodeCoverageSettings.scoverageSettings
 
 ThisBuild / majorVersion := 1
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.3.7"
+
+val scalaCompilerOptions = Seq(
+  "-Werror",
+  "-feature",
+  "-Wconf:src=target/.*:s",
+  "-Wconf:src=routes/.*:s",
+)
 
 lazy val root = (project in file("."))
   .settings(
@@ -11,26 +19,18 @@ lazy val root = (project in file("."))
     resolvers ++= Seq(
       Resolver.typesafeRepo("releases"),
     ),
-    scalacOptions ++= Seq(
-      "-Xfatal-warnings",
-      "-Xlint:-missing-interpolator,_",
-      "-Ywarn-value-discard",
-      "-Ywarn-dead-code",
-      "-deprecation",
-      "-feature",
-      "-unchecked",
-      "-language:implicitConversions",
-      "-Wconf:src=routes/.*:s", // silence warnings from routes
-    ),
+    scalacOptions ++= scalaCompilerOptions,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always),
-    routesImport ++= Seq("uk.gov.hmrc.agentfirelationship.binders.PathBinders._"),
+    routesImport ++= Seq("uk.gov.hmrc.agentfirelationship.binders.PathBinders.given"),
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile    := true,
+    Compile / scalacOptions := (Compile / scalacOptions).value.distinct,
+    Test / scalacOptions    := (Test / scalacOptions).value.distinct,
     Test / logBuffered          := false
   )
   .settings(
-    CodeCoverageSettings.scoverageSettings,
+    scoverageSettings,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / parallelExecution := true
   )
@@ -45,6 +45,10 @@ lazy val it = project
   .settings(
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile    := true,
+    Compile / scalacOptions ++= scalaCompilerOptions,
+    Test / scalacOptions    ++= scalaCompilerOptions,
+    Compile / scalacOptions := (Compile / scalacOptions).value.distinct,
+    Test / scalacOptions    := (Test / scalacOptions).value.distinct,
     Test / logBuffered          := false,
     Test / parallelExecution    := false
   )

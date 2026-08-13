@@ -24,8 +24,8 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Utr
@@ -35,9 +35,9 @@ import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpErrorFunctions._
+import uk.gov.hmrc.http.HttpErrorFunctions.*
 import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
@@ -47,18 +47,16 @@ case class ClientRelationship(agents: Seq[Agent])
 case class Agent(hasAgent: Boolean, agentId: Option[SaAgentReference], agentCeasedDate: Option[String])
 
 object ClientRelationship {
-  implicit val agentReads: Reads[Agent] = Json.reads[Agent]
+  given agentReads: Reads[Agent] = Json.reads[Agent]
 
-  implicit val readClientRelationship: Reads[ClientRelationship] =
+  given readClientRelationship: Reads[ClientRelationship] =
     (JsPath \ "agents")
       .readNullable[Seq[Agent]]
       .map(optionalAgents => ClientRelationship(optionalAgents.getOrElse(Seq.empty)))
 }
 
 @Singleton
-class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metrics: Metrics)(
-    implicit val ec: ExecutionContext
-) {
+class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metrics: Metrics) {
 
   private val Environment: String     = "Environment"
   private val CorrelationId: String   = "CorrelationId"
@@ -73,7 +71,7 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
 
   def getClientSaAgentSaReferences(
       saTaxIdentifier: TaxIdentifier
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[Seq[SaAgentReference]] = {
     val url = {
       saTaxIdentifier match {
         case nino: NinoWithoutSuffix =>
@@ -83,7 +81,7 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
         case _ => throw new RuntimeException("Unexpected TaxIdentifier")
       }
     }
-    getWithDesHeaders[HttpResponse]("GetStatusAgentRelationship", url).map { response =>
+    getWithDesHeaders[HttpResponse](url).map { response =>
       response.status match {
         case s if is2xx(s) =>
           response.json
@@ -99,10 +97,7 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
     }
   }
 
-  private def getWithDesHeaders[A: HttpReads](
-      apiName: String,
-      url: URL
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
+  private def getWithDesHeaders[A: HttpReads](url: URL)(using hc: HeaderCarrier, ec: ExecutionContext): Future[A] = {
     val desHeaderCarrier = hc.copy(
       authorization = Some(Authorization(s"Bearer ${appConfig.desAuthToken}")),
       extraHeaders = hc.extraHeaders :+ "Environment" -> appConfig.desEnvironment
@@ -110,8 +105,8 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
 
     http
       .get(url)(desHeaderCarrier)
-      .transform(_.addHttpHeaders(explicitHeaders: _*))
-      .execute(implicitly[HttpReads[A]], ec)
+      .transform(_.addHttpHeaders(explicitHeaders*))
+      .execute(summon[HttpReads[A]], ec)
 
   }
 }

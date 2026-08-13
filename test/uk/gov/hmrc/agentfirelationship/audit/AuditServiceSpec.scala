@@ -26,7 +26,7 @@ import org.scalatest.time.Millis
 import org.scalatest.time.Span
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
@@ -38,7 +38,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
-  implicit val testConfig: PatienceConfig =
+  given testConfig: PatienceConfig =
     PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(200, Millis)))
   "auditEvent" should {
     "send an Create Relationship Event event with the correct fields" in {
@@ -59,7 +59,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("clientIdType", "ni")
       await(
         service.sendCreateRelationshipEvent(auditData)(
-          hc,
+          using hc,
           FakeRequest("GET", "/path"),
           concurrent.ExecutionContext.Implicits.global
         )
@@ -101,7 +101,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("clientIdType", "ni")
       await(
         service.sendTerminatedRelationshipEvent(auditData)(
-          hc,
+          using hc,
           FakeRequest("GET", "/path"),
           concurrent.ExecutionContext.Implicits.global
         )
@@ -144,7 +144,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
       auditData.set("clientIdType", "ni")
       await(
         service.sendCreateRelationshipFromExisting(auditData)(
-          hc,
+          using hc,
           FakeRequest("GET", "/path"),
           concurrent.ExecutionContext.Implicits.global
         )
@@ -188,7 +188,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with Eventually {
 
       await(
         service.sendHmrcLedDeleteRelationshipAuditEvent(auditData)(
-          hc,
+          using hc,
           FakeRequest("GET", "/path"),
           concurrent.ExecutionContext.Implicits.global
         )

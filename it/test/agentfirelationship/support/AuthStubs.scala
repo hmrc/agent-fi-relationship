@@ -16,7 +16,7 @@
 
 package agentfirelationship.support
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import uk.gov.hmrc.domain.SaAgentReference
 
 trait WiremockAware {

@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
+package agentfirelationship
+
 import java.time.LocalDateTime
 
-package object agentfirelationship {
-  val fakeCredId = "fakeCredId"
-  val agentId    = "TARN0000001"
-  val agentId2   = "TARN0000002"
-  val clientId   = "AE123456"
-  val clientId2  = "AB123456"
-  val service    = "afi"
-  val auditDetails =
-    Map("authProviderId" -> fakeCredId, "arn" -> agentId, "service" -> "personal-income-record", "clientId" -> clientId)
-  val auditDetails2 = Map(
-    "authProviderId" -> fakeCredId,
-    "arn"            -> agentId,
-    "service"        -> "personal-income-record",
-    "clientId"       -> clientId2
-  )
-  val testResponseDate = LocalDateTime.now
-  val clientUtr        = "1307171695"
-}
+val fakeCredId = "fakeCredId"
+val agentId    = "TARN0000001"
+val agentId2   = "TARN0000002"
+val clientId   = "AE123456"
+val clientId2  = "AB123456"
+val service    = "afi"
+val auditDetails =
+  Map("authProviderId" -> fakeCredId, "arn" -> agentId, "service" -> "personal-income-record", "clientId" -> clientId)
+val auditDetails2 = Map(
+  "authProviderId" -> fakeCredId,
+  "arn"            -> agentId,
+  "service"        -> "personal-income-record",
+  "clientId"       -> clientId2
+)
+val testResponseDate = LocalDateTime.now
+val clientUtr        = "1307171695"

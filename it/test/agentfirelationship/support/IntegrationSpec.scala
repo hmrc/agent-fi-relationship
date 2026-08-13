@@ -27,7 +27,7 @@ import play.api.http.Status
 
 trait IntegrationSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Eventually with Status {
 
-  implicit override val patienceConfig: PatienceConfig =
+  override given patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
 }

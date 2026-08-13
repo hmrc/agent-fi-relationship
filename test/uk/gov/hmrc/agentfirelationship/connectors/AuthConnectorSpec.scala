@@ -27,9 +27,10 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Result
 import play.api.mvc.Results
-import play.api.mvc.Results._
-import play.api.test.Helpers._
-import uk.gov.hmrc.agentfirelationship.controllers._
+import play.api.mvc.Results.*
+import play.api.test.Helpers.*
+import uk.gov.hmrc.agentfirelationship.controllers.*
+import uk.gov.hmrc.agentfirelationship.controllers.given
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -45,10 +46,10 @@ class AuthConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEa
   private type AfiAction =
     Option[TaxIdentifier] => Credentials => Future[Result]
 
-  val agentAction: AfiAction = { arn => credentials =>
+  val agentAction: AfiAction = { _ => _ =>
     Future.successful(Ok)
   }
-  val clientAction: AfiAction = { nino => credentials =>
+  val clientAction: AfiAction = { _ => _ =>
     Future.successful(Ok)
   }
 

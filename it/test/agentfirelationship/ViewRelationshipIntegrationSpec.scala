@@ -16,7 +16,7 @@
 
 package agentfirelationship
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.Await
 import scala.language.postfixOps
 
@@ -44,7 +44,7 @@ class ViewRelationshipIntegrationSpec
   override def arn  = agentId
   override def nino = clientId
 
-  implicit override lazy val app: Application = appBuilder.build()
+  override given app: Application = appBuilder.build()
 
   protected def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
