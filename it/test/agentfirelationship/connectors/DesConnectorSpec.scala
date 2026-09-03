@@ -35,6 +35,8 @@ import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.RequestId
+import uk.gov.hmrc.http.SessionId
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class DesConnectorSpec
@@ -73,6 +75,23 @@ class DesConnectorSpec
       val agentId = "bar"
       givenClientHasRelationshipWithAgentInCESA(nino, agentId)
       givenAuditConnector()
+      await(desConnector.getClientSaAgentSaReferences(nino)) shouldBe Seq(SaAgentReference(agentId))
+    }
+
+    "send request and session identifiers to DES" in {
+      given HeaderCarrier = HeaderCarrier(
+        requestId = Some(RequestId("request-id")),
+        sessionId = Some(SessionId("session-id"))
+      )
+      val agentId = "bar"
+      givenClientHasRelationshipWithAgentInCESA(
+        nino,
+        agentId,
+        requestId = Some("request-id"),
+        sessionId = Some("session-id")
+      )
+      givenAuditConnector()
+
       await(desConnector.getClientSaAgentSaReferences(nino)) shouldBe Seq(SaAgentReference(agentId))
     }
 
