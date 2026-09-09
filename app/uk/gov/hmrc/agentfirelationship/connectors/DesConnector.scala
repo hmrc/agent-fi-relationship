@@ -27,6 +27,7 @@ import scala.concurrent.Future
 import play.api.http.Status.*
 import play.api.libs.json.*
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
+import uk.gov.hmrc.agentfirelationship.connectors.helpers.CommonHeaders
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.UriPathEncoding.encodePathSegment
@@ -62,8 +63,8 @@ class DesConnector @Inject() (appConfig: AppConfig, http: HttpClientV2, val metr
   private val CorrelationId: String   = "CorrelationId"
   private val Authorization_ : String = "Authorization"
 
-  private def explicitHeaders: Seq[(String, String)] =
-    Seq(
+  private def explicitHeaders(using hc: HeaderCarrier): Seq[(String, String)] =
+    CommonHeaders() ++ Seq(
       Environment    -> s"${appConfig.desEnvironment}",
       CorrelationId  -> UUID.randomUUID().toString,
       Authorization_ -> s"Bearer ${appConfig.desAuthToken}"

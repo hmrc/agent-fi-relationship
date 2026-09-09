@@ -27,10 +27,19 @@ trait DesStubs {
   val someAlienAgent  = """{"hasAgent":false,"agentId":"alien"}"""
   val someCeasedAgent = """{"hasAgent":true,"agentId":"ex-agent","agentCeasedDate":"someDate"}"""
 
-  def givenClientHasRelationshipWithAgentInCESA(taxIdentifier: TaxIdentifier, agentId: String): StubMapping = {
-    val url = desUrlForTaxIdentifier(taxIdentifier)
+  def givenClientHasRelationshipWithAgentInCESA(
+      taxIdentifier: TaxIdentifier,
+      agentId: String,
+      requestId: Option[String] = None,
+      sessionId: Option[String] = None
+  ): StubMapping = {
+    val url     = desUrlForTaxIdentifier(taxIdentifier)
+    val request = get(urlEqualTo(url))
+    requestId.foreach(id => request.withHeader("X-Request-ID", equalTo(id)))
+    sessionId.foreach(id => request.withHeader("X-Session-ID", equalTo(id)))
+
     stubFor(
-      get(urlEqualTo(url))
+      request
         .willReturn(
           aResponse()
             .withStatus(200)
