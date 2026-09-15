@@ -27,11 +27,11 @@ import scala.util.matching.Regex
 
 import play.api.mvc.*
 import play.api.mvc.Results.*
-import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Auth.*
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
+import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
@@ -45,7 +45,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 @Singleton
 class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(using ec: ExecutionContext)
     extends AuthorisedFunctions
-    with Logging {
+    with RequestAwareLogging {
   given hc(using rh: RequestHeader): HeaderCarrier =
     HeaderCarrierConverter.fromRequestAndSession(rh, rh.session)
 
@@ -74,10 +74,10 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
       }
       .recoverWith {
         case ex: NoActiveSession =>
-          logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)
+          logger.warnNoRequest("NoActiveSession exception whilst trying to manipulate relationships", ex)
           Future.successful(Unauthorized)
         case ex: AuthorisationException =>
-          logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
+          logger.warnNoRequest("Authorisation exception whilst trying to manipulate relationships", ex)
           Future.successful(Forbidden)
       }
 
@@ -98,15 +98,15 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
           case decodedAuth(username, password) =>
             if (BasicAuthentication(username, password) == expectedAuth) body
             else {
-              logger.warn("Authorization header found in the request but invalid username or password")
+              logger.warnNoRequest("Authorization header found in the request but invalid username or password")
               Future.successful(Unauthorized)
             }
           case _ =>
-            logger.warn("Authorization header found in the request but its not in the expected format")
+            logger.warnNoRequest("Authorization header found in the request but its not in the expected format")
             Future.successful(Unauthorized)
         }
       case _ =>
-        logger.warn("No Authorization header found in the request for agent termination")
+        logger.warnNoRequest("No Authorization header found in the request for agent termination")
         Future.successful(Unauthorized)
     }
 
@@ -117,12 +117,12 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
       .retrieve(allEnrolments) {
         case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
         case e =>
-          logger.warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
+          logger.warnNoRequest(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
           Future.successful(Unauthorized)
       }
       .recover {
         case e =>
-          logger.warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")
+          logger.warnNoRequest(s"Error Discovered during Stride Authentication: ${e.getMessage}")
           Forbidden
       }
 
