@@ -31,6 +31,7 @@ import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Auth.*
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
 import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.~
@@ -74,10 +75,10 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
       }
       .recoverWith {
         case ex: NoActiveSession =>
-          logger.warnNoRequest("NoActiveSession exception whilst trying to manipulate relationships", ex)
+          logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)(using NoRequest)
           Future.successful(Unauthorized)
         case ex: AuthorisationException =>
-          logger.warnNoRequest("Authorisation exception whilst trying to manipulate relationships", ex)
+          logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)(using NoRequest)
           Future.successful(Forbidden)
       }
 
@@ -98,15 +99,15 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
           case decodedAuth(username, password) =>
             if (BasicAuthentication(username, password) == expectedAuth) body
             else {
-              logger.warnNoRequest("Authorization header found in the request but invalid username or password")
+              logger.warn("Authorization header found in the request but invalid username or password")
               Future.successful(Unauthorized)
             }
           case _ =>
-            logger.warnNoRequest("Authorization header found in the request but its not in the expected format")
+            logger.warn("Authorization header found in the request but its not in the expected format")
             Future.successful(Unauthorized)
         }
       case _ =>
-        logger.warnNoRequest("No Authorization header found in the request for agent termination")
+        logger.warn("No Authorization header found in the request for agent termination")
         Future.successful(Unauthorized)
     }
 
@@ -117,12 +118,14 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
       .retrieve(allEnrolments) {
         case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
         case e =>
-          logger.warnNoRequest(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
+          logger.warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")(
+            using NoRequest
+          )
           Future.successful(Unauthorized)
       }
       .recover {
         case e =>
-          logger.warnNoRequest(s"Error Discovered during Stride Authentication: ${e.getMessage}")
+          logger.warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")(using NoRequest)
           Forbidden
       }
 

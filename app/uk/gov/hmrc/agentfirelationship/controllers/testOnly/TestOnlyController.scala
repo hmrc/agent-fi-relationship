@@ -34,6 +34,7 @@ import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
 import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -53,14 +54,14 @@ class TestOnlyController @Inject() (mongoService: RelationshipMongoRepository, c
       withJsonBody[Invitation] { invitation =>
         mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
           case Nil =>
-            logger.infoNoRequest("Creating a relationship")
+            logger.info("Creating a relationship")
             for {
               _ <- mongoService.createRelationship(
                 Relationship(Arn(arn), service, clientId, Some(RelationshipStatus.Active), invitation.startDate, None)
               )
             } yield Created
           case _ =>
-            logger.infoNoRequest("Relationship already exists")
+            logger.info("Relationship already exists")
             Future.successful(Created)
         }
       }
@@ -75,7 +76,7 @@ class TestOnlyController @Inject() (mongoService: RelationshipMongoRepository, c
       relationshipDeleted.map(
         if (_) Ok
         else {
-          logger.warnNoRequest("Relationship Not Found")
+          logger.warn("Relationship Not Found")(using NoRequest)
           NotFound
         }
       )

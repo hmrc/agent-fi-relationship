@@ -33,6 +33,7 @@ import org.apache.pekko.stream.Materializer
 import play.api.mvc.Filter
 import play.api.mvc.RequestHeader
 import play.api.mvc.Result
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
 import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.http.HttpException
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -62,7 +63,7 @@ object KeyToPatternMappingFromRoutes extends RequestAwareLogging {
           )
           .mkString("__")
         val pattern = r.replace("$", ":")
-        logger.infoNoRequest(s"$key-$method -> $pattern")
+        logger.info(s"$key-$method -> $pattern")(using NoRequest)
         (key, pattern)
     }
 }

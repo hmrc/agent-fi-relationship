@@ -43,6 +43,7 @@ import uk.gov.hmrc.agentfirelationship.models.TerminationResponse
 import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
 import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.TaxIdentifier
@@ -167,7 +168,7 @@ class RelationshipController @Inject() (
           forThisUser(Arn(arn), NinoWithoutSuffix(clientId), strideRoles) {
             mongoService.findRelationships(arn, service, clientId, RelationshipStatus.Active).flatMap {
               case Nil =>
-                logger.infoNoRequest("Creating a relationship")
+                logger.info("Creating a relationship")
                 for {
                   similar <- mongoService.findClientRelationships(service, clientId, RelationshipStatus.Active)
                   _ <- Future.sequence(
@@ -198,7 +199,7 @@ class RelationshipController @Inject() (
                   _         <- auditService.sendCreateRelationshipEvent(auditData)
                 } yield Created
               case _ =>
-                logger.infoNoRequest("Relationship already exists")
+                logger.info("Relationship already exists")
                 Future.successful(Created)
             }
           }
@@ -221,7 +222,7 @@ class RelationshipController @Inject() (
               sendAuditEventForThisUser(credentials, auditData)
               Ok
             case (false, _) =>
-              logger.warnNoRequest("Relationship Not Found")
+              logger.warn("Relationship Not Found")
               NotFound
           }
         }
@@ -245,7 +246,7 @@ class RelationshipController @Inject() (
           mongoService.findInactiveAgentRelationships(arn).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
-              logger.warnNoRequest("No Inactive Relationships Found For ARN")
+              logger.warn("No Inactive Relationships Found For ARN")
               NotFound
             }
           }
@@ -253,12 +254,12 @@ class RelationshipController @Inject() (
           mongoService.findInactiveClientRelationships(nino).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
-              logger.warnNoRequest("No Inactive Relationships Found For NINO")
+              logger.warn("No Inactive Relationships Found For NINO")
               NotFound
             }
           }
         case _ =>
-          logger.errorNoRequest("Arn Not Found in Login")
+          logger.error("Arn Not Found in Login")
           Future.successful(NotFound)
       }
     }
@@ -272,7 +273,7 @@ class RelationshipController @Inject() (
           mongoService.findActiveAgentRelationships(arn).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
-              logger.warnNoRequest("No Active Relationships Found For ARN")
+              logger.warn("No Active Relationships Found For ARN")
               NotFound
             }
           }
@@ -280,12 +281,12 @@ class RelationshipController @Inject() (
           mongoService.findActiveClientRelationships(nino).map { result =>
             if (result.nonEmpty) Ok(toJson(result))
             else {
-              logger.warnNoRequest("No Active Relationships Found For NINO")
+              logger.warn("No Active Relationships Found For NINO")
               NotFound
             }
           }
         case _ =>
-          logger.errorNoRequest("Arn/Nino Not Found in Login")
+          logger.error("Arn/Nino Not Found in Login")
           Future.successful(NotFound)
       }
     }
@@ -316,7 +317,7 @@ class RelationshipController @Inject() (
           }
           .recover {
             case e =>
-              logger.warnNoRequest(s"Something has gone for $arn due to: ${e.getMessage}")
+              logger.warn(s"Something has gone for $arn due to: ${e.getMessage}")
               InternalServerError
           }
       } else Future.successful(BadRequest)
@@ -363,10 +364,10 @@ class RelationshipController @Inject() (
       case Some(t) =>
         t match {
           case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) =>
-            logger.warnNoRequest("Arn does not match")
+            logger.warn("Arn does not match")(using NoRequest)
             Future.successful(Forbidden)
           case nino @ NinoWithoutSuffix(_) if nino != requestedNino =>
-            logger.warnNoRequest("Nino does not match")
+            logger.warn("Nino does not match")(using NoRequest)
             Future.successful(Forbidden)
           case _ =>
             action
@@ -375,7 +376,7 @@ class RelationshipController @Inject() (
         strideRoles match {
           case roles if roles.contains(appConfig.oldStrideRole) || roles.contains(appConfig.newStrideRole) => action
           case _ =>
-            logger.warnNoRequest("Unsupported ProviderType / Role")
+            logger.warn("Unsupported ProviderType / Role")(using NoRequest)
             Future.successful(Forbidden)
         }
     }

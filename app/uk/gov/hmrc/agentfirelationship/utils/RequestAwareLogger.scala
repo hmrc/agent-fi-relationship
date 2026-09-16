@@ -16,10 +16,13 @@
 
 package uk.gov.hmrc.agentfirelationship.utils
 
+import org.slf4j
 import play.api.http.HeaderNames
 import play.api.mvc.RequestHeader
 import play.api.Logger
-import RequestSupport.given
+import play.api.LoggerLike
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
+import uk.gov.hmrc.agentfirelationship.utils.RequestSupport.hc
 
 /**
  * A logger which is aware of the request. It will append to the message extra information such as session ID, request ID, user agent, referer, and device ID
@@ -30,23 +33,7 @@ import RequestSupport.given
 @SuppressWarnings(Array("org.wartremover.warts.Any"))
 class RequestAwareLogger(
     delegateLogger: Logger
-):
-
-  def debugNoRequest(message: => String): Unit = logMessageWithoutRequest(message, Debug)
-
-  def infoNoRequest(message: => String): Unit = logMessageWithoutRequest(message, Info)
-
-  def warnNoRequest(message: => String): Unit = logMessageWithoutRequest(message, Warn)
-
-  def errorNoRequest(message: => String): Unit = logMessageWithoutRequest(message, Error)
-
-  def debugNoRequest(message: => String, ex: Throwable): Unit = logMessageWithoutRequest(message, ex, Debug)
-
-  def infoNoRequest(message: => String, ex: Throwable): Unit = logMessageWithoutRequest(message, ex, Info)
-
-  def warnNoRequest(message: => String, ex: Throwable): Unit = logMessageWithoutRequest(message, ex, Warn)
-
-  def errorNoRequest(message: => String, ex: Throwable): Unit = logMessageWithoutRequest(message, ex, Error)
+) extends LoggerLike:
 
   def debug(message: => String)(using request: RequestHeader): Unit = logMessage(message, Debug)
 
@@ -111,23 +98,8 @@ class RequestAwareLogger(
 
   private def makeRichMessage(message: String)(using request: RequestHeader): String =
     request match
-      case _ => s"$message $context "
-
-  private def makePlainMessage(message: String): String = message
-
-  private def logMessageWithoutRequest(message: => String, level: LogLevel): Unit =
-    level match
-      case Debug => delegateLogger.debug(makePlainMessage(message))
-      case Info  => delegateLogger.info(makePlainMessage(message))
-      case Warn  => delegateLogger.warn(makePlainMessage(message))
-      case Error => delegateLogger.error(makePlainMessage(message))
-
-  private def logMessageWithoutRequest(message: => String, ex: Throwable, level: LogLevel): Unit =
-    level match
-      case Debug => delegateLogger.debug(makePlainMessage(message), ex)
-      case Info  => delegateLogger.info(makePlainMessage(message), ex)
-      case Warn  => delegateLogger.warn(makePlainMessage(message), ex)
-      case Error => delegateLogger.error(makePlainMessage(message), ex)
+      case NoRequest => message
+      case _         => s"$message $context "
 
   private sealed trait LogLevel
 
@@ -161,3 +133,5 @@ class RequestAwareLogger(
       case Info  => delegateLogger.info(richMessage, ex)
       case Warn  => delegateLogger.warn(richMessage, ex)
       case Error => delegateLogger.error(richMessage, ex)
+
+  override def logger: slf4j.Logger = delegateLogger.logger

@@ -30,12 +30,12 @@ import org.mongodb.scala.model.Filters.*
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model.Updates.set
-import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.models.Relationship
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus
 import uk.gov.hmrc.agentfirelationship.models.RelationshipStatus.Active
+import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.MongoComponent
@@ -78,7 +78,7 @@ class RelationshipMongoRepository @Inject() (appConfig: AppConfig, mongoComponen
         ),
       )
     )
-    with Logging {
+    with RequestAwareLogging {
 
   def findRelationships(
       arn: String,
