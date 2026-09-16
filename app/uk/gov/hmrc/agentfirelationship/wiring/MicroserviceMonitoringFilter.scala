@@ -33,7 +33,8 @@ import org.apache.pekko.stream.Materializer
 import play.api.mvc.Filter
 import play.api.mvc.RequestHeader
 import play.api.mvc.Result
-import play.api.Logging
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
+import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.http.HttpException
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.metrics.Metrics
@@ -47,7 +48,7 @@ class MicroserviceMonitoringFilter @Inject() (metrics: Metrics, routes: Routes)(
     KeyToPatternMappingFromRoutes(routes, Set("service"))
 }
 
-object KeyToPatternMappingFromRoutes extends Logging {
+object KeyToPatternMappingFromRoutes extends RequestAwareLogging {
   def apply(routes: Routes, placeholders: Set[String] = Set.empty): Seq[(String, String)] =
     routes.documentation.map {
       case (method, route, _) =>
@@ -62,7 +63,7 @@ object KeyToPatternMappingFromRoutes extends Logging {
           )
           .mkString("__")
         val pattern = r.replace("$", ":")
-        logger.info(s"$key-$method -> $pattern")
+        logger.info(s"$key-$method -> $pattern")(using NoRequest)
         (key, pattern)
     }
 }
@@ -70,7 +71,7 @@ object KeyToPatternMappingFromRoutes extends Logging {
 abstract class MonitoringFilter(kenshooRegistry: MetricRegistry)(using ec: ExecutionContext)
     extends Filter
     with MonitoringKeyMatcher
-    with Logging {
+    with RequestAwareLogging {
 
   override def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] =
     findMatchingKey(requestHeader.uri) match {
@@ -79,7 +80,7 @@ abstract class MonitoringFilter(kenshooRegistry: MetricRegistry)(using ec: Execu
           nextFilter(requestHeader)
         }
       case None =>
-        logger.debug(s"API-Not-Monitored: ${requestHeader.method}-${requestHeader.uri}")
+        logger.debug(s"API-Not-Monitored: ${requestHeader.method}-${requestHeader.uri}")(using requestHeader)
         nextFilter(requestHeader)
     }
 

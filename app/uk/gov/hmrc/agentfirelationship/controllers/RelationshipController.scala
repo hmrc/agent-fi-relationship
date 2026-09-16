@@ -29,7 +29,6 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.OFormat
 import play.api.mvc.*
-import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.audit.AuditData
 import uk.gov.hmrc.agentfirelationship.audit.AuditService
 import uk.gov.hmrc.agentfirelationship.config.AppConfig
@@ -44,6 +43,8 @@ import uk.gov.hmrc.agentfirelationship.models.TerminationResponse
 import uk.gov.hmrc.agentfirelationship.models.Utr
 import uk.gov.hmrc.agentfirelationship.repository.RelationshipMongoRepository
 import uk.gov.hmrc.agentfirelationship.services.CesaRelationshipCopyService
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
+import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.domain.TaxIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
@@ -60,7 +61,7 @@ class RelationshipController @Inject() (
     cc: ControllerComponents
 )(using ec: ExecutionContext)
     extends BackendController(cc)
-    with Logging {
+    with RequestAwareLogging {
 
   import appConfig.newStrideRole
   import appConfig.oldStrideRole
@@ -363,10 +364,10 @@ class RelationshipController @Inject() (
       case Some(t) =>
         t match {
           case arn @ Arn(_) if isDifferentIdentifier(requestedArn, arn) =>
-            logger.warn("Arn does not match")
+            logger.warn("Arn does not match")(using NoRequest)
             Future.successful(Forbidden)
           case nino @ NinoWithoutSuffix(_) if nino != requestedNino =>
-            logger.warn("Nino does not match")
+            logger.warn("Nino does not match")(using NoRequest)
             Future.successful(Forbidden)
           case _ =>
             action
@@ -375,7 +376,7 @@ class RelationshipController @Inject() (
         strideRoles match {
           case roles if roles.contains(appConfig.oldStrideRole) || roles.contains(appConfig.newStrideRole) => action
           case _ =>
-            logger.warn("Unsupported ProviderType / Role")
+            logger.warn("Unsupported ProviderType / Role")(using NoRequest)
             Future.successful(Forbidden)
         }
     }

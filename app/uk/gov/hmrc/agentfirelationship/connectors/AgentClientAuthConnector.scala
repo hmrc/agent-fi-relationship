@@ -27,11 +27,12 @@ import scala.util.matching.Regex
 
 import play.api.mvc.*
 import play.api.mvc.Results.*
-import play.api.Logging
 import uk.gov.hmrc.agentfirelationship.models.Arn
 import uk.gov.hmrc.agentfirelationship.models.Auth.*
 import uk.gov.hmrc.agentfirelationship.models.BasicAuthentication
 import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
+import uk.gov.hmrc.agentfirelationship.utils.NoRequest
+import uk.gov.hmrc.agentfirelationship.utils.RequestAwareLogging
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.allEnrolments
@@ -45,7 +46,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 @Singleton
 class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(using ec: ExecutionContext)
     extends AuthorisedFunctions
-    with Logging {
+    with RequestAwareLogging {
   given hc(using rh: RequestHeader): HeaderCarrier =
     HeaderCarrierConverter.fromRequestAndSession(rh, rh.session)
 
@@ -74,10 +75,10 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
       }
       .recoverWith {
         case ex: NoActiveSession =>
-          logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)
+          logger.warn("NoActiveSession exception whilst trying to manipulate relationships", ex)(using NoRequest)
           Future.successful(Unauthorized)
         case ex: AuthorisationException =>
-          logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)
+          logger.warn("Authorisation exception whilst trying to manipulate relationships", ex)(using NoRequest)
           Future.successful(Forbidden)
       }
 
@@ -117,12 +118,14 @@ class AgentClientAuthConnector @Inject() (val authConnector: AuthConnector)(usin
       .retrieve(allEnrolments) {
         case allEnrols if allEnrols.enrolments.map(_.key).contains(strideRole) => action
         case e =>
-          logger.warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")
+          logger.warn(s"Unauthorized Discovered during Stride Authentication: ${e.enrolments.map(_.key)}")(
+            using NoRequest
+          )
           Future.successful(Unauthorized)
       }
       .recover {
         case e =>
-          logger.warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")
+          logger.warn(s"Error Discovered during Stride Authentication: ${e.getMessage}")(using NoRequest)
           Forbidden
       }
 
