@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import org.mockito.ArgumentMatchers.{ eq => eqs }
+import org.mockito.ArgumentMatchers.eq as eqs
 import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import play.api.test.Helpers.*
@@ -33,20 +33,19 @@ import uk.gov.hmrc.agentfirelationship.models.NinoWithoutSuffix
 import uk.gov.hmrc.agentfirelationship.support.ResettingMockitoSugar
 import uk.gov.hmrc.agentfirelationship.support.UnitSpec
 import uk.gov.hmrc.domain.AgentCode
-import uk.gov.hmrc.domain.Generator
+import uk.gov.hmrc.domain.NinoGenerator
 import uk.gov.hmrc.domain.SaAgentReference
 import uk.gov.hmrc.http.HeaderCarrier
 
 class CesaRelationshipCopyServiceSpec extends UnitSpec with BeforeAndAfterEach with ResettingMockitoSugar {
 
-  val testDataGenerator       = new Generator()
   val arn                     = Arn("AARN0000002")
   val saAgentRef              = SaAgentReference("T1113T")
   val saAgentRef2             = SaAgentReference("T1123T")
   val saAgentRef3             = SaAgentReference("T1133T")
   val mtdItId                 = MtdItId("ABCDEF123456789")
   val agentCode               = AgentCode("ABC1234")
-  val nino: NinoWithoutSuffix = NinoWithoutSuffix(testDataGenerator.nextNino.value)
+  val nino: NinoWithoutSuffix = NinoWithoutSuffix(NinoGenerator().nextNino.value)
 
   private val des     = resettingMock[DesConnector]
   private val mapping = resettingMock[MappingConnector]
